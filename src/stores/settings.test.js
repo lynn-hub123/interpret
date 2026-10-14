@@ -20,3 +20,19 @@ describe('settings store', () => {
     expect(document.documentElement.dataset.theme).toBe('light')
   })
 })
+
+describe('settings persistence signal and stored shape', () => {
+  it('loadSettings merges persisted settings over defaults', () => {
+    localStorage.setItem('interpret.settings.v1', JSON.stringify({ direction: 'en2zh' }))
+    loadSettings()
+    expect(settings.value).toEqual({ direction: 'en2zh', theme: 'dark', showTimer: false })
+  })
+  it('loadSettings ignores non-object stored value', () => {
+    localStorage.setItem('interpret.settings.v1', '[1,2]')
+    loadSettings()
+    expect(settings.value).toEqual({ direction: 'zh2en', theme: 'dark', showTimer: false })
+  })
+  it('setters return persistence boolean', () => {
+    expect(setDirection('en2zh')).toBe(true)
+  })
+})

@@ -6,17 +6,19 @@ const DEFAULTS = { direction: 'zh2en', theme: 'dark', showTimer: false }
 export const settings = ref({ ...DEFAULTS })
 
 export function loadSettings() {
-  settings.value = { ...DEFAULTS, ...load('settings.v1', {}) }
+  const v = load('settings.v1', {})
+  const stored = v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+  settings.value = { ...DEFAULTS, ...stored }
   applyTheme()
 }
 
 export function saveSettings() {
-  save('settings.v1', { ...settings.value })
+  return save('settings.v1', { ...settings.value })
 }
 
-export function setDirection(v) { settings.value.direction = v; saveSettings() }
-export function setTheme(v) { settings.value.theme = v; saveSettings(); applyTheme() }
-export function setShowTimer(v) { settings.value.showTimer = v; saveSettings() }
+export function setDirection(v) { settings.value.direction = v; return saveSettings() }
+export function setTheme(v) { settings.value.theme = v; applyTheme(); return saveSettings() }
+export function setShowTimer(v) { settings.value.showTimer = v; return saveSettings() }
 
 export function applyTheme() {
   document.documentElement.dataset.theme = settings.value.theme
