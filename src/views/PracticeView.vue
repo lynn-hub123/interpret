@@ -87,8 +87,12 @@ onMounted(() => {
     // 主题限定会话：只取该主题内置句，无效主题/空池回退全量
     const topicPool = allBuiltinSentences().filter(s => s.topic === session.topicId)
     pool.value = topicPool.length ? topicPool : [...allBuiltinSentences(), ...getCustomSentences()]
+  } else if (session?.mode === 'paste') {
+    // 粘贴会话：只取自定义句（含历史粘贴），空池回退全量
+    const customPool = getCustomSentences()
+    pool.value = customPool.length ? customPool : [...allBuiltinSentences(), ...getCustomSentences()]
   } else {
-    // 后续任务在此分支扩展 paste / replay 会话模式
+    // 后续任务在此分支扩展 replay 会话模式
     pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
   }
   next(false)
