@@ -21,8 +21,10 @@ export const TOPICS = [
 
 const BUILTIN = { daily, economy, diplomacy, tech, environment, education, sports, culture }
 
+let _allBuiltin
+// 共享缓存：内置数据静态不可变，调用方不得修改返回数组及其元素
 export function allBuiltinSentences() {
-  return TOPICS.flatMap(t => BUILTIN[t.id].map(s => ({ ...s, topic: t.id, source: 'builtin' })))
+  return (_allBuiltin ??= TOPICS.flatMap(t => BUILTIN[t.id].map(s => ({ ...s, topic: t.id, source: 'builtin' }))))
 }
 
 export function sentenceById(id) {
