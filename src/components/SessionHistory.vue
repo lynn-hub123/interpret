@@ -25,7 +25,7 @@ const refOf = it => (it.direction === 'zh2en' ? it.sentence.en || '（无参考�
 
 <style scoped>
 .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
-.panel { width: min(480px, 100%); max-height: 75dvh; overflow-y: auto; padding: 16px; border-radius: 20px 20px 0 0; }
+.panel { width: min(480px, 100%); max-height: 75dvh; overflow-y: auto; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 h3 { margin: 0; font-size: 16px; }
 .btn-close { font-size: 13px; padding: 8px 14px; }
