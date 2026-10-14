@@ -30,6 +30,7 @@ export function sentenceById(id) {
 }
 
 export function detectLang(text) {
+  if (typeof text !== 'string' || !text.trim()) return 'en'
   const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length
   return cjk / text.replace(/\s/g, '').length > 0.3 ? 'zh' : 'en'
 }
@@ -53,10 +54,11 @@ export function addCustomSentences(texts) {
       source: 'custom'
     }
   })
-  save('custom.v1', [...list, ...added])
-  return added
+  const persisted = save('custom.v1', [...list, ...added])
+  return { added, persisted }
 }
 
 export function getCustomSentences() {
-  return load('custom.v1', [])
+  const list = load('custom.v1', [])
+  return Array.isArray(list) ? list : []
 }

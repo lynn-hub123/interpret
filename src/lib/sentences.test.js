@@ -51,3 +51,19 @@ describe('custom sentences', () => {
     expect(list[0].id).toMatch(/^c_/)
   })
 })
+
+describe('persistence hardening', () => {
+  it('addCustomSentences returns { added, persisted } with persisted true on success', () => {
+    const result = addCustomSentences(['新增的句子。'])
+    expect(result.added).toHaveLength(1)
+    expect(result.added[0]).toEqual(expect.objectContaining({ zh: '新增的句子。', source: 'custom', topic: 'paste' }))
+    expect(result.persisted).toBe(true)
+  })
+  it('getCustomSentences returns [] when stored value is valid JSON but not an array', () => {
+    localStorage.setItem('interpret.custom.v1', JSON.stringify({ broken: true }))
+    expect(getCustomSentences()).toEqual([])
+  })
+  it('detectLang treats empty string as en', () => {
+    expect(detectLang('')).toBe('en')
+  })
+})
