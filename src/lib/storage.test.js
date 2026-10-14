@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { load, save, storageAvailable, exportAll, importAll } from './storage.js'
 
 beforeEach(() => localStorage.clear())
@@ -15,6 +15,18 @@ describe('load/save', () => {
     localStorage.setItem('bad', '{oops')
     expect(load('bad', 'fb')).toBe('fb')
     expect(localStorage.getItem('bad.corrupt')).toBe('{oops')
+  })
+  it('falls back to bare key and backs up corruption', () => {
+    localStorage.setItem('bare', '{oops')
+    expect(load('bare', 'fb')).toBe('fb')
+    expect(localStorage.getItem('bare.corrupt')).toBe('{oops')
+  })
+  it('returns false when storage writes fail (quota)', () => {
+    // happy-dom 下对 Storage.prototype 打 spy 在窗口有过真实读写后会静默失效，故 mock localStorage 实例
+    const spy = vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('quota') })
+    expect(save('k', 1)).toBe(false)
+    expect(importAll({ records: [], custom: [] })).toBe(false)
+    spy.mockRestore()
   })
 })
 

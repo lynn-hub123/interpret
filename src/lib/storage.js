@@ -1,3 +1,5 @@
+// 本模块是全应用唯一的持久化抽象层（interpret.* 前缀）。
+// 契约：同步语义、本地为准；未来账号系统以"本地缓存 + 后台同步"实现，不改变同步签名。
 const PREFIX = 'interpret.'
 
 function fullKey(key) {
@@ -16,18 +18,23 @@ export function storageAvailable() {
 }
 
 export function load(key, fallback) {
-  const full = fullKey(key)
-  let raw = localStorage.getItem(full)
-  let srcKey = full
-  if (raw === null && full !== key) {
-    raw = localStorage.getItem(key)
-    srcKey = key
-  }
-  if (raw === null) return fallback
   try {
-    return JSON.parse(raw)
+    const full = fullKey(key)
+    let raw = localStorage.getItem(full)
+    let srcKey = full
+    if (raw === null && full !== key) {
+      raw = localStorage.getItem(key)
+      srcKey = key
+    }
+    if (raw === null) return fallback
+    try {
+      return JSON.parse(raw)
+    } catch {
+      try { localStorage.setItem(srcKey + '.corrupt', raw) } catch { /* ignore */ }
+      return fallback
+    }
   } catch {
-    try { localStorage.setItem(srcKey + '.corrupt', raw) } catch { /* ignore */ }
+    // 存储被禁（隐私模式等）导致读取抛异常时静默降级
     return fallback
   }
 }
@@ -59,8 +66,7 @@ export function importAll(payload) {
     try { d = JSON.parse(payload) } catch { return false }
   }
   if (!isValidDump(d)) return false
-  save('records.v1', d.records)
-  save('custom.v1', d.custom)
-  if (d.settings) save('settings.v1', d.settings)
-  return true
+  const results = [save('records.v1', d.records), save('custom.v1', d.custom)]
+  if (d.settings) results.push(save('settings.v1', d.settings))
+  return results.every(Boolean)
 }
