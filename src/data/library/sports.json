@@ -1,1 +1,22 @@
-[]
+[
+  { "id": "sports_001", "zh": "中国队在冬奥会上夺得短道速滑混合接力金牌。", "en": "China won gold in the mixed team relay in short track speed skating at the Winter Olympics." },
+  { "id": "sports_002", "zh": "城市马拉松报名人数突破十万，中签率不到三成。", "en": "Over one hundred thousand people signed up for the city marathon; fewer than thirty percent got in." },
+  { "id": "sports_003", "zh": "电子竞技成为亚运会正式项目，职业选手有了更大的舞台。", "en": "Esports is now an official Asian Games event, giving professional players a bigger stage." },
+  { "id": "sports_004", "zh": "足球联赛恢复主客场制，球迷终于回到了看台。", "en": "The football league returned to home-and-away games, and fans are finally back in the stands." },
+  { "id": "sports_005", "zh": "全民健身器材进了社区，大爷大妈也练起了引体向上。", "en": "Fitness equipment has entered communities, and seniors are trying pull-ups." },
+  { "id": "sports_006", "zh": "这位游泳小将打破了自己保持的亚洲纪录。", "en": "The young swimmer broke the Asian record she once held herself." },
+  { "id": "sports_007", "zh": "篮球世界杯预选赛，主队在加时赛完成绝杀。", "en": "In the basketball World Cup qualifier, the home team won at the buzzer in overtime." },
+  { "id": "sports_008", "zh": "瑜伽和飞盘成了都市年轻人的新宠。", "en": "Yoga and frisbee are the new favorites of young city dwellers." },
+  { "id": "sports_009", "zh": "体育馆免费时段一到，羽毛球场总是供不应求。", "en": "The moment free court time opens, the badminton courts are fully booked." },
+  { "id": "sports_010", "zh": "女排姑娘们苦战五局，逆转拿下了关键一战。", "en": "The women's volleyball team battled through five sets and came back to win." },
+  { "id": "sports_011", "zh": "这位短跑运动员因伤退赛，遗憾告别本届奥运会。", "en": "The sprinter withdrew due to injury, missing out on this year's Olympics." },
+  { "id": "sports_012", "zh": "冰雪运动南展西扩，室内滑雪场在南方城市落地。", "en": "Ice and snow sports are spreading south, with indoor ski resorts opening in southern cities." },
+  { "id": "sports_013", "zh": "村级篮球联赛火爆全网，现场观众挤满了球场四周。", "en": "A village basketball league went viral online, drawing packed crowds." },
+  { "id": "sports_014", "zh": "跑步软件的记录显示，他今年已经跑了九百公里。", "en": "His running app shows he has covered nine hundred kilometers this year." },
+  { "id": "sports_015", "zh": "主教练在赛后发布会上说，胜利属于整个团队。", "en": "The head coach said after the match that the victory belonged to the whole team." },
+  { "id": "sports_016", "zh": "体育课改要求中小学生每天锻炼不少于一小时。", "en": "The curriculum reform requires at least one hour of daily exercise for primary and secondary students." },
+  { "id": "sports_017", "zh": "骑行热潮带火了装备销售，头盔一度卖到断货。", "en": "The cycling boom boosted equipment sales, and helmets sold out for a time." },
+  { "id": "sports_018", "zh": "这位乒乓球小将首次参加世乒赛就闯进了决赛。", "en": "In her first World Table Tennis Championships, the young player reached the final." },
+  { "id": "sports_019", "zh": "残奥会运动员的拼搏精神感动了无数观众。", "en": "The grit of the Paralympic athletes moved audiences everywhere." },
+  { "id": "sports_020", "zh": "广场舞大赛决赛在市中心广场举行，几十支队伍同场竞技。", "en": "The square dance final was held on the central plaza, with dozens of teams competing." }
+]

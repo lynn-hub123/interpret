@@ -1,1 +1,22 @@
-[]
+[
+  { "id": "culture_001", "zh": "这项剪纸技艺已传承六代人，入选了国家级非遗名录。", "en": "The paper-cutting craft, passed down through six generations, is on the national intangible heritage list." },
+  { "id": "culture_002", "zh": "博物馆的预约名额一秒抢光，年轻人成了观展主力。", "en": "Museum booking slots sell out in seconds, and young people lead the crowds." },
+  { "id": "culture_003", "zh": "这部动画电影票房破亿，还登上了海外流媒体榜首。", "en": "The animated film earned over one hundred million yuan and topped overseas streaming charts." },
+  { "id": "culture_004", "zh": "端午龙舟赛在古镇河道开赛，两岸挤满了观众。", "en": "The dragon boat race started on the old town's river, with crowds lining both banks." },
+  { "id": "culture_005", "zh": "京剧演员直播唱段，一场演出吸引了上百万网友。", "en": "A Peking opera performer livestreamed her arias, drawing over a million viewers." },
+  { "id": "culture_006", "zh": "汉服热带动了传统服饰产业的复兴。", "en": "The hanfu craze has revived the traditional clothing industry." },
+  { "id": "culture_007", "zh": "中秋灯会上，巨型兔子灯成了朋友圈的打卡热点。", "en": "The giant rabbit lantern was the most photographed spot at the Mid-Autumn lantern fair." },
+  { "id": "culture_008", "zh": "这座千年古塔完成了为期三年的整体修缮。", "en": "The thousand-year-old pagoda has completed a three-year full restoration." },
+  { "id": "culture_009", "zh": "网剧在东南亚播出后，主角的方言台词成了流行语。", "en": "After the web drama aired in Southeast Asia, the lead's dialect line became a catchphrase." },
+  { "id": "culture_010", "zh": "非遗工坊开进了景区，游客可以亲手体验扎染。", "en": "Heritage workshops have opened in scenic areas, where visitors can try tie-dye themselves." },
+  { "id": "culture_011", "zh": "春运期间，火车站的年货大街满是返乡的旅客。", "en": "During the Spring Festival travel rush, the station's New Year market is full of homebound travelers." },
+  { "id": "culture_012", "zh": "老匠人坚持手工制琴，订单已经排到了三年之后。", "en": "The old violin maker insists on handmade instruments, with orders booked three years out." },
+  { "id": "culture_013", "zh": "这部纪录片讲好中国美食故事，海外评分居高不下。", "en": "The documentary tells Chinese food stories well and keeps high ratings overseas." },
+  { "id": "culture_014", "zh": "故宫文创产品的年销售额突破了十五亿元。", "en": "The Palace Museum's cultural products now sell more than one and a half billion yuan a year." },
+  { "id": "culture_015", "zh": "传统戏曲进校园，孩子们跟着演员学起了水袖。", "en": "Traditional opera has entered campuses, and children are learning the water sleeve dance." },
+  { "id": "culture_016", "zh": "春节申遗成功，全球多座地标点亮了中国红。", "en": "After the Spring Festival joined UNESCO's heritage list, landmarks worldwide lit up in Chinese red." },
+  { "id": "culture_017", "zh": "这家书店把咖啡区和古籍区结合，成了新的文化地标。", "en": "The bookstore pairs a coffee corner with rare books and has become a cultural landmark." },
+  { "id": "culture_018", "zh": "皮影戏艺人走进幼儿园，孩子们看得目不转睛。", "en": "Shadow puppeteers visited a kindergarten, and the children watched, spellbound." },
+  { "id": "culture_019", "zh": "网络文学加速出海，多部作品被改编成外语有声书。", "en": "Chinese web novels are going global, many adapted into foreign-language audiobooks." },
+  { "id": "culture_020", "zh": "中医药文化节吸引不少外国友人体验针灸推拿。", "en": "The traditional medicine festival drew many foreign visitors to try acupuncture and massage." }
+]

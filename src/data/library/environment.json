@@ -1,1 +1,22 @@
-[]
+[
+  { "id": "environment_001", "zh": "这家工厂升级了污水处理设备，废水排放达到一级标准。", "en": "The factory upgraded its wastewater treatment equipment, and its discharge now meets the top standard." },
+  { "id": "environment_002", "zh": "长江十年禁渔初见成效，江豚数量止跌回升。", "en": "The ten-year fishing ban on the Yangtze is paying off, with the finless porpoise population rising again." },
+  { "id": "environment_003", "zh": "光伏板铺满了屋顶，这所学校用电基本自给自足。", "en": "Solar panels cover the school's roof, meeting almost all of its electricity needs." },
+  { "id": "environment_004", "zh": "垃圾分类实施三年，居民投放的准确率明显提高。", "en": "Three years after mandatory waste sorting began, residents are sorting far more accurately." },
+  { "id": "environment_005", "zh": "北极冰川加速融化，科学家呼吁全球协同减排。", "en": "Arctic glaciers are melting faster, and scientists are calling for coordinated global emission cuts." },
+  { "id": "environment_006", "zh": "这片湿地修复后，每年有数十万只候鸟在此越冬。", "en": "Since the wetland was restored, hundreds of thousands of migratory birds have wintered there each year." },
+  { "id": "environment_007", "zh": "新能源汽车保有量突破两千万辆，充电桩建设同步提速。", "en": "With over twenty million new energy vehicles on the road, charging stations are being built at full speed." },
+  { "id": "environment_008", "zh": "空气质量优良天数比例达到九成，蓝天正在成为常态。", "en": "Ninety percent of days now meet air quality standards, and blue skies are becoming the norm." },
+  { "id": "environment_009", "zh": "沙漠边缘的防护林带有效遏制了沙尘暴的侵袭。", "en": "Shelter belts on the desert's edge have effectively curbed sandstorms." },
+  { "id": "environment_010", "zh": "碳交易市场开市以来，重点企业的排放强度持续下降。", "en": "Since the carbon trading market opened, emissions intensity at major companies has kept falling." },
+  { "id": "environment_011", "zh": "海洋塑料污染不容忽视，微塑料已在多种鱼类体内检出。", "en": "Ocean plastic pollution cannot be ignored; microplastics have been found in many fish species." },
+  { "id": "environment_012", "zh": "水电与风电互补调度，保障了电网的平稳运行。", "en": "Coordinated dispatching of hydropower and wind keeps the power grid running smoothly." },
+  { "id": "environment_013", "zh": "这座城市把废弃矿山改造成生态公园，如今游人如织。", "en": "The city turned an abandoned mine into an eco-park, now crowded with visitors." },
+  { "id": "environment_014", "zh": "农药化肥减量使用后，土壤和地下水的水质明显改善。", "en": "After cuts in pesticide and fertilizer use, soil and groundwater quality have improved markedly." },
+  { "id": "environment_015", "zh": "珍稀植物的种子保存在种质资源库，为未来留一份保障。", "en": "Seeds of rare plants are stored in a gene bank, a safeguard for the future." },
+  { "id": "environment_016", "zh": "共享单车的流行，让一两公里的短途出行更加环保。", "en": "The popularity of shared bikes has made short trips of a kilometer or two greener." },
+  { "id": "environment_017", "zh": "环保组织定期组织净滩活动，志愿者捡走了数吨垃圾。", "en": "Environmental groups hold regular beach cleanups, where volunteers have collected tons of litter." },
+  { "id": "environment_018", "zh": "高耗能企业面临更严格的能耗标准，倒逼技术升级。", "en": "Energy-intensive companies face stricter standards, which pushes them to upgrade their technology." },
+  { "id": "environment_019", "zh": "极端天气频发，城市规划开始重视海绵设施的建设。", "en": "With extreme weather on the rise, city planners are paying more attention to sponge infrastructure." },
+  { "id": "environment_020", "zh": "退耕还林工程实施二十多年，荒山重新披上了绿装。", "en": "More than two decades of reforestation have turned barren hills green again." }
+]

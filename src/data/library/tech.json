@@ -1,1 +1,22 @@
-[]
+[
+  { "id": "tech_001", "zh": "这款新手机搭载了自研芯片，性能提升了百分之三十。", "en": "The new phone is powered by a self-developed chip, thirty percent faster than before." },
+  { "id": "tech_002", "zh": "人工智能正在改变我们工作和学习的方式。", "en": "Artificial intelligence is changing the way we work and learn." },
+  { "id": "tech_003", "zh": "大模型已经能写代码、翻译文档，还会总结会议纪要。", "en": "Large AI models can now write code, translate documents, and even summarize meetings." },
+  { "id": "tech_004", "zh": "芯片制造依赖光刻机，这是全球技术竞争的焦点。", "en": "Chipmaking depends on lithography machines, the focal point of global tech competition." },
+  { "id": "tech_005", "zh": "火箭成功回收，标志着可重复使用航天器迈出关键一步。", "en": "The rocket's successful recovery marks a key step toward reusable spacecraft." },
+  { "id": "tech_006", "zh": "电动车充电十分钟就能跑四百公里，续航焦虑大大缓解。", "en": "An electric car can add four hundred kilometers of range in ten minutes of charging, easing range anxiety." },
+  { "id": "tech_007", "zh": "数据中心耗电量巨大，散热成了运营商最头疼的问题。", "en": "Data centers use huge amounts of electricity, and cooling is a constant headache for operators." },
+  { "id": "tech_008", "zh": "这家公司把自动驾驶出租车开进了三座大城市。", "en": "The company has launched robotaxis in three major cities." },
+  { "id": "tech_009", "zh": "数字人民币试点扩大，已有两千万用户开通钱包。", "en": "The digital yuan pilot has expanded, with twenty million users opening e-wallets." },
+  { "id": "tech_010", "zh": "风电和光伏装机容量再创新高，绿电比例稳步提升。", "en": "Wind and solar capacity has hit a new high, raising the share of green electricity." },
+  { "id": "tech_011", "zh": "卫星互联网开始商用，偏远山区也能高速上网。", "en": "Satellite internet has gone commercial, bringing high-speed access to remote mountain areas." },
+  { "id": "tech_012", "zh": "研究团队开发了可降解的生物芯片，用于疾病早期筛查。", "en": "The research team developed biodegradable biochips for early disease screening." },
+  { "id": "tech_013", "zh": "开源社区的力量不容小觑，全球开发者一起打磨这个系统。", "en": "Never underestimate open-source communities; developers worldwide refine the system together." },
+  { "id": "tech_014", "zh": "智能音箱不仅能放音乐，还能控制家里的灯光和空调。", "en": "Smart speakers do more than play music; they can control the lights and air conditioning too." },
+  { "id": "tech_015", "zh": "工厂引入机器人后，良品率提高了，工人转型去做设备维护。", "en": "Since robots joined the factory, yield rates have risen and workers have moved to equipment maintenance." },
+  { "id": "tech_016", "zh": "量子计算机在特定任务上的速度已远超传统超算。", "en": "Quantum computers already outperform traditional supercomputers on certain tasks." },
+  { "id": "tech_017", "zh": "手机厂商竞相布局折叠屏，铰链技术不断突破。", "en": "Phone makers are racing into foldable screens, and hinge technology keeps improving." },
+  { "id": "tech_018", "zh": "网络安全形势严峻，企业在安全防护上的投入持续增加。", "en": "With cybersecurity threats rising, companies keep increasing their spending on protection." },
+  { "id": "tech_019", "zh": "这款应用用人工智能实时翻译语音，支持四十多种语言。", "en": "This app translates speech in real time with AI, supporting over forty languages." },
+  { "id": "tech_020", "zh": "新一代北斗系统定位精度更高，服务全球一百多个国家和地区。", "en": "The next-generation BeiDou system offers higher positioning accuracy, serving more than a hundred countries and regions." }
+]

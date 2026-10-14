@@ -1,5 +1,22 @@
 [
   { "id": "economy_001", "zh": "全球经济正在缓慢复苏。", "en": "The global economy is recovering slowly." },
   { "id": "economy_002", "zh": "通货膨胀率已连续三个月回落。", "en": "The inflation rate has fallen for three consecutive months." },
-  { "id": "economy_003", "zh": "中小企业是就业的主要来源。", "en": "Small and medium-sized enterprises are a major source of employment." }
+  { "id": "economy_003", "zh": "中小企业是就业的主要来源。", "en": "Small and medium-sized enterprises are a major source of employment." },
+  { "id": "economy_004", "zh": "今年上半年社会消费品零售总额同比增长了百分之五。", "en": "Retail sales of consumer goods grew by five percent year on year in the first half of the year." },
+  { "id": "economy_005", "zh": "出口订单回暖，港口集装箱吞吐量创下历史新高。", "en": "With export orders recovering, container throughput at the ports hit a record high." },
+  { "id": "economy_006", "zh": "新能源汽车出口大幅增长，成为外贸新的增长点。", "en": "Exports of new energy vehicles have surged, becoming a new driver of foreign trade." },
+  { "id": "economy_007", "zh": "青年就业压力依然不小，许多毕业生选择灵活就业。", "en": "Youth employment pressure remains, and many graduates are choosing flexible work." },
+  { "id": "economy_008", "zh": "央行下调存款准备金率，释放长期资金支持实体经济。", "en": "The central bank cut the reserve requirement ratio, releasing long-term funds to support the real economy." },
+  { "id": "economy_009", "zh": "直播带货正在改变年轻人的消费习惯。", "en": "Livestream shopping is changing the spending habits of young consumers." },
+  { "id": "economy_010", "zh": "房地产市场仍在调整，各地出台了不同的支持措施。", "en": "The property market is still adjusting, and cities have rolled out different support measures." },
+  { "id": "economy_011", "zh": "制造业采购经理指数连续三个月回升，企业信心有所增强。", "en": "The manufacturing purchasing managers' index has risen for three straight months, and business confidence is improving." },
+  { "id": "economy_012", "zh": "跨境电商发展迅速，越来越多的小商品卖到了海外。", "en": "Cross-border e-commerce is booming, sending more and more small goods overseas." },
+  { "id": "economy_013", "zh": "服务业回暖带动了餐饮、旅游和住宿行业的用工需求。", "en": "The recovery in services has boosted hiring in catering, tourism, and hotels." },
+  { "id": "economy_014", "zh": "全球供应链正在重组，不少企业采取多元化布局。", "en": "Global supply chains are being restructured, and many companies are diversifying." },
+  { "id": "economy_015", "zh": "消费者越来越精打细算，把性价比放在第一位。", "en": "Consumers are spending more carefully, putting value for money first." },
+  { "id": "economy_016", "zh": "数字支付普及之后，现金交易的比例逐年下降。", "en": "Since digital payments became widespread, cash transactions have declined year by year." },
+  { "id": "economy_017", "zh": "猪肉价格回落，让食品通胀的压力明显减轻。", "en": "Falling pork prices have noticeably eased pressure on food inflation." },
+  { "id": "economy_018", "zh": "这家老牌制造企业通过自动化改造，把产能提升了一倍。", "en": "The century-old manufacturer doubled its output through automation upgrades." },
+  { "id": "economy_019", "zh": "免税购物政策吸引大量游客，海南离岛免税销售额翻倍。", "en": "Duty-free shopping has drawn crowds of tourists, doubling sales on the island." },
+  { "id": "economy_020", "zh": "专家提醒，家庭理财要根据自己的风险承受能力来配置。", "en": "Experts advise households to allocate assets according to their risk tolerance." }
 ]

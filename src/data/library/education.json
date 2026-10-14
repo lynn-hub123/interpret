@@ -1,1 +1,22 @@
-[]
+[
+  { "id": "education_001", "zh": "双减政策实施后，孩子们的周末终于有了自由时间。", "en": "Since the double reduction policy took effect, children finally have free weekends again." },
+  { "id": "education_002", "zh": "职业教育毕业生动手能力强，企业抢着要人。", "en": "Vocational graduates have strong hands-on skills, and companies are eager to hire them." },
+  { "id": "education_003", "zh": "越来越多的中国学生选择去欧洲读研究生。", "en": "More and more Chinese students are choosing Europe for graduate school." },
+  { "id": "education_004", "zh": "线上课程让偏远山区的孩子也能听到名师授课。", "en": "Online courses bring great teachers to children in remote mountain villages." },
+  { "id": "education_005", "zh": "这位五十岁的阿姨坚持学英语，如今能给外国游客指路了。", "en": "The fifty-year-old lady kept learning English and can now give directions to foreign tourists." },
+  { "id": "education_006", "zh": "学校把编程课纳入必修，培养孩子的逻辑思维。", "en": "The school made programming a required course to build children's logical thinking." },
+  { "id": "education_007", "zh": "课后服务丰富多样，足球、书法和机器人社团最受欢迎。", "en": "After-school programs are rich and varied; football, calligraphy, and robotics clubs are the most popular." },
+  { "id": "education_008", "zh": "教育公平是社会公平的重要基石。", "en": "Equal access to education is the foundation of social fairness." },
+  { "id": "education_009", "zh": "今年高考报名人数再创新高，考生迎来人生大考。", "en": "A record number of students sat the college entrance exam this year." },
+  { "id": "education_010", "zh": "研究生扩招缓解了就业压力，也带来了学历竞争。", "en": "Graduate school expansion has eased job pressure but also fueled credential competition." },
+  { "id": "education_011", "zh": "留学归国人数逐年上升，许多人在科创企业找到了舞台。", "en": "The number of returning students rises every year, and many join tech startups." },
+  { "id": "education_012", "zh": "老年大学的摄影课每学期都是最先报满的。", "en": "The photography class at the university for seniors fills up first every term." },
+  { "id": "education_013", "zh": "阅读习惯要从小培养，亲子共读是最简单有效的方式。", "en": "Reading habits start early, and shared parent-child reading is the simplest way." },
+  { "id": "education_014", "zh": "乡村教师通过远程培训更新了教学方法。", "en": "Rural teachers refreshed their teaching methods through online training." },
+  { "id": "education_015", "zh": "职业技能大赛的获奖者不仅有奖金，还能破格晋升。", "en": "Winners of vocational skills contests get prize money and fast-tracked promotion." },
+  { "id": "education_016", "zh": "双语幼儿园的学费不便宜，但报名的家庭依然排着队。", "en": "Bilingual kindergarten tuition is steep, yet families still line up to enroll." },
+  { "id": "education_017", "zh": "大学与工厂合作开设订单班，学生一毕业就入职。", "en": "The university and a factory run targeted training classes; students go straight into jobs." },
+  { "id": "education_018", "zh": "终身学习已经成为这个时代的必修课。", "en": "Lifelong learning has become a must in our times." },
+  { "id": "education_019", "zh": "那位考上研究生的外卖小哥，激励了很多普通人。", "en": "The delivery rider who got into graduate school inspired countless people." },
+  { "id": "education_020", "zh": "减负不是简单少留作业，而是把时间还给成长。", "en": "Easing homework burdens isn't just less homework; it means giving time back to growing up." }
+]

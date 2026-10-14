@@ -1,5 +1,22 @@
 [
   { "id": "daily_001", "zh": "今天天气不错，我们去公园走走吧。", "en": "The weather is nice today. Let's take a walk in the park." },
   { "id": "daily_002", "zh": "这家餐厅的招牌菜是红烧肉。", "en": "The signature dish at this restaurant is braised pork." },
-  { "id": "daily_003", "zh": "记得提前十分钟到会议室。", "en": "Remember to arrive at the meeting room ten minutes early." }
+  { "id": "daily_003", "zh": "记得提前十分钟到会议室。", "en": "Remember to arrive at the meeting room ten minutes early." },
+  { "id": "daily_004", "zh": "外面下大雨了，出门记得带把伞，路上小心。", "en": "It's pouring outside. Take an umbrella and be careful on your way." },
+  { "id": "daily_005", "zh": "早上七点起床跑步，坚持一个月感觉精神好多了。", "en": "I get up at seven to go running, and after a month I feel much more energetic." },
+  { "id": "daily_006", "zh": "冰箱空了，下班路上顺便去超市买点菜。", "en": "The fridge is empty; I'll pick up some groceries at the supermarket on my way home." },
+  { "id": "daily_007", "zh": "这件外套打完折才两百块，比网上买还划算。", "en": "With the discount, this jacket costs just two hundred yuan, even cheaper than online." },
+  { "id": "daily_008", "zh": "邻居家装修吵了两个星期，今天终于结束了。", "en": "The neighbor's renovation noise finally ended today after two weeks." },
+  { "id": "daily_009", "zh": "周末全家去郊外爬山，孩子们玩得特别开心。", "en": "The whole family went hiking in the hills over the weekend, and the kids had a great time." },
+  { "id": "daily_010", "zh": "医生建议少熬夜，每天保证七个小时的睡眠。", "en": "The doctor advised me to stop staying up late and get seven hours of sleep a day." },
+  { "id": "daily_011", "zh": "晚高峰地铁太挤了，我宁愿骑车回家。", "en": "The subway is too crowded at rush hour, so I'd rather bike home." },
+  { "id": "daily_012", "zh": "妈妈包的饺子是全世界最好吃的，没有之一。", "en": "My mom's dumplings are the best in the world, no contest." },
+  { "id": "daily_013", "zh": "手机没电了，借你的充电器用一下好吗？", "en": "My phone is out of battery. Could I borrow your charger for a minute?" },
+  { "id": "daily_014", "zh": "新开的菜市场就在小区门口，走路五分钟就到。", "en": "The new food market is right at the entrance of our neighborhood, a five-minute walk away." },
+  { "id": "daily_015", "zh": "天气预报说明天降温十度，记得给孩子加衣服。", "en": "The forecast says temperatures will drop by ten degrees tomorrow, so dress the kids warmly." },
+  { "id": "daily_016", "zh": "我把快递放在物业了，回来的时候记得取一下。", "en": "I left the package with the property office; remember to pick it up when you're back." },
+  { "id": "daily_017", "zh": "这条街晚上很热闹，夜市摊子一直开到半夜。", "en": "This street gets lively at night, with night-market stalls open until midnight." },
+  { "id": "daily_018", "zh": "搬家那天多亏邻居们帮忙，我请他们吃了顿饭。", "en": "The neighbors helped a lot on moving day, so I treated them to dinner." },
+  { "id": "daily_019", "zh": "每天睡前刷两小时手机，第二天眼睛总是很干。", "en": "After two hours on my phone before bed, my eyes always feel dry the next day." },
+  { "id": "daily_020", "zh": "公交卡充值可以在手机上完成，不用再跑服务网点。", "en": "You can top up your transit card in an app now; there's no need to visit a service counter." }
 ]
