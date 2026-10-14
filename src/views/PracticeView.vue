@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import PracticeCard from '../components/PracticeCard.vue'
 import RatingButtons from '../components/RatingButtons.vue'
 import SessionHistory from '../components/SessionHistory.vue'
@@ -63,9 +63,12 @@ function onRevealed() {
 }
 
 function rate(rating) {
+  if (!current.value) return
   addRecord({ sentenceId: current.value.sentence.id, direction: current.value.direction, rating })
   next(true)
 }
+
+onUnmounted(() => clearInterval(timerId))
 
 function flipDirection() {
   current.value.direction = current.value.direction === 'zh2en' ? 'en2zh' : 'zh2en'
