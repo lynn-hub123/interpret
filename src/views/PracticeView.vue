@@ -75,7 +75,22 @@ function flipDirection() {
 }
 
 onMounted(() => {
-  pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+  const raw = sessionStorage.getItem('interpret.session')
+  if (raw) sessionStorage.removeItem('interpret.session')
+  let session = null
+  try {
+    session = raw ? JSON.parse(raw) : null
+  } catch {
+    session = null // 坏标记降级为普通全量会话
+  }
+  if (session?.mode === 'topic') {
+    // 主题限定会话：只取该主题内置句，无效主题/空池回退全量
+    const topicPool = allBuiltinSentences().filter(s => s.topic === session.topicId)
+    pool.value = topicPool.length ? topicPool : [...allBuiltinSentences(), ...getCustomSentences()]
+  } else {
+    // 后续任务在此分支扩展 paste / replay 会话模式
+    pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+  }
   next(false)
 })
 </script>
