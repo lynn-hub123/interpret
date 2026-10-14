@@ -1,0 +1,8 @@
+:root[data-theme='dark'] { --bg: #1c1c1f; --text: #e7e7ea; }
+:root[data-theme='light'] { --bg: #eceef1; --text: #26282c; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, 'PingFang SC', 'Segoe UI', sans-serif; }
+.view { max-width: 480px; margin: 0 auto; padding: 16px 16px 88px; }
+.tab-bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
+.tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; text-decoration: none; color: inherit; font-size: 12px; }
+.tab-icon { font-size: 20px; }
+.placeholder { opacity: 0.5; }
