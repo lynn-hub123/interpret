@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+
+# Local env & caches
+.DS_Store
+*.local
+
+# Superpowers brainstorm sessions
+.superpowers/
