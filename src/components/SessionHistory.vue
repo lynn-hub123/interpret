@@ -9,7 +9,7 @@
       <ol v-else class="thread">
         <li v-for="(it, i) in items" :key="i">
           <div class="bubble src">{{ sourceOf(it) }}</div>
-          <div class="bubble ref">{{ refOf(it) }}</div>
+          <div class="bubble ref"><span v-if="it.rating" class="rating">{{ ratingOf(it) }}</span>{{ refOf(it) }}</div>
         </li>
       </ol>
     </div>
@@ -21,6 +21,8 @@ defineProps({ items: { type: Array, default: () => [] } })
 const emit = defineEmits(['close'])
 const sourceOf = it => (it.direction === 'zh2en' ? it.sentence.zh : it.sentence.en)
 const refOf = it => (it.direction === 'zh2en' ? it.sentence.en || '（无参考译文）' : it.sentence.zh || '（无参考译文）')
+const RATING_LABELS = { ok: '能译', shaky: '磕绊', miss: '不会' }
+const ratingOf = it => RATING_LABELS[it.rating] || ''
 </script>
 
 <style scoped>
@@ -33,5 +35,6 @@ h3 { margin: 0; font-size: 16px; }
 .bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 14px; }
 .bubble.src { background: var(--surface-deep); box-shadow: var(--shadow-in); }
 .bubble.ref { background: var(--accent-soft); color: var(--accent-text); margin-left: auto; }
+.bubble.ref .rating { display: block; font-size: 11px; opacity: 0.75; margin-bottom: 2px; }
 .hint { color: var(--text-muted); font-size: 13px; }
 </style>

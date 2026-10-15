@@ -19,6 +19,7 @@
       <p class="hint">去「题库」挑个主题，或到「粘贴」丢一段文字进来</p>
     </div>
 
+    <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮不保存记录</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
   </main>
 </template>
@@ -33,11 +34,13 @@ import { allBuiltinSentences, getCustomSentences, sentenceById } from '../lib/se
 import { drawSentence } from '../lib/picker.js'
 import { weakIds } from '../lib/review.js'
 import { addRecord } from '../lib/records.js'
+import { storageAvailable } from '../lib/storage.js'
 
 const pool = ref([])
 const current = ref(null)
 const history = ref([])
 const showHistory = ref(false)
+const saveWarn = ref(!storageAvailable())
 const done = computed(() => history.value.length)
 const elapsed = ref(0)
 let startedAt = 0
@@ -50,8 +53,8 @@ function startTimer() {
   timerId = setInterval(() => { elapsed.value = Math.floor((Date.now() - startedAt) / 1000) }, 1000)
 }
 
-function next(counted) {
-  if (counted) history.value.push({ ...current.value })
+function next(counted, rating) {
+  if (counted) history.value.push({ ...current.value, rating })
   const weak = weakIds()
   const s = drawSentence({ pool: pool.value, lastId: current.value?.sentence.id ?? null, weakIds: weak })
   current.value = s ? { sentence: { ...s }, direction: settings.value.direction, revealed: false } : null
@@ -64,8 +67,9 @@ function onRevealed() {
 
 function rate(rating) {
   if (!current.value) return
-  addRecord({ sentenceId: current.value.sentence.id, direction: current.value.direction, rating })
-  next(true)
+  const saved = addRecord({ sentenceId: current.value.sentence.id, direction: current.value.direction, rating })
+  if (!saved) saveWarn.value = true
+  next(true, rating)
 }
 
 onUnmounted(() => clearInterval(timerId))
@@ -112,4 +116,5 @@ onMounted(() => {
 .hint { font-size: 13px; color: var(--text-muted); }
 .dir-toggle { display: block; margin: 20px auto 0; font-size: 13px; opacity: 0.7; }
 .empty { padding: 40px 20px; text-align: center; }
+.save-warn { text-align: center; font-size: 12px; color: #e8463a; opacity: 0.8; margin: 12px 0 0; }
 </style>
