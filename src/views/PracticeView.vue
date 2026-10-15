@@ -29,7 +29,7 @@ import PracticeCard from '../components/PracticeCard.vue'
 import RatingButtons from '../components/RatingButtons.vue'
 import SessionHistory from '../components/SessionHistory.vue'
 import { settings } from '../stores/settings.js'
-import { allBuiltinSentences, getCustomSentences } from '../lib/sentences.js'
+import { allBuiltinSentences, getCustomSentences, sentenceById } from '../lib/sentences.js'
 import { drawSentence } from '../lib/picker.js'
 import { weakIds } from '../lib/review.js'
 import { addRecord } from '../lib/records.js'
@@ -91,8 +91,12 @@ onMounted(() => {
     // 粘贴会话：只取自定义句（含历史粘贴），空池回退全量
     const customPool = getCustomSentences()
     pool.value = customPool.length ? customPool : [...allBuiltinSentences(), ...getCustomSentences()]
+  } else if (session?.mode === 'replay') {
+    // 重练会话：只取指定 id 的句子，无效 id 过滤掉，空池回退全量
+    const ids = Array.isArray(session.ids) ? session.ids : []
+    const replayPool = ids.map(id => sentenceById(id)).filter(Boolean)
+    pool.value = replayPool.length ? replayPool : [...allBuiltinSentences(), ...getCustomSentences()]
   } else {
-    // 后续任务在此分支扩展 replay 会话模式
     pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
   }
   next(false)
