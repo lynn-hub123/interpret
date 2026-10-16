@@ -57,6 +57,12 @@ watch(() => props.sentence, () => {
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
 
+// 中途切模式不换句：清掉旧模式的音频提示，避免失真残留（朗读停止由父级 applyMode 负责）
+watch(() => props.mode, () => {
+  listenError.value = ''
+  speakError.value = ''
+})
+
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
 // 源语言按实际文本判定：自定义句可能缺 zh 或 en 字段，direction 与实际语言可能不一致
 const sourceLang = computed(() => (/[\u4e00-\u9fff]/.test(sourceText.value) ? 'zh' : 'en'))

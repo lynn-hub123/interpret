@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PracticeCard from './PracticeCard.vue'
-import { speak, ttsSupported } from '../lib/tts.js'
+import { speak, ttsSupported, cancel } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke } from '../lib/recorder.js'
 
 vi.mock('../lib/tts.js', () => ({
@@ -90,6 +90,15 @@ describe('listen mode', () => {
     expect(wrapper.find('.source').exists()).toBe(true)
     await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
     expect(wrapper.find('.source').exists()).toBe(false)
+    expect(cancel).toHaveBeenCalled()
+  })
+  it('clears audio warnings on mode change', async () => {
+    speak.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-speak').trigger('click')
+    expect(wrapper.text()).toContain('语音包')
+    await wrapper.setProps({ mode: 'listen' })
+    expect(wrapper.text()).not.toContain('语音包')
   })
 })
 
