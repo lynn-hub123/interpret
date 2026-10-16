@@ -18,7 +18,7 @@ const topics = TOPICS
 const countOf = id => allBuiltinSentences().filter(s => s.topic === id).length
 
 function start(topicId) {
-  location.hash = `/#/` // 回练习页
+  location.hash = `#/` // 回练习页
   sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'topic', topicId }))
 }
 </script>

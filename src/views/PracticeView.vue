@@ -87,6 +87,7 @@ onMounted(() => {
   } catch {
     session = null // 坏标记降级为普通全量会话
   }
+  if (session?.persistWarn) saveWarn.value = true // 粘贴句未能持久化（存储禁用/已满）
   if (session?.mode === 'topic') {
     // 主题限定会话：只取该主题内置句，无效主题/空池回退全量
     const topicPool = allBuiltinSentences().filter(s => s.topic === session.topicId)

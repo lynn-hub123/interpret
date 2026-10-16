@@ -20,9 +20,9 @@ const sentences = computed(() => splitPasteText(text.value))
 function start() {
   if (sentences.value.length === 0) { error.value = '没有拆出可练的句子，检查一下内容'; return }
   error.value = ''
-  addCustomSentences(sentences.value)
-  sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'paste' }))
-  location.hash = '/#/'
+  const r = addCustomSentences(sentences.value)
+  sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'paste', persistWarn: !r.persisted }))
+  location.hash = '#/'
 }
 </script>
 

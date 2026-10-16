@@ -40,7 +40,7 @@ import { computed, ref } from 'vue'
 import { stats } from '../lib/records.js'
 import { TOPICS } from '../lib/sentences.js'
 import { settings, setDirection, setTheme, setShowTimer } from '../stores/settings.js'
-import { exportAll, importAll, storageAvailable } from '../lib/storage.js'
+import { exportAll, importAll } from '../lib/storage.js'
 
 const s = stats()
 const fileInput = ref(null)
@@ -65,7 +65,7 @@ function importData(e) {
   const file = e.target.files?.[0]
   if (!file) return
   file.text().then(t => {
-    msg.value = importAll(t) ? '导入成功' : '文件格式不对，没有覆盖任何数据'
+    msg.value = importAll(t) ? '导入成功' : '导入未完成：文件格式不对，或存储空间不足导致部分数据未写入'
   })
   e.target.value = ''
 }

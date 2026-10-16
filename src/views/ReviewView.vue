@@ -21,7 +21,7 @@ const fmt = ts => new Date(ts).toLocaleDateString('zh-CN')
 
 function replay() {
   sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'replay', ids: list.map(i => i.sentenceId) }))
-  location.hash = '/#/'
+  location.hash = '#/'
 }
 </script>
 
