@@ -7,12 +7,18 @@
     </header>
 
     <template v-if="current">
-      <PracticeCard :sentence="current.sentence" :direction="current.direction" @revealed="onRevealed" @skip="next(false)" />
+      <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @skip="next(false)" />
       <div class="rating-zone">
         <RatingButtons v-if="current.revealed" @rate="rate" />
         <p v-else class="hint">口头译出后，点「看参考译文」对照</p>
       </div>
-      <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
+      <div class="toggles">
+        <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
+        <div class="mode-toggle">
+          <button class="btn mode-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
+          <button class="btn mode-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
+        </div>
+      </div>
     </template>
     <div v-else class="empty neu-raised">
       <p>这里空空的</p>
@@ -29,12 +35,13 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import PracticeCard from '../components/PracticeCard.vue'
 import RatingButtons from '../components/RatingButtons.vue'
 import SessionHistory from '../components/SessionHistory.vue'
-import { settings } from '../stores/settings.js'
+import { settings, setMode } from '../stores/settings.js'
 import { allBuiltinSentences, getCustomSentences, sentenceById } from '../lib/sentences.js'
 import { drawSentence } from '../lib/picker.js'
 import { weakIds } from '../lib/review.js'
 import { addRecord } from '../lib/records.js'
 import { storageAvailable } from '../lib/storage.js'
+import { cancel } from '../lib/tts.js'
 
 const pool = ref([])
 const current = ref(null)
@@ -72,10 +79,16 @@ function rate(rating) {
   next(true, rating)
 }
 
-onUnmounted(() => clearInterval(timerId))
+onUnmounted(() => { clearInterval(timerId); cancel() })
 
 function flipDirection() {
   current.value.direction = current.value.direction === 'zh2en' ? 'en2zh' : 'zh2en'
+}
+
+function applyMode(m) {
+  if (m === settings.value.mode) return
+  cancel() // 切模式立即停止朗读
+  setMode(m)
 }
 
 onMounted(() => {
@@ -115,7 +128,11 @@ onMounted(() => {
 .btn-history { margin-left: auto; font-size: 13px; padding: 8px 14px; }
 .rating-zone { margin-top: 20px; min-height: 56px; display: flex; align-items: center; justify-content: center; }
 .hint { font-size: 13px; color: var(--text-muted); }
-.dir-toggle { display: block; margin: 20px auto 0; font-size: 13px; opacity: 0.7; }
+.toggles { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.dir-toggle { font-size: 13px; opacity: 0.7; }
+.mode-toggle { display: flex; gap: 4px; }
+.mode-btn { font-size: 13px; opacity: 0.7; padding: 8px 12px; }
+.mode-btn.active { opacity: 1; color: var(--accent-text); box-shadow: var(--shadow-in); }
 .empty { padding: 40px 20px; text-align: center; }
 .save-warn { text-align: center; font-size: 12px; color: #e8463a; opacity: 0.8; margin: 12px 0 0; }
 </style>
