@@ -32,7 +32,7 @@
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { cancel, speak, ttsSupported } from '../lib/tts.js'
-import { recorderSupported, startRecording, stopRecording, revoke } from '../lib/recorder.js'
+import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
 
 const props = defineProps({
   sentence: { type: Object, required: true },
@@ -91,12 +91,22 @@ const isRec = ref(false)
 const recUrl = ref('')
 const recError = ref('')
 
+// getUserMedia 常见失败原因 → 具体提示（含历史别名，Safari/旧内核命名不同）
+const REC_ERROR_TEXT = {
+  NotAllowedError: '麦克风权限被拒绝，请在地址栏锁形图标中允许后重试',
+  SecurityError: '麦克风权限被拒绝，请在地址栏锁形图标中允许后重试',
+  NotFoundError: '未检测到麦克风设备',
+  DevicesNotFoundError: '未检测到麦克风设备',
+  NotReadableError: '麦克风被其他应用占用，关闭占用后重试',
+  TrackStartError: '麦克风被其他应用占用，关闭占用后重试'
+}
+
 async function onRecStart() {
   recError.value = ''
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
   const ok = await startRecording()
   isRec.value = ok
-  if (!ok) recError.value = '无法访问麦克风'
+  if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
 }
 
 async function onRecStop() {

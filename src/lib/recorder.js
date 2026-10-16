@@ -1,6 +1,6 @@
 // 录音封装：MediaRecorder 状态机。录音仅会话级（浏览器限制，不持久化），
 // Blob URL 由调用方负责 revoke。
-const state = { recorder: null, stream: null, chunks: [] }
+const state = { recorder: null, stream: null, chunks: [], errorName: '' }
 
 export function recorderSupported() {
   return typeof window !== 'undefined' &&
@@ -8,13 +8,20 @@ export function recorderSupported() {
     !!navigator.mediaDevices?.getUserMedia
 }
 
+// 最近一次 startRecording 失败的错误名（NotAllowedError/NotFoundError/NotReadableError…），供 UI 区分提示
+export function lastErrorName() {
+  return state.errorName
+}
+
 export async function startRecording() {
   if (!recorderSupported()) return false
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  } catch {
-    return false // 不支持或权限被拒
+  } catch (e) {
+    state.errorName = (e && e.name) || ''
+    return false
   }
+  state.errorName = ''
   state.chunks = []
   state.recorder = new MediaRecorder(state.stream)
   state.recorder.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data) }

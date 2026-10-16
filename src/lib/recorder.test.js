@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { recorderSupported, startRecording, isRecording, stopRecording, revoke } from './recorder.js'
+import { recorderSupported, startRecording, isRecording, stopRecording, revoke, lastErrorName } from './recorder.js'
 
 let FakeRecorder // 模块级：修复任务文本中函数内 class 声明导致测试主体无法访问的作用域缺陷
-function stubRecorderEnv({ reject = false } = {}) {
+function stubRecorderEnv({ rejectWith = null } = {}) {
   const calls = { getUserMedia: 0, start: 0, stop: 0, tracksStopped: 0, createdURLs: [], revoked: [] }
   const track = { stop: () => { calls.tracksStopped++ } }
   const stream = { getTracks: () => [track] }
@@ -19,7 +19,7 @@ function stubRecorderEnv({ reject = false } = {}) {
     mediaDevices: {
       getUserMedia: async () => {
         calls.getUserMedia++
-        if (reject) throw new Error('denied')
+        if (rejectWith) throw rejectWith
         return stream
       }
     }
@@ -40,9 +40,21 @@ describe('recorder', () => {
     expect(await stopRecording()).toBeNull()
   })
   it('start fails when permission denied', async () => {
-    stubRecorderEnv({ reject: true })
+    stubRecorderEnv({ rejectWith: new Error('denied') })
     expect(await startRecording()).toBe(false)
     expect(isRecording()).toBe(false)
+  })
+  it('exposes the failure reason name', async () => {
+    stubRecorderEnv({ rejectWith: { name: 'NotAllowedError' } })
+    expect(await startRecording()).toBe(false)
+    expect(lastErrorName()).toBe('NotAllowedError')
+  })
+  it('clears reason after successful start', async () => {
+    stubRecorderEnv({ rejectWith: { name: 'NotAllowedError' } })
+    await startRecording()
+    stubRecorderEnv()
+    await startRecording()
+    expect(lastErrorName()).toBe('')
   })
   it('full cycle: start, record, stop returns url and releases mic', async () => {
     const calls = stubRecorderEnv()

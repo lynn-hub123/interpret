@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PracticeCard from './PracticeCard.vue'
 import { speak, ttsSupported, cancel } from '../lib/tts.js'
-import { recorderSupported, startRecording, stopRecording, revoke } from '../lib/recorder.js'
+import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
 
 vi.mock('../lib/tts.js', () => ({
   ttsSupported: vi.fn(() => true),
@@ -15,7 +15,8 @@ vi.mock('../lib/recorder.js', () => ({
   startRecording: vi.fn(async () => true),
   stopRecording: vi.fn(async () => 'blob:fake-rec'),
   revoke: vi.fn(),
-  isRecording: vi.fn(() => false)
+  isRecording: vi.fn(() => false),
+  lastErrorName: vi.fn(() => '')
 }))
 
 const sentence = { id: 'daily_001', zh: '你好。', en: 'Hello.', topic: 'daily', source: 'builtin' }
@@ -126,6 +127,14 @@ describe('recording zone', () => {
     await wrapper.find('.btn-rec').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('无法访问麦克风')
+  })
+  it('shows specific message by failure type', async () => {
+    startRecording.mockReturnValueOnce(false)
+    lastErrorName.mockReturnValueOnce('NotFoundError')
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('未检测到麦克风设备')
   })
   it('revokes url on sentence change', async () => {
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
