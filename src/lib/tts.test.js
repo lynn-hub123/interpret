@@ -40,7 +40,8 @@ describe('tts', () => {
     const calls = stubSynth()
     speak('a', 'en')
     speak('b', 'en')
-    expect(calls.cancel).toBeGreaterThanOrEqual(1)
+    expect(calls.cancel).toBe(2)
+    expect(calls.speak).toHaveLength(2)
   })
   it('voicesFor matches language prefix', () => {
     stubSynth({ voices: [{ lang: 'zh-TW' }] })
