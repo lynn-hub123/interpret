@@ -1,12 +1,21 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import PracticeCard from './PracticeCard.vue'
 import { speak, ttsSupported } from '../lib/tts.js'
+import { recorderSupported, startRecording, stopRecording, revoke } from '../lib/recorder.js'
 
 vi.mock('../lib/tts.js', () => ({
   ttsSupported: vi.fn(() => true),
   speak: vi.fn(() => true),
   cancel: vi.fn()
+}))
+
+vi.mock('../lib/recorder.js', () => ({
+  recorderSupported: vi.fn(() => true),
+  startRecording: vi.fn(async () => true),
+  stopRecording: vi.fn(async () => 'blob:fake-rec'),
+  revoke: vi.fn(),
+  isRecording: vi.fn(() => false)
 }))
 
 const sentence = { id: 'daily_001', zh: '你好。', en: 'Hello.', topic: 'daily', source: 'builtin' }
@@ -81,5 +90,42 @@ describe('listen mode', () => {
     expect(wrapper.find('.source').exists()).toBe(true)
     await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
     expect(wrapper.find('.source').exists()).toBe(false)
+  })
+})
+
+describe('recording zone', () => {
+  it('hides when recorder unsupported', () => {
+    recorderSupported.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    expect(wrapper.find('.rec-zone').exists()).toBe(false)
+  })
+  it('records, stops, shows playback', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    expect(wrapper.find('.rec-zone').exists()).toBe(true)
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(startRecording).toHaveBeenCalled()
+    expect(wrapper.text()).toContain('停止')
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(stopRecording).toHaveBeenCalled()
+    expect(wrapper.find('.rec-playback').exists()).toBe(true)
+  })
+  it('shows mic error when start fails', async () => {
+    startRecording.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('无法访问麦克风')
+  })
+  it('revokes url on sentence change', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
+    expect(revoke).toHaveBeenCalledWith('blob:fake-rec')
+    expect(wrapper.find('.rec-playback').exists()).toBe(false)
   })
 })

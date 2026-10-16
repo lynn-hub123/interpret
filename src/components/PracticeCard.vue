@@ -18,6 +18,12 @@
         </div>
       </template>
       <p v-if="listenError" class="audio-warn">{{ listenError }}</p>
+      <div class="rec-zone" v-if="recOK && !revealed">
+        <button v-if="!isRec" class="btn btn-rec" @click="onRecStart">🎙 录音</button>
+        <button v-else class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
+        <audio v-if="recUrl" class="rec-playback" :src="recUrl" controls></audio>
+      </div>
+      <p v-if="recError" class="audio-warn">{{ recError }}</p>
       <button class="btn btn-skip" @click="emit('skip')">跳过</button>
     </div>
   </div>
@@ -26,6 +32,7 @@
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { cancel, speak, ttsSupported } from '../lib/tts.js'
+import { recorderSupported, startRecording, stopRecording, revoke } from '../lib/recorder.js'
 
 const props = defineProps({
   sentence: { type: Object, required: true },
@@ -46,6 +53,8 @@ watch(() => props.sentence, () => {
   listenError.value = ''
   speakError.value = ''
   cancel()
+  isRec.value = false
+  if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
 
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
@@ -71,7 +80,29 @@ function onListenPlay() {
   }
 }
 
-onUnmounted(() => cancel())
+const recOK = recorderSupported() // 运行期不变
+const isRec = ref(false)
+const recUrl = ref('')
+const recError = ref('')
+
+async function onRecStart() {
+  recError.value = ''
+  if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
+  const ok = await startRecording()
+  isRec.value = ok
+  if (!ok) recError.value = '无法访问麦克风'
+}
+
+async function onRecStop() {
+  const url = await stopRecording()
+  isRec.value = false
+  if (url) recUrl.value = url
+}
+
+onUnmounted(() => {
+  cancel()
+  if (recUrl.value) revoke(recUrl.value)
+})
 </script>
 
 <style scoped>
@@ -84,4 +115,8 @@ onUnmounted(() => cancel())
 .btn-speak { border: none; background: none; cursor: pointer; font-size: 16px; vertical-align: middle; margin-left: 6px; opacity: 0.7; padding: 4px; }
 .btn-speak:active { transform: scale(0.92); }
 .audio-warn { font-size: 12px; color: #e8463a; opacity: 0.8; margin: 0; }
+.rec-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.btn-rec { font-size: 13px; padding: 8px 16px; }
+.btn-rec.recording { color: #e8463a; }
+.rec-playback { width: 100%; max-width: 260px; height: 36px; }
 </style>
