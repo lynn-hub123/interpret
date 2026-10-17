@@ -46,6 +46,22 @@ describe('export/import', () => {
     importAll(dump)
     expect(load('interpret.records.v1', [])).toEqual([{ id: 1 }])
   })
+  it('round-trips srs progress', () => {
+    const srs = { boxes: { s1: { box: 2, lastTs: 123 } }, quota: { date: '2026-10-17', used: 3 } }
+    save('srs.v1', srs)
+    const dump = exportAll()
+    expect(dump.srs).toEqual(srs)
+    localStorage.clear()
+    save('srs.v1', { boxes: {}, quota: { date: '', used: 0 } })
+    importAll(dump)
+    expect(load('srs.v1', null)).toEqual(srs)
+  })
+  it('leaves srs untouched when dump predates srs', () => {
+    const srs = { boxes: { keep: { box: 1, lastTs: 1 } }, quota: { date: '', used: 0 } }
+    save('srs.v1', srs)
+    importAll({ records: [], custom: [] })
+    expect(load('srs.v1', null)).toEqual(srs)
+  })
   it('rejects invalid import payload', () => {
     expect(importAll('not json')).toBe(false)
     expect(importAll({ records: 42 })).toBe(false)

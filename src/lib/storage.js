@@ -49,10 +49,11 @@ export function save(key, value) {
 }
 
 export function exportAll() {
-  const dump = { version: 1, exportedAt: new Date().toISOString(), records: [], custom: [], settings: null }
+  const dump = { version: 1, exportedAt: new Date().toISOString(), records: [], custom: [], settings: null, srs: null }
   dump.records = load('records.v1', [])
   dump.custom = load('custom.v1', [])
   dump.settings = load('settings.v1', null)
+  dump.srs = load('srs.v1', null)
   return dump
 }
 
@@ -68,5 +69,6 @@ export function importAll(payload) {
   if (!isValidDump(d)) return false
   const results = [save('records.v1', d.records), save('custom.v1', d.custom)]
   if (d.settings) results.push(save('settings.v1', d.settings))
+  if (d.srs) results.push(save('srs.v1', d.srs))
   return results.every(Boolean)
 }
