@@ -4,8 +4,8 @@ import { TOPICS, allBuiltinSentences, splitPasteText, detectLang, addCustomSente
 beforeEach(() => localStorage.clear())
 
 describe('builtin library', () => {
-  it('exposes 8 topics with labels', () => {
-    expect(TOPICS.map(t => t.id)).toEqual(['daily', 'economy', 'diplomacy', 'tech', 'environment', 'education', 'sports', 'culture'])
+  it('exposes 10 topics with labels', () => {
+    expect(TOPICS.map(t => t.id)).toEqual(['daily', 'economy', 'diplomacy', 'tech', 'environment', 'education', 'sports', 'culture', 'govreport', 'news'])
     expect(TOPICS.every(t => typeof t.label === 'string')).toBe(true)
   })
   it('loads sentences with id/zh/en/topic', () => {

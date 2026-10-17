@@ -7,6 +7,8 @@ import environment from '../data/library/environment.json'
 import education from '../data/library/education.json'
 import sports from '../data/library/sports.json'
 import culture from '../data/library/culture.json'
+import govreport from '../data/library/govreport.json'
+import news from '../data/library/news.json'
 
 export const TOPICS = [
   { id: 'daily', label: '日常' },
@@ -16,10 +18,12 @@ export const TOPICS = [
   { id: 'environment', label: '环保' },
   { id: 'education', label: '教育' },
   { id: 'sports', label: '体育' },
-  { id: 'culture', label: '文化' }
+  { id: 'culture', label: '文化' },
+  { id: 'govreport', label: '政府文件' },
+  { id: 'news', label: '新闻时事' }
 ]
 
-const BUILTIN = { daily, economy, diplomacy, tech, environment, education, sports, culture }
+const BUILTIN = { daily, economy, diplomacy, tech, environment, education, sports, culture, govreport, news }
 
 let _allBuiltin
 // 共享缓存：内置数据静态不可变，调用方不得修改返回数组及其元素
