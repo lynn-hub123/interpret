@@ -1,7 +1,7 @@
 <template>
   <main class="view">
     <h2>题库</h2>
-    <p class="hint">点主题进入连续练习；练习中会有约三成机会碰到你最近磕绊的老朋友</p>
+    <p class="hint">点主题进入连续练习</p>
     <div class="topic-grid">
       <button v-for="t in topics" :key="t.id" class="btn topic-card neu-raised" @click="start(t.id)">
         <span class="topic-label">{{ t.label }}</span>
