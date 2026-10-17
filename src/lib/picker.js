@@ -1,6 +1,7 @@
 import { sentenceById } from './sentences.js'
 
-export function drawSentence({ pool, lastId, dueIds = [], dueAllowed = true, random = Math.random, pickIndex = n => Math.floor(Math.random() * n), sentenceById: sentenceByIdFn = sentenceById }) {
+// 抽句：到期队列头部优先（顺序由调用方保证，最久没练在前），无到期句或配额满回退随机
+export function drawSentence({ pool, lastId, dueIds = [], dueAllowed = true, pickIndex = n => Math.floor(Math.random() * n), sentenceById: sentenceByIdFn = sentenceById }) {
   if (pool.length === 0) return null
   if (dueAllowed && dueIds.length > 0) {
     const id = dueIds[0]
