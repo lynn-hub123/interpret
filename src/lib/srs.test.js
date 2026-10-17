@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { INTERVALS, DAILY_CAP, getSrs, nextBox, isDue, quotaAvailable, dueQueue, onRated, localDate } from './srs.js'
+import { save } from './storage.js'
 
 const DAY = 86400000
 // 固定「现在」：2026-10-17 12:00 本地时间
@@ -55,6 +56,13 @@ describe('onRated 落库', () => {
   })
   it('返回 true 表示落库成功', () => {
     expect(onRated({ sentenceId: 's1', rating: 'ok' }, () => NOW)).toBe(true)
+  })
+  it('预置脏数据时按默认形状容错落库', () => {
+    save('srs.v1', { boxes: 'x', quota: 'x' })
+    onRated({ sentenceId: 's1', rating: 'ok' }, () => NOW)
+    const s = getSrs()
+    expect(s.boxes.s1).toEqual({ box: 1, lastTs: NOW })
+    expect(s.quota).toEqual({ date: '', used: 0 })
   })
 })
 
