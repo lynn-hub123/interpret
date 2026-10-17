@@ -19,9 +19,9 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/test-utils": "^2.4.0",
     "cheerio": "^1.2.0",
-    "happy-dom": "^15.11.7",
+    "happy-dom": "^21.0.3",
     "vite": "^6.0.0",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^3.0.0"
+    "vitest": "^5.0.5"
   }
 }
