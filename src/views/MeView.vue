@@ -77,7 +77,7 @@ h2 { font-size: 20px; } h3 { font-size: 15px; margin-top: 24px; }
 .stat { flex: 1; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .stat b { font-size: 20px; } .stat span { font-size: 12px; color: var(--text-muted); }
 .topic-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-.topic-name { width: 40px; font-size: 13px; }
+.topic-name { width: 56px; font-size: 13px; }
 .bar { flex: 1; height: 10px; border-radius: 999px; overflow: hidden; }
 .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 .topic-rate { width: 40px; text-align: right; font-size: 12px; color: var(--text-muted); }
