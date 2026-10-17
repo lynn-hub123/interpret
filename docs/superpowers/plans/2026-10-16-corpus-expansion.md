@@ -318,12 +318,12 @@ export function assertTopicValid(sentences, topic) {
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `npx.cmd vitest run scripts/corpus-lib.test.js`
-Expected: 19 passed
+Expected: 27 passed
 
 - [ ] **Step 5: 全量测试确认无回归**
 
 Run: `npm.cmd run test`
-Expected: 93 passed（74 旧 + 19 新）
+Expected: 101 passed（74 旧 + 27 新）
 
 - [ ] **Step 6: Commit**
 
@@ -524,7 +524,7 @@ const BUILTIN = { daily, economy, diplomacy, tech, environment, education, sport
 - [ ] **Step 4: 全量测试**
 
 Run: `npm.cmd run test`
-Expected: 93 passed（`library.test.js` 的 topic 数/前缀/长度断言由新 JSON 天然满足）
+Expected: 101 passed（`library.test.js` 的 topic 数/前缀/长度断言由新 JSON 天然满足）
 
 - [ ] **Step 5: 构建**
 

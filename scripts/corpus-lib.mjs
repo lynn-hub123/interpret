@@ -24,10 +24,17 @@ export function isEn(text) {
 
 // ---------- 拆句 ----------
 export function splitZh(text) {
-  return (text || '')
+  const parts = (text || '')
     .split(/(?<=[。！？；!?;])/)
     .map(s => s.trim())
     .filter(Boolean)
+  // 连续标点会被拆成纯标点碎片，并回前一段
+  const out = []
+  for (const part of parts) {
+    if (out.length && /^[。！？；!?;]+$/.test(part)) out[out.length - 1] += part
+    else out.push(part)
+  }
+  return out
 }
 
 // 句尾缩写（Mr. / U.S. 等）后不拆句：常见缩写词表 + 单个大写字母加句点
@@ -79,8 +86,9 @@ export function dedupePairs(pairs) {
 }
 
 // ---------- 哈希 id：中文文本 sha256 前 8 位，重抓后 id 稳定，练习记录延续 ----------
+// 哈希前做空白归一，与 dedupePairs 的去重键一致：空白差异不影响 id 稳定性
 export function hashId(prefix, zhText) {
-  const hex = createHash('sha256').update(zhText, 'utf8').digest('hex')
+  const hex = createHash('sha256').update(zhText.replace(/\s/g, ''), 'utf8').digest('hex')
   return `${prefix}${hex.slice(0, 8)}`
 }
 

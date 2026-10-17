@@ -25,6 +25,9 @@ describe('sentence splitting', () => {
   it('splitZh splits on Chinese terminal punctuation', () => {
     expect(splitZh('第一句。第二句！第三句')).toEqual(['第一句。', '第二句！', '第三句'])
   })
+  it('splitZh treats consecutive punctuation as one delimiter, no fragments', () => {
+    expect(splitZh('真的吗？！居然！！')).toEqual(['真的吗？！', '居然！！'])
+  })
   it('splitEn splits on terminal punctuation before capital letter', () => {
     expect(splitEn('He went home. She stayed.')).toEqual(['He went home.', 'She stayed.'])
     expect(splitEn('It costs $3.50. Buy it.')).toEqual(['It costs $3.50.', 'Buy it.'])
@@ -51,6 +54,9 @@ describe('pair filtering (宁缺毋滥)', () => {
   })
   it('rejects en longer than 50 words', () => {
     expect(isValidPair({ ...GOOD, en: 'word '.repeat(51).trim() })).toBe(false)
+  })
+  it('rejects en over 50 words even when under 200 chars', () => {
+    expect(isValidPair({ ...GOOD, en: 'a '.repeat(51).trim() })).toBe(false) // 101 字符、51 词，仅触发词数分支
   })
   it('rejects en longer than 200 chars', () => {
     expect(isValidPair({ ...GOOD, en: 'Supercalifragilisticexpialidocious '.repeat(6).trim() })).toBe(false)
@@ -96,6 +102,10 @@ describe('dedupe and hash id', () => {
     expect(a).toMatch(/^news_[0-9a-f]{8}$/)
     expect(hashId('govreport_', '今天天气不错')).toMatch(/^govreport_[0-9a-f]{8}$/)
     expect(hashId('news_', '另一句话')).not.toBe(a)
+  })
+  it('hashId normalizes whitespace so refetch keeps the same id', () => {
+    expect(hashId('news_', '今天 天气 不错')).toBe(hashId('news_', '今天天气不错'))
+    expect(hashId('news_', ' 今天天气不错 ')).toBe(hashId('news_', '今天天气不错'))
   })
 })
 
