@@ -36,9 +36,9 @@ import PracticeCard from '../components/PracticeCard.vue'
 import RatingButtons from '../components/RatingButtons.vue'
 import SessionHistory from '../components/SessionHistory.vue'
 import { settings, setMode } from '../stores/settings.js'
-import { allBuiltinSentences, getCustomSentences, sentenceById } from '../lib/sentences.js'
+import { allBuiltinSentences, getCustomSentences } from '../lib/sentences.js'
 import { drawSentence } from '../lib/picker.js'
-import { weakIds } from '../lib/review.js'
+import { dueQueue, quotaAvailable, isDue, onRated } from '../lib/srs.js'
 import { addRecord } from '../lib/records.js'
 import { storageAvailable } from '../lib/storage.js'
 import { cancel } from '../lib/tts.js'
@@ -62,8 +62,7 @@ function startTimer() {
 
 function next(counted, rating) {
   if (counted) history.value.push({ ...current.value, rating })
-  const weak = weakIds()
-  const s = drawSentence({ pool: pool.value, lastId: current.value?.sentence.id ?? null, weakIds: weak })
+  const s = drawSentence({ pool: pool.value, lastId: current.value?.sentence.id ?? null, dueIds: dueQueue(pool.value), dueAllowed: quotaAvailable() })
   current.value = s ? { sentence: { ...s }, direction: settings.value.direction, revealed: false } : null
   startTimer()
 }
@@ -74,8 +73,10 @@ function onRevealed() {
 
 function rate(rating) {
   if (!current.value) return
-  const saved = addRecord({ sentenceId: current.value.sentence.id, direction: current.value.direction, rating })
+  const sentenceId = current.value.sentence.id
+  const saved = addRecord({ sentenceId, direction: current.value.direction, rating })
   if (!saved) saveWarn.value = true
+  onRated({ sentenceId, rating, wasDue: isDue(sentenceId) })
   next(true, rating)
 }
 
@@ -109,11 +110,6 @@ onMounted(() => {
     // 粘贴会话：只取自定义句（含历史粘贴），空池回退全量
     const customPool = getCustomSentences()
     pool.value = customPool.length ? customPool : [...allBuiltinSentences(), ...getCustomSentences()]
-  } else if (session?.mode === 'replay') {
-    // 重练会话：只取指定 id 的句子，无效 id 过滤掉，空池回退全量
-    const ids = Array.isArray(session.ids) ? session.ids : []
-    const replayPool = ids.map(id => sentenceById(id)).filter(Boolean)
-    pool.value = replayPool.length ? replayPool : [...allBuiltinSentences(), ...getCustomSentences()]
   } else {
     pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
   }

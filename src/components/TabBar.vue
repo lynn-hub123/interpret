@@ -12,7 +12,6 @@ const tabs = [
   { to: '/', icon: '🎴', label: '练习' },
   { to: '/library', icon: '📚', label: '题库' },
   { to: '/paste', icon: '📋', label: '粘贴' },
-  { to: '/review', icon: '🔁', label: '复习' },
   { to: '/me', icon: '🙂', label: '我的' }
 ]
 </script>
