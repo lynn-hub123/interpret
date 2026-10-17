@@ -19,7 +19,7 @@ const ARTICLES_PER_SOURCE = 35
 const PREFIX = { govreport: 'govreport_', news: 'news_' }
 const OUT = { govreport: 'src/data/library/govreport.json', news: 'src/data/library/news.json' }
 
-async function fetchText(url) {
+async function fetchTextOnce(url) {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT)
   try {
@@ -30,6 +30,16 @@ async function fetchText(url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.text()
   } finally { clearTimeout(timer) }
+}
+
+// 瞬时失败重试 1 次（短退避），失败仍由调用方 warn 跳过
+async function fetchText(url) {
+  try {
+    return await fetchTextOnce(url)
+  } catch {
+    await new Promise(r => setTimeout(r, 1500))
+    return fetchTextOnce(url)
+  }
 }
 
 // ---------- 段落对 → 句子对 ----------
