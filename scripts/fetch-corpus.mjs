@@ -9,7 +9,7 @@
 import { writeFile } from 'node:fs/promises'
 import * as cheerio from 'cheerio'
 import {
-  alignPairs, buildTopicSentences, assertTopicValid, isZh, isEn, splitZh, splitEn, MIN_SENTENCES
+  alignPairs, buildTopicSentences, assertTopicValid, isZh, isEn, splitZh, splitEn, MAX_SENTENCES
 } from './corpus-lib.mjs'
 
 const TIMEOUT = 20000
@@ -78,11 +78,14 @@ function extractLanguage($) {
       return
     }
     if (isEn(t)) { pendingEn = t; return }
-    // 混合段：按首个 CJK 字符切分为英文原文 + 中文翻译；去掉两端列表装饰符（-- …… ——）
+    // 混合段：按首个 CJK 字符切分为英文原文 + 中文翻译；中文以数字开头时（2024年、7月29日）
+    // 数字属于中文侧，切分点回退过数字串；再去掉英文侧两端列表装饰符（-- …… ——）
     const m = t.match(/[\u4e00-\u9fff]/)
     if (!m || m.index === undefined || m.index === 0) return
-    const enPart = t.slice(0, m.index).replace(/^[-–—\s]+/, '').replace(/[-–—\s]+$/, '').trim()
-    const zhPart = t.slice(m.index).trim()
+    let idx = m.index
+    while (idx > 0 && /\d/.test(t[idx - 1])) idx--
+    const enPart = t.slice(0, idx).replace(/^[-–—\s]+/, '').replace(/[-–—\s]+$/, '').trim()
+    const zhPart = t.slice(idx).trim()
     if (isEn(enPart) && isZh(zhPart)) pushPairs(out, sentencePairs(zhPart, enPart))
   })
   return out
@@ -160,7 +163,7 @@ for (const topic of Object.keys(SOURCES)) {
       console.warn(`[warn] 源不可用 ${source.listUrl}：${e.message}`)
     }
     const probe = buildTopicSentences(pairs, PREFIX[topic])
-    if (probe.length >= MIN_SENTENCES) break // 已够量，不再抓后续源
+    if (probe.length >= MAX_SENTENCES) break // 已达上限，不再抓后续列表页；未达则累计下一页
   }
   const sentences = buildTopicSentences(pairs, PREFIX[topic])
   try {
