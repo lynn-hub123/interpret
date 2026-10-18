@@ -252,4 +252,33 @@ describe('recording zone', () => {
       vi.useRealTimers()
     }
   })
+  it('does not start timer if unmounted while start pending', async () => {
+    let resolveStart
+    startRecording.mockImplementationOnce(() => new Promise(r => { resolveStart = r }))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    const click = wrapper.find('.btn-rec').trigger('click')
+    wrapper.unmount()
+    const intervalSpy = vi.spyOn(globalThis, 'setInterval')
+    resolveStart(true)
+    await click
+    await flushPromises()
+    expect(intervalSpy).not.toHaveBeenCalled()
+    intervalSpy.mockRestore()
+  })
+  it('keeps single timer when start clicked twice quickly', async () => {
+    let resolveStart
+    startRecording.mockImplementationOnce(() => new Promise(r => { resolveStart = r }))
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+      await wrapper.find('.btn-rec').trigger('click')
+      await wrapper.find('.btn-rec').trigger('click')
+      resolveStart(true)
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(wrapper.find('.rec-time').text()).toBe('00:02')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

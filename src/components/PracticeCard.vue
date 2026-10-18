@@ -72,6 +72,9 @@ watch(() => props.mode, () => {
   speakError.value = ''
 })
 
+// 录音中点「看参考译文」会移出 rec-zone，先停表避免 interval 空转
+watch(revealed, v => { if (v) stopRecTimer() })
+
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
 // 源语言按实际文本判定：自定义句可能缺 zh 或 en 字段，direction 与实际语言可能不一致
 const sourceLang = computed(() => (/[\u4e00-\u9fff]/.test(sourceText.value) ? 'zh' : 'en'))
@@ -113,6 +116,7 @@ const recUrl = ref('')
 const recError = ref('')
 const recSeconds = ref(0)
 let recTimer = null
+let alive = true
 const recTimeText = computed(() => {
   const m = String(Math.floor(recSeconds.value / 60)).padStart(2, '0')
   const s = String(recSeconds.value % 60).padStart(2, '0')
@@ -120,6 +124,7 @@ const recTimeText = computed(() => {
 })
 
 function startRecTimer() {
+  stopRecTimer()
   recSeconds.value = 0
   recTimer = setInterval(() => { recSeconds.value++ }, 1000)
 }
@@ -142,8 +147,8 @@ async function onRecStart() {
   recError.value = ''
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
   const ok = await startRecording()
-  isRec.value = ok
-  if (ok) startRecTimer()
+  isRec.value = ok && alive
+  if (ok && alive) startRecTimer()
   if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
 }
 
@@ -155,6 +160,7 @@ async function onRecStop() {
 }
 
 onUnmounted(() => {
+  alive = false
   stop()
   stopRecTimer()
   if (recUrl.value) revoke(recUrl.value)
