@@ -179,8 +179,19 @@ onUnmounted(() => {
 .audio-warn { font-size: 12px; color: #e8463a; opacity: 0.8; margin: 0; }
 .rec-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .btn-rec { font-size: 13px; padding: 8px 16px; }
-.btn-rec.recording { color: #e8463a; }
+.btn-rec.recording {
+  color: #e8463a;
+  animation: rec-pulse 1.6s ease-in-out infinite;
+}
 .rec-live { display: flex; align-items: center; gap: 8px; }
 .rec-time { font-size: 13px; color: #e8463a; font-variant-numeric: tabular-nums; }
 .rec-playback { width: 100%; max-width: 260px; height: 36px; }
+
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 70, 58, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(232, 70, 58, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-rec.recording { animation: none; }
+}
 </style>
