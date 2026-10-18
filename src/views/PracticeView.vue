@@ -41,7 +41,7 @@ import { drawSentence } from '../lib/picker.js'
 import { dueQueue, quotaAvailable, isDue, onRated } from '../lib/srs.js'
 import { addRecord } from '../lib/records.js'
 import { storageAvailable } from '../lib/storage.js'
-import { cancel } from '../lib/tts.js'
+import { stop } from '../lib/voice.js'
 
 const pool = ref([])
 const current = ref(null)
@@ -81,7 +81,7 @@ function rate(rating) {
   next(true, rating)
 }
 
-onUnmounted(() => { clearInterval(timerId); cancel() })
+onUnmounted(() => { clearInterval(timerId); stop() })
 
 function flipDirection() {
   current.value.direction = current.value.direction === 'zh2en' ? 'en2zh' : 'zh2en'
@@ -89,7 +89,7 @@ function flipDirection() {
 
 function applyMode(m) {
   if (m === settings.value.mode) return
-  cancel() // 切模式立即停止朗读
+  stop() // 切模式立即停止播放
   setMode(m)
 }
 

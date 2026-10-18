@@ -1,13 +1,17 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PracticeCard from './PracticeCard.vue'
-import { speak, ttsSupported, cancel } from '../lib/tts.js'
+import { playText, stop } from '../lib/voice.js'
+import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
 
+vi.mock('../lib/voice.js', () => ({
+  playText: vi.fn(async () => 'played'),
+  stop: vi.fn()
+}))
+
 vi.mock('../lib/tts.js', () => ({
-  ttsSupported: vi.fn(() => true),
-  speak: vi.fn(() => true),
-  cancel: vi.fn()
+  ttsSupported: vi.fn(() => true)
 }))
 
 vi.mock('../lib/recorder.js', () => ({
@@ -18,6 +22,12 @@ vi.mock('../lib/recorder.js', () => ({
   isRecording: vi.fn(() => false),
   lastErrorName: vi.fn(() => '')
 }))
+
+afterEach(() => {
+  playText.mockImplementation(async () => 'played')
+  stop.mockClear()
+  ttsSupported.mockReturnValue(true)
+})
 
 const sentence = { id: 'daily_001', zh: '你好。', en: 'Hello.', topic: 'daily', source: 'builtin' }
 
@@ -45,24 +55,50 @@ describe('PracticeCard', () => {
   })
 })
 
-describe('speak button (sight mode)', () => {
-  it('shows source with speaker and speaks on click', async () => {
+describe('play button (sight mode)', () => {
+  it('shows source with speaker and plays via voice on click', async () => {
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
     expect(wrapper.find('.source').exists()).toBe(true)
     expect(wrapper.find('.btn-speak').exists()).toBe(true)
     await wrapper.find('.btn-speak').trigger('click')
-    expect(speak).toHaveBeenCalledWith('你好', 'zh')
+    expect(playText).toHaveBeenCalledWith(expect.objectContaining({ text: '你好', lang: 'zh' }))
   })
-  it('shows missing voicepack warning when speak fails', async () => {
-    speak.mockReturnValueOnce(false)
+  it('shows stop icon while playing and reverts after done', async () => {
+    let resolvePlay
+    playText.mockImplementation(() => new Promise(r => { resolvePlay = r }))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    expect(wrapper.find('.btn-speak').text()).toBe('🔊')
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.btn-speak').text()).toBe('⏹')
+    resolvePlay('played')
+    await flushPromises()
+    expect(wrapper.find('.btn-speak').text()).toBe('🔊')
+  })
+  it('second click while playing stops instead of restarting', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
     await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-speak').trigger('click')
+    expect(stop).toHaveBeenCalled()
+  })
+  it('shows missing voicepack warning when play fails', async () => {
+    playText.mockResolvedValueOnce('failed')
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
     expect(wrapper.text()).toContain('语音包')
   })
-  it('hides speaker when tts unsupported', () => {
+  it('hides speaker for custom sentence when tts unsupported', () => {
     ttsSupported.mockReturnValueOnce(false)
-    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'c_1', zh: '你好', en: '', source: 'custom' }, direction: 'zh2en' } })
     expect(wrapper.find('.btn-speak').exists()).toBe(false)
+  })
+  it('shows speaker for builtin sentence even when tts unsupported', () => {
+    ttsSupported.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'daily_001', zh: '你好', en: 'hello', source: 'builtin' }, direction: 'zh2en' } })
+    expect(wrapper.find('.btn-speak').exists()).toBe(true)
   })
 })
 
@@ -71,32 +107,36 @@ describe('listen mode', () => {
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en', mode: 'listen' } })
     expect(wrapper.find('.source').exists()).toBe(false)
     await wrapper.find('.btn-listen').trigger('click')
-    expect(speak).toHaveBeenCalledWith('你好', 'zh')
+    await flushPromises()
+    expect(playText).toHaveBeenCalledWith(expect.objectContaining({ text: '你好', lang: 'zh' }))
     expect(wrapper.find('.source').exists()).toBe(false)
     const showBtn = wrapper.findAll('button').find(b => b.text() === '显示原文')
     await showBtn.trigger('click')
     expect(wrapper.find('.source').exists()).toBe(true)
   })
-  it('degrades to text when no voice engine', async () => {
-    speak.mockReturnValueOnce(false)
+  it('degrades to text when play fails', async () => {
+    playText.mockResolvedValueOnce('failed')
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en', mode: 'listen' } })
     await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
     expect(wrapper.find('.source').exists()).toBe(true)
     expect(wrapper.text()).toContain('无语音引擎')
   })
-  it('resets listen state on sentence change', async () => {
+  it('resets listen state and stops playback on sentence change', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en', mode: 'listen' } })
     const showBtn = wrapper.findAll('button').find(b => b.text() === '显示原文')
     await showBtn.trigger('click')
     expect(wrapper.find('.source').exists()).toBe(true)
     await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
     expect(wrapper.find('.source').exists()).toBe(false)
-    expect(cancel).toHaveBeenCalled()
+    expect(stop).toHaveBeenCalled()
   })
   it('clears audio warnings on mode change', async () => {
-    speak.mockReturnValueOnce(false)
+    playText.mockResolvedValueOnce('failed')
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
     await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
     expect(wrapper.text()).toContain('语音包')
     await wrapper.setProps({ mode: 'listen' })
     expect(wrapper.text()).not.toContain('语音包')

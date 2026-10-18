@@ -3,13 +3,13 @@
     <div class="card-face">
       <span class="dir-pill">{{ direction === 'zh2en' ? '中 → 英' : '英 → 中' }}</span>
       <template v-if="mode === 'listen' && !listenTextShown && !revealed">
-        <button class="btn btn-primary btn-listen" @click="onListenPlay">🎧 播放原句</button>
+        <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
         <button class="btn btn-skip" @click="listenTextShown = true">显示原文</button>
       </template>
       <template v-else>
         <p class="source">
           {{ sourceText }}
-          <button v-if="ttsOK" class="btn-speak" title="朗读原句" @click="onSpeak">🔊</button>
+          <button v-if="canPlay" class="btn-speak" :title="playing ? '停止' : '朗读原句'" @click="onSpeak">{{ playing ? '⏹' : '🔊' }}</button>
         </p>
         <p v-if="speakError" class="audio-warn">{{ speakError }}</p>
         <button class="btn btn-primary btn-reveal" v-if="!revealed" @click="revealed = true; emit('revealed')">看参考译文</button>
@@ -31,7 +31,8 @@
 
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { cancel, speak, ttsSupported } from '../lib/tts.js'
+import { playText, stop } from '../lib/voice.js'
+import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
 
 const props = defineProps({
@@ -46,13 +47,17 @@ const listenTextShown = ref(false)
 const listenError = ref('')
 const speakError = ref('')
 const ttsOK = ttsSupported() // 运行期不变，无需响应式
+// 内置句有预生成音频，无 TTS 引擎也能播；自定义句只能靠 TTS
+const canPlay = computed(() => props.sentence.source === 'builtin' || ttsOK)
+const playing = ref(false)
 
 watch(() => props.sentence, () => {
   revealed.value = false
   listenTextShown.value = false
   listenError.value = ''
   speakError.value = ''
-  cancel()
+  stop()
+  playing.value = false
   isRec.value = false
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
@@ -71,19 +76,31 @@ const referenceText = computed(() => {
   return t || '（此句无参考译文，凭感觉评即可）'
 })
 
+async function playCurrent() {
+  const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value })
+  playing.value = false
+  return r !== 'failed'
+}
+
 function onSpeak() {
   speakError.value = ''
-  if (!speak(sourceText.value, sourceLang.value)) {
-    speakError.value = `设备缺少${sourceLang.value === 'zh' ? '中文' : '英文'}语音包`
-  }
+  if (playing.value) { stop(); return } // 播放中再点 = 停止
+  playing.value = true
+  playCurrent().then(ok => {
+    if (!ok) speakError.value = `设备缺少${sourceLang.value === 'zh' ? '中文' : '英文'}语音包`
+  })
 }
 
 function onListenPlay() {
   listenError.value = ''
-  if (!speak(sourceText.value, sourceLang.value)) {
-    listenError.value = '当前设备无语音引擎，已显示原文'
-    listenTextShown.value = true
-  }
+  if (playing.value) { stop(); return }
+  playing.value = true
+  playCurrent().then(ok => {
+    if (!ok) {
+      listenError.value = '当前设备无语音引擎，已显示原文'
+      listenTextShown.value = true
+    }
+  })
 }
 
 const recOK = recorderSupported() // 运行期不变
@@ -116,7 +133,7 @@ async function onRecStop() {
 }
 
 onUnmounted(() => {
-  cancel()
+  stop()
   if (recUrl.value) revoke(recUrl.value)
 })
 </script>
