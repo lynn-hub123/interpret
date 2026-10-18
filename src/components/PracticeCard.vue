@@ -24,7 +24,11 @@
           <button class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
           <span class="rec-time">{{ recTimeText }}</span>
         </div>
-        <audio v-if="recUrl" class="rec-playback" :src="recUrl" controls></audio>
+        <RecPlayback v-if="recUrl" ref="recPlayback" :src="recUrl" @playing="onRecPlaying" />
+        <div v-if="recUrl" class="rec-actions">
+          <button class="btn-rec-aux" :title="playing ? '停止' : '对照原句再听一遍'" @click="onSpeak">{{ playing ? '⏹ 停止' : '🔊 听原句' }}</button>
+          <button class="btn-rec-aux" title="重新录一遍" @click="onRerecord">↻ 重录</button>
+        </div>
       </div>
       <p v-if="recError" class="audio-warn">{{ recError }}</p>
       <button class="btn btn-skip" @click="emit('skip')">跳过</button>
@@ -37,6 +41,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
+import RecPlayback from './RecPlayback.vue'
 
 const props = defineProps({
   sentence: { type: Object, required: true },
@@ -84,6 +89,7 @@ const referenceText = computed(() => {
 })
 
 async function playCurrent() {
+  if (recPlayback.value) recPlayback.value.pause() // 互斥：播原句前先停自己的回放
   const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value })
   playing.value = false
   return r !== 'failed'
@@ -114,6 +120,7 @@ const recOK = recorderSupported() // 运行期不变
 const isRec = ref(false)
 const recUrl = ref('')
 const recError = ref('')
+const recPlayback = ref(null)
 const recSeconds = ref(0)
 let recTimer = null
 let alive = true
@@ -159,6 +166,17 @@ async function onRecStop() {
   if (url) recUrl.value = url
 }
 
+// 互斥：自己的回放开播时停掉原句（听原句与上方 🔊 共用 playing 状态）
+function onRecPlaying() {
+  if (playing.value) { stop(); playing.value = false }
+}
+
+// 重录：停掉回放后直接开始新录音（revoke 旧 URL 由 onRecStart 处理）
+async function onRerecord() {
+  if (recPlayback.value) recPlayback.value.pause()
+  await onRecStart()
+}
+
 onUnmounted(() => {
   alive = false
   stop()
@@ -185,7 +203,13 @@ onUnmounted(() => {
 }
 .rec-live { display: flex; align-items: center; gap: 8px; }
 .rec-time { font-size: 13px; color: #e8463a; font-variant-numeric: tabular-nums; }
-.rec-playback { width: 100%; max-width: 260px; height: 36px; }
+.rec-actions { display: flex; gap: 18px; }
+.btn-rec-aux {
+  border: none; background: none; cursor: pointer; font: inherit;
+  font-size: 13px; color: var(--text-muted); padding: 2px 4px; border-radius: 8px;
+  transition: color 0.15s ease, transform 0.12s ease;
+}
+.btn-rec-aux:active { transform: scale(0.95); color: var(--accent-text); }
 
 @keyframes rec-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 70, 58, 0.3); }

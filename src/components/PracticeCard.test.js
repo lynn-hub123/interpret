@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PracticeCard from './PracticeCard.vue'
+import { nextTick } from 'vue'
+import RecPlayback from './RecPlayback.vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
@@ -280,5 +282,62 @@ describe('recording zone', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+  // 辅助：完成一次录音并停止，得到 blob:fake-rec 回放
+  async function recordOnce(wrapper) {
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+  }
+  it('shows custom playback and guide buttons without native controls after stop', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    expect(wrapper.findComponent(RecPlayback).exists()).toBe(true)
+    expect(wrapper.find('audio[controls]').exists()).toBe(false)
+    const aux = wrapper.findAll('.btn-rec-aux')
+    expect(aux.length).toBe(2)
+    expect(wrapper.text()).toContain('听原句')
+    expect(wrapper.text()).toContain('重录')
+  })
+  it('hears original sentence via playText from guide button', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    await wrapper.findAll('.btn-rec-aux')[0].trigger('click')
+    await flushPromises()
+    expect(playText).toHaveBeenCalledWith(expect.objectContaining({ text: '你好', lang: 'zh' }))
+  })
+  it('rerecord revokes old url and restarts recording', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    revoke.mockClear()
+    startRecording.mockClear()
+    await wrapper.findAll('.btn-rec-aux')[1].trigger('click')
+    await flushPromises()
+    expect(revoke).toHaveBeenCalledWith('blob:fake-rec')
+    expect(startRecording).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('停止')
+  })
+  it('pauses own playback when original voice starts', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    const a = wrapper.find('audio').element
+    a.pause = vi.fn()
+    a.dispatchEvent(new Event('play'))
+    await nextTick()
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    expect(a.pause).toHaveBeenCalled()
+  })
+  it('stops original voice when own playback starts', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.btn-speak').text()).toBe('⏹')
+    wrapper.find('audio').element.dispatchEvent(new Event('play'))
+    await nextTick()
+    expect(stop).toHaveBeenCalled()
   })
 })
