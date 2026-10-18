@@ -6,11 +6,19 @@ import RecPlayback, { formatTime } from './RecPlayback.vue'
 const SRC = 'blob:fake-rec'
 
 // happy-dom 不驱动媒体状态：在 audio 元素上补属性（可记录赋值）再手动派发事件
-function patchAudio(wrapper) {
+function patchAudio(wrapper, { duration: initialDuration = 7 } = {}) {
   const a = wrapper.find('audio').element
   let ct = 0
+  let dur = initialDuration
   Object.defineProperty(a, 'currentTime', { configurable: true, get: () => ct, set: v => { ct = v } })
-  Object.defineProperty(a, 'duration', { configurable: true, get: () => 7, set: () => {} })
+  Object.defineProperty(a, 'duration', { configurable: true, get: () => dur, set: v => { dur = v } })
+  // 真实浏览器换源后时长未知（duration 归 NaN）；happy-dom 的 src setter 不重置时长，
+  // 还会带着旧时长派发 durationchange，这里覆盖补齐该语义
+  Object.defineProperty(a, 'src', {
+    configurable: true,
+    get() { return a.getAttribute('src') || '' },
+    set(v) { dur = NaN; a.setAttribute('src', v) }
+  })
   a.play = vi.fn()
   a.pause = vi.fn()
   return a
@@ -68,6 +76,20 @@ describe('RecPlayback', () => {
     fire(a, 'timeupdate')
     await nextTick()
     expect(w.find('.pb-time').text()).toBe('0:02 / 0:07')
+  })
+  it('probes duration when metadata reports Infinity (MediaRecorder webm)', async () => {
+    const w = mount(RecPlayback, { props: { src: SRC } })
+    const a = patchAudio(w, { duration: Infinity })
+    fire(a, 'loadedmetadata')
+    await nextTick()
+    expect(a.currentTime).toBe(1e101)
+    expect(w.find('.pb-bar').element.disabled).toBe(true)
+    a.duration = 7
+    fire(a, 'durationchange')
+    await nextTick()
+    expect(a.currentTime).toBe(0)
+    expect(w.find('.pb-bar').element.disabled).toBe(false)
+    expect(w.find('.pb-time').text()).toBe('0:00 / 0:07')
   })
   it('seek updates audio currentTime and displayed time', async () => {
     const w = mount(RecPlayback, { props: { src: SRC } })

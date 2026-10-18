@@ -23,6 +23,7 @@
       @ended="onEnded"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onMeta"
+      @durationchange="onDurationChange"
     ></audio>
   </div>
 </template>
@@ -46,6 +47,7 @@ const props = defineProps({
 const emit = defineEmits(['playing'])
 
 const audio = ref(null)
+let probing = false // duration=Infinity 时的探测跳转中，屏蔽 timeupdate 回写
 const isPlaying = ref(false)
 const current = ref(0)
 const duration = ref(0)
@@ -73,9 +75,28 @@ function onPlayEvt() { isPlaying.value = true; emit('playing') }
 function onPauseEvt() { isPlaying.value = false }
 // 自然播完只有 ended 事件（paused 变 true 但不派发 pause），需自行复位
 function onEnded() { isPlaying.value = false; current.value = 0 }
-function onTimeUpdate() { if (audio.value) current.value = audio.value.currentTime }
+function onTimeUpdate() {
+  if (probing) return
+  if (audio.value) current.value = audio.value.currentTime
+}
 function onMeta() {
-  if (audio.value && Number.isFinite(audio.value.duration)) duration.value = audio.value.duration
+  if (!audio.value) return
+  const d = audio.value.duration
+  if (Number.isFinite(d) && d > 0) { duration.value = d; return }
+  if (d === Infinity) {
+    // Chromium：MediaRecorder 的 webm 头部无 duration，跳到末尾逼其计算出时长
+    probing = true
+    audio.value.currentTime = 1e101
+  }
+}
+
+function onDurationChange() {
+  const a = audio.value
+  if (!a) return
+  if (Number.isFinite(a.duration) && a.duration > 0) {
+    duration.value = a.duration
+    if (probing) { probing = false; a.currentTime = 0 } // 探测结束归位
+  }
 }
 
 function onSeek(e) {
@@ -90,6 +111,7 @@ watch(() => props.src, () => {
   isPlaying.value = false
   current.value = 0
   duration.value = 0
+  probing = false
 })
 
 onUnmounted(() => { pause() })
