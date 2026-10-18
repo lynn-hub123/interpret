@@ -51,4 +51,28 @@ describe('tts', () => {
   it('cancel is safe without engine', () => {
     expect(() => cancel()).not.toThrow()
   })
+  it('voicesFor prefers Natural online voice', () => {
+    stubSynth({ voices: [
+      { lang: 'zh-CN', name: 'Microsoft Huihui' },
+      { lang: 'zh-CN', name: 'Microsoft Xiaoxiao Online (Natural) - Chinese (Simplified)' }
+    ] })
+    expect(voicesFor('zh').name).toMatch(/Natural/i)
+  })
+  it('voicesFor falls back to Google voice when no Natural', () => {
+    stubSynth({ voices: [
+      { lang: 'en-US', name: 'Microsoft Zira' },
+      { lang: 'en-US', name: 'Google US English' }
+    ] })
+    expect(voicesFor('en').name).toMatch(/Google/i)
+  })
+  it('voicesFor falls back to first local voice', () => {
+    stubSynth({ voices: [{ lang: 'zh-TW', name: 'Mei-Jia' }] })
+    expect(voicesFor('zh').name).toBe('Mei-Jia')
+  })
+  it('speak forwards onend to utterance', () => {
+    const calls = stubSynth()
+    const onend = () => {}
+    speak('你好', 'zh', onend)
+    expect(calls.speak[0].onend).toBe(onend)
+  })
 })

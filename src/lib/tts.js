@@ -4,16 +4,19 @@ export function ttsSupported() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
+// 优选在线自然语音：Edge 的 Natural 语音最自然，其次 Chrome 的 Google 在线语音，
+// 都没有时回退第一个本地语音。
 export function voicesFor(lang) {
   if (!ttsSupported()) return null
   const prefix = lang === 'zh' ? 'zh' : 'en'
   const list = window.speechSynthesis
     .getVoices()
     .filter(v => (v.lang || '').toLowerCase().startsWith(prefix))
-  return list[0] || null
+  if (!list.length) return null
+  return list.find(v => /natural/i.test(v.name)) || list.find(v => /google/i.test(v.name)) || list[0]
 }
 
-export function speak(text, lang) {
+export function speak(text, lang, onend) {
   if (!ttsSupported()) return false
   const synth = window.speechSynthesis
   cancel()
@@ -23,6 +26,7 @@ export function speak(text, lang) {
   const u = new window.SpeechSynthesisUtterance(text)
   u.lang = lang === 'zh' ? 'zh-CN' : 'en-US'
   if (v) u.voice = v
+  if (onend) u.onend = onend
   synth.speak(u)
   return true
 }
