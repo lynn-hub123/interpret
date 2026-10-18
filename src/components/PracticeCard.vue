@@ -171,8 +171,9 @@ function onRecPlaying() {
   if (playing.value) { stop(); playing.value = false }
 }
 
-// 重录：停掉回放后直接开始新录音（revoke 旧 URL 由 onRecStart 处理）
+// 重录：停掉原句与回放后直接开始新录音（revoke 旧 URL 由 onRecStart 处理）
 async function onRerecord() {
+  if (playing.value) { stop(); playing.value = false }
   if (recPlayback.value) recPlayback.value.pause()
   await onRecStart()
 }

@@ -318,6 +318,17 @@ describe('recording zone', () => {
     expect(startRecording).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('停止')
   })
+  it('rerecord stops playing original voice first', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await recordOnce(wrapper)
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    stop.mockClear()
+    await wrapper.findAll('.btn-rec-aux')[1].trigger('click')
+    await flushPromises()
+    expect(stop).toHaveBeenCalled()
+  })
   it('pauses own playback when original voice starts', async () => {
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
     await recordOnce(wrapper)
