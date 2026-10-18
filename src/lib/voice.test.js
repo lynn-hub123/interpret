@@ -17,15 +17,21 @@ class FakeAudio {
     this.paused = false
     FakeAudio.instances.push(this)
   }
-  play() { FakeAudio.played.push(this); return Promise.resolve() }
+  play() {
+    FakeAudio.played.push(this)
+    if (FakeAudio.rejectPlay) return Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }))
+    return Promise.resolve()
+  }
   pause() { this.paused = true }
   static instances = []
   static played = []
+  static rejectPlay = false
 }
 
 beforeEach(() => {
   FakeAudio.instances = []
   FakeAudio.played = []
+  FakeAudio.rejectPlay = false
   speak.mockClear(); cancel.mockClear()
   speak.mockImplementation(() => true)
   vi.stubGlobal('Audio', FakeAudio)
@@ -40,6 +46,7 @@ describe('voice.playText', () => {
   it('builtin plays prerecorded audio at BASE_URL path', async () => {
     const p = playText({ id: 'daily_001', source: 'builtin', text: '你好', lang: 'zh' })
     expect(FakeAudio.instances).toHaveLength(1)
+    expect(FakeAudio.played).toEqual([FakeAudio.instances[0]])
     expect(FakeAudio.instances[0].src).toBe(`${import.meta.env.BASE_URL}audio/daily_001.zh.mp3`)
     FakeAudio.instances[0].onended()
     await expect(p).resolves.toBe('played')
@@ -82,5 +89,13 @@ describe('voice.playText', () => {
   it('stop() is safe with nothing playing', () => {
     expect(() => stop()).not.toThrow()
     expect(cancel).toHaveBeenCalled()
+  })
+  it('play() rejection does not trigger TTS fallback', async () => {
+    FakeAudio.rejectPlay = true
+    const p = playText({ id: 'a', source: 'builtin', text: 'a', lang: 'zh' })
+    await Promise.resolve(); await Promise.resolve()
+    expect(speak).not.toHaveBeenCalled()
+    stop()
+    await expect(p).resolves.toBe('stopped')
   })
 })

@@ -44,6 +44,6 @@ export function playText({ id, source, text, lang }) {
     state.audio = audio
     audio.onended = () => settle('played')
     audio.onerror = () => speakFallback()
-    audio.play().catch(() => {}) // 播放失败最终会走 onerror，这里只防未处理拒绝
+    audio.play().catch(() => {}) // 播放失败最终会走 onerror 回退 TTS；autoplay 策略拒绝（NotAllowedError）只拒 promise 不触发 error，此处静默（接线处均为点击触发，有用户激活）
   })
 }
