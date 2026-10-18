@@ -10,6 +10,7 @@ export const router = createRouter({
     { path: '/', name: 'practice', component: PracticeView },
     { path: '/library', name: 'library', component: LibraryView },
     { path: '/paste', name: 'paste', component: PasteView },
-    { path: '/me', name: 'me', component: MeView }
+    { path: '/me', name: 'me', component: MeView },
+    { path: '/review', redirect: '/' } // 弱项回顾页已下线，旧链接回首页
   ]
 })

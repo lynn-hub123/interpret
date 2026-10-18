@@ -25,7 +25,7 @@
       <p class="hint">去「题库」挑个主题，或到「粘贴」丢一段文字进来</p>
     </div>
 
-    <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮不保存记录</p>
+    <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录与复习进度不保存</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
   </main>
 </template>
@@ -76,7 +76,8 @@ function rate(rating) {
   const sentenceId = current.value.sentence.id
   const saved = addRecord({ sentenceId, direction: current.value.direction, rating })
   if (!saved) saveWarn.value = true
-  onRated({ sentenceId, rating, wasDue: isDue(sentenceId) })
+  // 硬上限：配额满后随机撞到的到期句不再计入配额，used 精确封顶 DAILY_CAP
+  onRated({ sentenceId, rating, wasDue: isDue(sentenceId) && quotaAvailable() })
   next(true, rating)
 }
 
