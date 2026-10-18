@@ -207,4 +207,49 @@ describe('recording zone', () => {
     expect(revoke).toHaveBeenCalledWith('blob:fake-rec')
     expect(wrapper.find('.rec-playback').exists()).toBe(false)
   })
+  it('shows elapsed timer while recording and hides after stop', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.rec-time').exists()).toBe(true)
+      expect(wrapper.find('.rec-time').text()).toBe('00:00')
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(wrapper.find('.rec-time').text()).toBe('00:02')
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.rec-time').exists()).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('formats minutes at 65 seconds', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(65000)
+      expect(wrapper.find('.rec-time').text()).toBe('01:05')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('resets timer on sentence change and recounts from zero', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(3000)
+      await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
+      expect(wrapper.find('.rec-time').exists()).toBe(false)
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.rec-time').text()).toBe('00:00')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

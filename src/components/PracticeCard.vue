@@ -20,7 +20,10 @@
       <p v-if="listenError" class="audio-warn">{{ listenError }}</p>
       <div class="rec-zone" v-if="recOK && !revealed">
         <button v-if="!isRec" class="btn btn-rec" @click="onRecStart">🎙 录音</button>
-        <button v-else class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
+        <div v-else class="rec-live">
+          <button class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
+          <span class="rec-time">{{ recTimeText }}</span>
+        </div>
         <audio v-if="recUrl" class="rec-playback" :src="recUrl" controls></audio>
       </div>
       <p v-if="recError" class="audio-warn">{{ recError }}</p>
@@ -59,6 +62,7 @@ watch(() => props.sentence, () => {
   stop()
   playing.value = false
   isRec.value = false
+  stopRecTimer()
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
 
@@ -107,6 +111,22 @@ const recOK = recorderSupported() // 运行期不变
 const isRec = ref(false)
 const recUrl = ref('')
 const recError = ref('')
+const recSeconds = ref(0)
+let recTimer = null
+const recTimeText = computed(() => {
+  const m = String(Math.floor(recSeconds.value / 60)).padStart(2, '0')
+  const s = String(recSeconds.value % 60).padStart(2, '0')
+  return `${m}:${s}`
+})
+
+function startRecTimer() {
+  recSeconds.value = 0
+  recTimer = setInterval(() => { recSeconds.value++ }, 1000)
+}
+
+function stopRecTimer() {
+  if (recTimer) { clearInterval(recTimer); recTimer = null }
+}
 
 // getUserMedia 常见失败原因 → 具体提示（含历史别名，Safari/旧内核命名不同）
 const REC_ERROR_TEXT = {
@@ -123,10 +143,12 @@ async function onRecStart() {
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
   const ok = await startRecording()
   isRec.value = ok
+  if (ok) startRecTimer()
   if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
 }
 
 async function onRecStop() {
+  stopRecTimer()
   const url = await stopRecording()
   isRec.value = false
   if (url) recUrl.value = url
@@ -134,6 +156,7 @@ async function onRecStop() {
 
 onUnmounted(() => {
   stop()
+  stopRecTimer()
   if (recUrl.value) revoke(recUrl.value)
 })
 </script>
@@ -151,5 +174,7 @@ onUnmounted(() => {
 .rec-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .btn-rec { font-size: 13px; padding: 8px 16px; }
 .btn-rec.recording { color: #e8463a; }
+.rec-live { display: flex; align-items: center; gap: 8px; }
+.rec-time { font-size: 13px; color: #e8463a; font-variant-numeric: tabular-nums; }
 .rec-playback { width: 100%; max-width: 260px; height: 36px; }
 </style>
