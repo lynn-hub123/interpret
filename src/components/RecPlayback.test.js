@@ -102,13 +102,13 @@ describe('RecPlayback', () => {
     expect(w.find('.pb-toggle').text()).toBe('▶')
     expect(w.find('.pb-time').text()).toBe('0:00 / 0:00')
   })
-  it('exposed pause pauses while playing, unmount pauses too', async () => {
+  it('exposed pause works even before play event fires, unmount pauses too', async () => {
     const w = mount(RecPlayback, { props: { src: SRC } })
     const a = patchAudio(w)
+    w.vm.pause() // play 事件异步未到时也必须生效（互斥空窗修复）
+    expect(a.pause).toHaveBeenCalledTimes(1)
     fire(a, 'play')
     await nextTick()
-    w.vm.pause()
-    expect(a.pause).toHaveBeenCalledTimes(1)
     fire(a, 'pause')
     await nextTick()
     w.unmount()

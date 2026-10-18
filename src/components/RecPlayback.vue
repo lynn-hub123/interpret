@@ -56,13 +56,15 @@ function onToggle() {
   const a = audio.value
   if (!a) return
   if (isPlaying.value) a.pause()
-  else a.play()
+  else {
+    const p = a.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {}) // 兜 AbortError：换源/快速切换时浏览器会中断播放
+  }
 }
 
-// 供父级互斥调用：仅在自己播放中时暂停
+// 供父级互斥调用：无条件暂停（play 事件异步未到时也必须生效）
 function pause() {
-  const a = audio.value
-  if (a && isPlaying.value) a.pause()
+  if (audio.value) audio.value.pause()
 }
 defineExpose({ pause })
 
