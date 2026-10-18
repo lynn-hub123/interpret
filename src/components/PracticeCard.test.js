@@ -25,6 +25,7 @@ vi.mock('../lib/recorder.js', () => ({
 
 afterEach(() => {
   playText.mockImplementation(async () => 'played')
+  playText.mockClear()
   stop.mockClear()
   ttsSupported.mockReturnValue(true)
 })
@@ -100,6 +101,14 @@ describe('play button (sight mode)', () => {
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'daily_001', zh: '你好', en: 'hello', source: 'builtin' }, direction: 'zh2en' } })
     expect(wrapper.find('.btn-speak').exists()).toBe(true)
   })
+  it('stops playback on unmount', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    wrapper.unmount()
+    expect(stop).toHaveBeenCalled()
+  })
 })
 
 describe('listen mode', () => {
@@ -113,6 +122,18 @@ describe('listen mode', () => {
     const showBtn = wrapper.findAll('button').find(b => b.text() === '显示原文')
     await showBtn.trigger('click')
     expect(wrapper.find('.source').exists()).toBe(true)
+  })
+  it('shows stop label on listen button while playing and reverts after done', async () => {
+    let resolvePlay
+    playText.mockImplementation(() => new Promise(r => { resolvePlay = r }))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en', mode: 'listen' } })
+    expect(wrapper.find('.btn-listen').text()).toBe('🎧 播放原句')
+    await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.btn-listen').text()).toBe('⏹ 停止')
+    resolvePlay('played')
+    await flushPromises()
+    expect(wrapper.find('.btn-listen').text()).toBe('🎧 播放原句')
   })
   it('degrades to text when play fails', async () => {
     playText.mockResolvedValueOnce('failed')
