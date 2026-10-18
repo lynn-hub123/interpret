@@ -40,7 +40,7 @@ try {
       }
     }
     // 每种语言一条连接，批量合成减少握手次数
-    const tts = agent ? new MsEdgeTTS(agent) : new MsEdgeTTS()
+    const tts = agent ? new MsEdgeTTS({ agent }) : new MsEdgeTTS()
     await tts.setMetadata(VOICES[lang], OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
     for (const { id, text } of items) {
       const out = join(outDir, `${id}.${lang}.mp3`)
