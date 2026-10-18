@@ -39,12 +39,19 @@ try {
         if (text) items.push({ id: s.id, text })
       }
     }
-    // 每种语言一条连接，批量合成减少握手次数
-    const tts = agent ? new MsEdgeTTS({ agent }) : new MsEdgeTTS()
-    await tts.setMetadata(VOICES[lang], OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
+    // 先按存在性过滤，无待生成文件时不建连接（幂等重跑免联网）
+    const pending = []
     for (const { id, text } of items) {
       const out = join(outDir, `${id}.${lang}.mp3`)
       if (!force && existsSync(out)) { skipped++; continue }
+      pending.push({ id, text })
+    }
+    if (!pending.length) continue
+    // 每种语言一条连接，批量合成减少握手次数
+    const tts = agent ? new MsEdgeTTS({ agent }) : new MsEdgeTTS()
+    await tts.setMetadata(VOICES[lang], OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
+    for (const { id, text } of pending) {
+      const out = join(outDir, `${id}.${lang}.mp3`)
       const { audioStream } = await tts.toStream(esc(text))
       const chunks = []
       for await (const chunk of audioStream) chunks.push(chunk)
