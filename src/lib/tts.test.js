@@ -75,4 +75,11 @@ describe('tts', () => {
     speak('你好', 'zh', onend)
     expect(calls.speak[0].onend).toBe(onend)
   })
+  it('voicesFor prefers Natural over Google when both exist', () => {
+    stubSynth({ voices: [
+      { lang: 'zh-CN', name: 'Google 普通话（中国大陆）' },
+      { lang: 'zh-CN', name: 'Microsoft Xiaoxiao Online (Natural) - Chinese (Simplified)' }
+    ] })
+    expect(voicesFor('zh').name).toMatch(/Natural/i)
+  })
 })
