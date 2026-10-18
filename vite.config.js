@@ -23,7 +23,14 @@ export default defineConfig({
           { src: 'icon-maskable.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' }
         ]
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,json,woff2}'] }
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
+        runtimeCaching: [{
+          urlPattern: /audio\/.+\.(mp3)$/,
+          handler: 'CacheFirst',
+          options: { cacheName: 'audio-v1', expiration: { maxEntries: 800, purgeOnQuotaError: true } }
+        }]
+      }
     })
   ],
   test: {
