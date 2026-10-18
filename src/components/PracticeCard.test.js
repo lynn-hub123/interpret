@@ -254,6 +254,22 @@ describe('recording zone', () => {
       vi.useRealTimers()
     }
   })
+  it('keeps rec-zone and timer running after reveal', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+      await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(2000)
+      await wrapper.find('.btn-reveal').trigger('click')
+      expect(wrapper.find('.rec-zone').exists()).toBe(true)
+      expect(wrapper.find('.rec-time').exists()).toBe(true)
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(wrapper.find('.rec-time').text()).toBe('00:03')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
   it('does not start timer if unmounted while start pending', async () => {
     let resolveStart
     startRecording.mockImplementationOnce(() => new Promise(r => { resolveStart = r }))

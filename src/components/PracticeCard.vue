@@ -18,7 +18,7 @@
         </div>
       </template>
       <p v-if="listenError" class="audio-warn">{{ listenError }}</p>
-      <div class="rec-zone" v-if="recOK && !revealed">
+      <div class="rec-zone" v-if="recOK">
         <button v-if="!isRec" class="btn btn-rec" @click="onRecStart">🎙 录音</button>
         <div v-else class="rec-live">
           <button class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
@@ -76,9 +76,6 @@ watch(() => props.mode, () => {
   listenError.value = ''
   speakError.value = ''
 })
-
-// 录音中点「看参考译文」会移出 rec-zone，先停表避免 interval 空转
-watch(revealed, v => { if (v) stopRecTimer() })
 
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
 // 源语言按实际文本判定：自定义句可能缺 zh 或 en 字段，direction 与实际语言可能不一致
