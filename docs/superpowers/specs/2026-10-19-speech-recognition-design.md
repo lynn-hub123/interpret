@@ -68,7 +68,7 @@ export function stop()
 - 「↻ 重录」（`onRerecord`）：复用 `onRecStart`，文字随启动自然清空
 - 换句 watch：清空 `recFinal/recInterim/srError`，并 `srStop()`（防止旧句识别跨句继续出字；MediaRecorder 现状行为不动）
 - `onUnmounted`：追加 `srStop()`
-- handlers：`onFinal` 追加到 `recFinal`（末尾补空格分隔段落）、`onInterim` 覆盖 `recInterim`、`onError` 映射为 `srError` 文案
+- handlers：`onFinal` 追加到 `recFinal`（拼接规则：英文段间补一个空格分隔，中文自带标点直接拼接）、`onInterim` 覆盖 `recInterim`、`onError` 映射为 `srError` 文案
 - 声音互斥无需参与：识别只产文字不出声
 
 ## 3. 识别文字区 UI
