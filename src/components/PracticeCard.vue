@@ -25,7 +25,7 @@
           <span class="rec-time">{{ recTimeText }}</span>
         </div>
         <p v-if="recFinal || recInterim" class="rec-sr">
-          <span>{{ recFinal }}</span><span v-if="recInterim" class="sr-interim">{{ recInterim }}</span>
+          <span>{{ recFinal }}</span><span v-if="recInterim" class="sr-interim">{{ direction === 'zh2en' ? ' ' + recInterim : recInterim }}</span>
         </p>
         <p v-if="srError" class="audio-warn">{{ srError }}</p>
         <RecPlayback v-if="recUrl" ref="recPlayback" :src="recUrl" @playing="onRecPlaying" />

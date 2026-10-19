@@ -414,6 +414,7 @@ describe('speech recognition zone', () => {
     const sr = wrapper.find('.rec-sr')
     expect(sr.text()).toContain('Hello world.')
     expect(sr.text()).toContain('how are')
+    expect(sr.text()).toContain('Hello world. how are')
     expect(wrapper.find('.sr-interim').exists()).toBe(true)
   })
 
@@ -484,5 +485,14 @@ describe('speech recognition zone', () => {
     await flushPromises()
     wrapper.unmount()
     expect(srStop).toHaveBeenCalled()
+  })
+
+  it('does not start recognition when recording start fails', async () => {
+    startRecording.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(srStart).not.toHaveBeenCalled()
+    expect(wrapper.find('.rec-sr').exists()).toBe(false)
   })
 })
