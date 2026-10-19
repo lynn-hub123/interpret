@@ -24,6 +24,10 @@
           <button class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
           <span class="rec-time">{{ recTimeText }}</span>
         </div>
+        <p v-if="recFinal || recInterim" class="rec-sr">
+          <span>{{ recFinal }}</span><span v-if="recInterim" class="sr-interim">{{ recInterim }}</span>
+        </p>
+        <p v-if="srError" class="audio-warn">{{ srError }}</p>
         <RecPlayback v-if="recUrl" ref="recPlayback" :src="recUrl" @playing="onRecPlaying" />
         <div v-if="recUrl" class="rec-actions">
           <button class="btn-rec-aux" :title="playing ? '停止' : '对照原句再听一遍'" @click="onSpeak">{{ playing ? '⏹ 停止' : '🔊 听原句' }}</button>
@@ -41,6 +45,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
+import { speechSupported, start as srStart, stop as srStop } from '../lib/speech.js'
 import RecPlayback from './RecPlayback.vue'
 
 const props = defineProps({
@@ -68,6 +73,8 @@ watch(() => props.sentence, () => {
   playing.value = false
   isRec.value = false
   stopRecTimer()
+  srStop() // 防旧句识别跨句继续出字
+  recFinal.value = ''; recInterim.value = ''; srError.value = ''
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
 
@@ -114,6 +121,28 @@ function onListenPlay() {
 }
 
 const recOK = recorderSupported() // 运行期不变
+
+// —— 语音识别：跟录音绑定，识别是增强功能，任何失败不影响录音 ——
+const srOK = speechSupported()
+const recFinal = ref('')
+const recInterim = ref('')
+const srError = ref('')
+const srLang = computed(() => (props.direction === 'zh2en' ? 'en-US' : 'zh-CN'))
+const SR_ERROR_TEXT = {
+  'not-allowed': '语音识别权限被拒，可在地址栏允许后重试；录音不受影响',
+  network: '语音识别服务不可用（需联网）；录音不受影响',
+  'audio-capture': '麦克风不可用于识别；录音不受影响'
+}
+function onSrFinal(text) {
+  if (!text) return
+  recFinal.value += (props.direction === 'zh2en' && recFinal.value ? ' ' : '') + text
+}
+function onSrInterim(text) { recInterim.value = text }
+const srHandlers = {
+  onFinal: onSrFinal,
+  onInterim: onSrInterim,
+  onError: name => { srError.value = SR_ERROR_TEXT[name] || '语音识别暂不可用；录音不受影响' }
+}
 const isRec = ref(false)
 const recUrl = ref('')
 const recError = ref('')
@@ -150,14 +179,17 @@ const REC_ERROR_TEXT = {
 async function onRecStart() {
   recError.value = ''
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
+  recFinal.value = ''; recInterim.value = ''; srError.value = '' // 文字与回放同生命周期
   const ok = await startRecording()
   isRec.value = ok && alive
   if (ok && alive) startRecTimer()
+  if (ok && alive && srOK) srStart(srLang.value, srHandlers)
   if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
 }
 
 async function onRecStop() {
   stopRecTimer()
+  srStop()
   const url = await stopRecording()
   isRec.value = false
   if (url) recUrl.value = url
@@ -178,6 +210,7 @@ async function onRerecord() {
 onUnmounted(() => {
   alive = false
   stop()
+  srStop()
   stopRecTimer()
   if (recUrl.value) revoke(recUrl.value)
 })
@@ -208,6 +241,9 @@ onUnmounted(() => {
   transition: color 0.15s ease, transform 0.12s ease;
 }
 .btn-rec-aux:active { transform: scale(0.95); color: var(--accent-text); }
+
+.rec-sr { font-size: 13px; line-height: 1.6; color: var(--text-muted); text-align: center; margin: 0; }
+.sr-interim { opacity: 0.45; }
 
 @keyframes rec-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 70, 58, 0.3); }

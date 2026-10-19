@@ -6,6 +6,7 @@ import RecPlayback from './RecPlayback.vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
+import { speechSupported, start as srStart, stop as srStop } from '../lib/speech.js'
 
 vi.mock('../lib/voice.js', () => ({
   playText: vi.fn(async () => 'played'),
@@ -25,11 +26,20 @@ vi.mock('../lib/recorder.js', () => ({
   lastErrorName: vi.fn(() => '')
 }))
 
+vi.mock('../lib/speech.js', () => ({
+  speechSupported: vi.fn(() => true),
+  start: vi.fn(() => true),
+  stop: vi.fn()
+}))
+
 afterEach(() => {
   playText.mockImplementation(async () => 'played')
   playText.mockClear()
   stop.mockClear()
   ttsSupported.mockReturnValue(true)
+  speechSupported.mockReturnValue(true)
+  srStart.mockClear()
+  srStop.mockClear()
 })
 
 const sentence = { id: 'daily_001', zh: '你好。', en: 'Hello.', topic: 'daily', source: 'builtin' }
@@ -366,5 +376,113 @@ describe('recording zone', () => {
     wrapper.find('audio').element.dispatchEvent(new Event('play'))
     await nextTick()
     expect(stop).toHaveBeenCalled()
+  })
+})
+
+describe('speech recognition zone', () => {
+  const srSentence = { id: 'x_001', zh: '你好', en: 'hello' }
+
+  it('hides recognition ui and skips start when unsupported', async () => {
+    speechSupported.mockReturnValueOnce(false)
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(srStart).not.toHaveBeenCalled()
+    expect(wrapper.find('.rec-sr').exists()).toBe(false)
+    expect(wrapper.find('.rec-zone').exists()).toBe(true)
+  })
+
+  it('starts recognition with target language by direction', async () => {
+    const w1 = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await w1.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(srStart.mock.calls.at(-1)[0]).toBe('en-US')
+    const w2 = mount(PracticeCard, { props: { sentence: srSentence, direction: 'en2zh' } })
+    await w2.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(srStart.mock.calls.at(-1)[0]).toBe('zh-CN')
+  })
+
+  it('renders interim and final text from handlers', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    const handlers = srStart.mock.calls.at(-1)[1]
+    handlers.onFinal('Hello world.')
+    handlers.onInterim('how are')
+    await nextTick()
+    const sr = wrapper.find('.rec-sr')
+    expect(sr.text()).toContain('Hello world.')
+    expect(sr.text()).toContain('how are')
+    expect(wrapper.find('.sr-interim').exists()).toBe(true)
+  })
+
+  it('joins english finals with space and chinese finals directly', async () => {
+    const w1 = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await w1.find('.btn-rec').trigger('click')
+    await flushPromises()
+    let h = srStart.mock.calls.at(-1)[1]
+    h.onFinal('Hello.'); h.onFinal('How are you.')
+    await nextTick()
+    expect(w1.find('.rec-sr').text()).toContain('Hello. How are you.')
+    const w2 = mount(PracticeCard, { props: { sentence: srSentence, direction: 'en2zh' } })
+    await w2.find('.btn-rec').trigger('click')
+    await flushPromises()
+    h = srStart.mock.calls.at(-1)[1]
+    h.onFinal('你好。'); h.onFinal('今天天气不错。')
+    await nextTick()
+    expect(w2.find('.rec-sr').text()).toContain('你好。今天天气不错。')
+  })
+
+  it('keeps text after stopping recording', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    srStart.mock.calls.at(-1)[1].onFinal('Hello world.')
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.rec-sr').text()).toContain('Hello world.')
+    expect(srStop).toHaveBeenCalled()
+  })
+
+  it('clears text on rerecord', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    srStart.mock.calls.at(-1)[1].onFinal('Hello world.')
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.rec-sr').exists()).toBe(false)
+  })
+
+  it('shows sr error without breaking recording zone', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    srStart.mock.calls.at(-1)[1].onError('network')
+    await nextTick()
+    expect(wrapper.text()).toContain('需联网')
+    expect(wrapper.find('.rec-zone').exists()).toBe(true)
+    expect(wrapper.find('.btn-rec.recording').exists()).toBe(true)
+  })
+
+  it('clears text and stops recognition on sentence change', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    srStart.mock.calls.at(-1)[1].onFinal('Hello world.')
+    await wrapper.setProps({ sentence: { id: 'x_002', zh: '世界', en: 'world' } })
+    expect(wrapper.find('.rec-sr').exists()).toBe(false)
+    expect(srStop).toHaveBeenCalled()
+  })
+
+  it('stops recognition on unmount', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    wrapper.unmount()
+    expect(srStop).toHaveBeenCalled()
   })
 })
