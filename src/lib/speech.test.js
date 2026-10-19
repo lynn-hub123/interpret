@@ -114,6 +114,20 @@ describe('start', () => {
   it('stop() when idle is a safe no-op', () => {
     expect(() => stop()).not.toThrow()
   })
+  it('start throwing is treated as fatal with onError unknown', () => {
+    install()
+    const onError = vi.fn()
+    const orig = FakeRecognition.prototype.start
+    FakeRecognition.prototype.start = () => { throw new Error('InvalidStateError') }
+    try {
+      expect(start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })).toBe(true)
+      expect(onError).toHaveBeenCalledWith('unknown')
+    } finally {
+      FakeRecognition.prototype.start = orig
+    }
+    FakeRecognition.all[0].emitEnd()
+    expect(FakeRecognition.all.length).toBe(1)
+  })
 })
 
 describe('error handling', () => {
