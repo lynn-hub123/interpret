@@ -74,6 +74,33 @@ describe('start', () => {
     expect(finals).toEqual(['Hello world.'])
     expect(interims).toEqual(['how are'])
   })
+  it('dispatches multiple results honoring resultIndex', () => {
+    install()
+    const finals = []; const interims = []
+    start('en-US', { onFinal: t => finals.push(t), onInterim: t => interims.push(t) })
+    FakeRecognition.all[0].onresult({
+      resultIndex: 1,
+      results: [
+        { isFinal: true, 0: { transcript: 'skipped' } },
+        { isFinal: true, 0: { transcript: 'second.' } },
+        { isFinal: false, 0: { transcript: 'typing' } }
+      ]
+    })
+    expect(finals).toEqual(['second.'])
+    expect(interims).toEqual(['typing'])
+  })
+
+  it('stop() keeps delivering final results until end', () => {
+    install()
+    const finals = []
+    start('en-US', { onFinal: t => finals.push(t), onInterim: () => {}, onError: () => {} })
+    const rec = FakeRecognition.all[0]
+    stop()
+    rec.emitFinal('last words.')
+    rec.emitEnd()
+    expect(finals).toEqual(['last words.'])
+    expect(FakeRecognition.all.length).toBe(1)
+  })
   it('restarts with same lang when onend fires (not manual)', () => {
     install()
     start('en-US', {})
@@ -114,19 +141,62 @@ describe('start', () => {
   it('stop() when idle is a safe no-op', () => {
     expect(() => stop()).not.toThrow()
   })
-  it('start throwing is treated as fatal with onError unknown', () => {
-    install()
-    const onError = vi.fn()
+  it('start throwing retries once then fatal with onError unknown', () => {
+    vi.useFakeTimers()
     const orig = FakeRecognition.prototype.start
-    FakeRecognition.prototype.start = () => { throw new Error('InvalidStateError') }
     try {
-      expect(start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })).toBe(true)
+      install()
+      FakeRecognition.prototype.start = () => { throw new Error('InvalidStateError') }
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      expect(onError).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(250)
       expect(onError).toHaveBeenCalledWith('unknown')
+      expect(FakeRecognition.all.length).toBe(2)
     } finally {
       FakeRecognition.prototype.start = orig
+      vi.useRealTimers()
     }
-    FakeRecognition.all[0].emitEnd()
-    expect(FakeRecognition.all.length).toBe(1)
+  })
+
+  it('start throwing recovers via delayed retry', () => {
+    vi.useFakeTimers()
+    const orig = FakeRecognition.prototype.start
+    try {
+      install()
+      let throwOnce = true
+      FakeRecognition.prototype.start = function () {
+        if (throwOnce) { throwOnce = false; throw new Error('InvalidStateError') }
+        this.started = true
+      }
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      vi.advanceTimersByTime(250)
+      expect(onError).not.toHaveBeenCalled()
+      expect(FakeRecognition.all.length).toBe(2)
+      expect(FakeRecognition.all[1].started).toBe(true)
+    } finally {
+      FakeRecognition.prototype.start = orig
+      vi.useRealTimers()
+    }
+  })
+
+  it('pending retry is cancelled by stop()', () => {
+    vi.useFakeTimers()
+    const orig = FakeRecognition.prototype.start
+    try {
+      install()
+      FakeRecognition.prototype.start = () => { throw new Error('InvalidStateError') }
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      stop()
+      vi.advanceTimersByTime(250)
+      expect(onError).not.toHaveBeenCalled()
+      expect(FakeRecognition.all.length).toBe(1)
+    } finally {
+      FakeRecognition.prototype.start = orig
+      vi.useRealTimers()
+    }
   })
 })
 

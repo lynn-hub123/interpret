@@ -7,6 +7,7 @@ export function speechSupported() {
 }
 
 const state = { rec: null, manual: false }
+let retryTimer = null
 
 // handlers = { onFinal(text), onInterim(text), onError(name) }
 // 返回 boolean；重复 start 先 abort 旧会话（幂等，避免旧 final 串入新会话）
@@ -14,7 +15,7 @@ export function start(lang, handlers) {
   if (!speechSupported()) return false
   stopSession(true)
   state.manual = false
-  spawn(lang, handlers)
+  spawn(lang, handlers, false)
   return true
 }
 
@@ -25,41 +26,50 @@ export function stop() {
 
 function stopSession(abort) {
   state.manual = true
+  if (retryTimer) { clearTimeout(retryTimer); retryTimer = null }
   const rec = state.rec
   state.rec = null
   if (rec) { try { abort ? rec.abort() : rec.stop() } catch { /* 已停止/未启动，忽略 */ } }
 }
 
-function spawn(lang, handlers) {
-  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition
-  const rec = new Ctor()
-  rec.lang = lang
-  rec.continuous = true
-  rec.interimResults = true
-  rec.onresult = e => {
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i]
-      if (r.isFinal) handlers.onFinal(r[0].transcript)
-      else handlers.onInterim(r[0].transcript)
-    }
-  }
-  rec.onerror = e => {
-    if (state.rec !== rec) return // 已被新会话顶替的旧实例，静默
-    const name = (e && e.error) || ''
-    if (name === 'no-speech' || name === 'aborted') return // 瞬态：交给 onend 决定重启
-    state.manual = true // 致命：停止重启循环
-    handlers.onError(name === 'service-not-allowed' ? 'not-allowed' : name)
-  }
-  rec.onend = () => {
-    if (state.rec !== rec) return // 旧实例不再接管
-    state.rec = null
-    if (!state.manual) spawn(lang, handlers) // 断流自动重启
-  }
-  state.rec = rec
+function spawn(lang, handlers, isRetry) {
+  let rec
   try {
+    const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition
+    rec = new Ctor()
+    rec.lang = lang
+    rec.continuous = true
+    rec.interimResults = true
+    // onresult 故意不加 stale 守卫：stop() 后末段 final 仍要送达视图层
+    rec.onresult = e => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i]
+        if (r.isFinal) handlers.onFinal(r[0].transcript)
+        else handlers.onInterim(r[0].transcript)
+      }
+    }
+    rec.onerror = e => {
+      if (state.rec !== rec) return // 已被新会话顶替的旧实例，静默
+      const name = (e && e.error) || ''
+      if (name === 'no-speech' || name === 'aborted') return // 瞬态：交给 onend 决定重启
+      state.manual = true // 致命：停止重启循环
+      handlers.onError(name === 'service-not-allowed' ? 'not-allowed' : name)
+    }
+    rec.onend = () => {
+      if (state.rec !== rec) return // 旧实例不再接管
+      state.rec = null
+      if (!state.manual) spawn(lang, handlers, false) // 断流自动重启
+    }
+    state.rec = rec
     rec.start()
   } catch {
-    stopSession(true) // start 抛错（状态非法等）：按致命收场
-    handlers.onError('unknown')
+    // 部分引擎在 onend 内同步重启会偶发 InvalidStateError：延迟单次重试，仍抛才致命
+    state.rec = null
+    if (isRetry) { handlers.onError('unknown'); return }
+    retryTimer = setTimeout(() => {
+      retryTimer = null
+      if (state.manual || state.rec) return
+      spawn(lang, handlers, true)
+    }, 250)
   }
 }
