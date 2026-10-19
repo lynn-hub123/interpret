@@ -418,6 +418,20 @@ describe('speech recognition zone', () => {
     expect(wrapper.find('.sr-interim').exists()).toBe(true)
   })
 
+  it('clears stale interim when final arrives', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    const handlers = srStart.mock.calls.at(-1)[1]
+    handlers.onInterim('how are')
+    await nextTick()
+    expect(wrapper.find('.sr-interim').exists()).toBe(true)
+    handlers.onFinal('how are you.')
+    await nextTick()
+    expect(wrapper.find('.sr-interim').exists()).toBe(false)
+    expect(wrapper.find('.rec-sr').text()).toContain('how are you.')
+  })
+
   it('joins english finals with space and chinese finals directly', async () => {
     const w1 = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
     await w1.find('.btn-rec').trigger('click')
@@ -467,6 +481,21 @@ describe('speech recognition zone', () => {
     expect(wrapper.text()).toContain('需联网')
     expect(wrapper.find('.rec-zone').exists()).toBe(true)
     expect(wrapper.find('.btn-rec.recording').exists()).toBe(true)
+  })
+
+  it('clears sr error after rerecord', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: srSentence, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    srStart.mock.calls.at(-1)[1].onError('network')
+    await nextTick()
+    expect(wrapper.find('.audio-warn').exists()).toBe(true)
+    expect(wrapper.text()).toContain('需联网')
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.audio-warn').exists()).toBe(false)
   })
 
   it('clears text and stops recognition on sentence change', async () => {

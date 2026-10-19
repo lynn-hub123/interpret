@@ -135,6 +135,7 @@ const SR_ERROR_TEXT = {
 }
 function onSrFinal(text) {
   if (!text) return
+  recInterim.value = '' // final 送达后清除 stale interim，防重复残影
   recFinal.value += (props.direction === 'zh2en' && recFinal.value ? ' ' : '') + text
 }
 function onSrInterim(text) { recInterim.value = text }
