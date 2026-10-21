@@ -235,12 +235,95 @@ describe('error handling', () => {
     FakeRecognition.all[0].emitError('service-not-allowed')
     expect(onError).toHaveBeenCalledWith('not-allowed')
   })
-  it('network is fatal', () => {
-    install()
-    const onError = vi.fn()
-    start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
-    FakeRecognition.all[0].emitError('network')
-    expect(onError).toHaveBeenCalledWith('network')
+  it('network is not fatal: schedules 500ms backoff retry', () => {
+    vi.useFakeTimers()
+    try {
+      install()
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      FakeRecognition.all[0].emitError('network')
+      FakeRecognition.all[0].emitEnd() // 真实引擎 error 后必随 end
+      expect(onError).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(499)
+      expect(FakeRecognition.all.length).toBe(1)
+      vi.advanceTimersByTime(1)
+      expect(FakeRecognition.all.length).toBe(2)
+      expect(FakeRecognition.all[1].started).toBe(true)
+      expect(onError).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('4 consecutive network errors turn fatal and stop respawning', () => {
+    vi.useFakeTimers()
+    try {
+      install()
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      // 前三次失败各退避重试：延迟 500ms、1s、2s；重试已排定时 onend 不立即 spawn
+      for (const d of [500, 1000, 2000]) {
+        FakeRecognition.all.at(-1).emitError('network')
+        FakeRecognition.all.at(-1).emitEnd()
+        expect(onError).not.toHaveBeenCalled()
+        vi.advanceTimersByTime(d)
+      }
+      expect(FakeRecognition.all.length).toBe(4)
+      FakeRecognition.all[3].emitError('network') // 连续第 4 次：致命
+      expect(onError).toHaveBeenCalledWith('network')
+      FakeRecognition.all[3].emitEnd()
+      vi.advanceTimersByTime(5000)
+      expect(FakeRecognition.all.length).toBe(4) // 不再 spawn
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('onend during pending network retry does not double spawn', () => {
+    vi.useFakeTimers()
+    try {
+      install()
+      start('en-US', {})
+      FakeRecognition.all[0].emitError('network')
+      FakeRecognition.all[0].emitEnd()
+      expect(FakeRecognition.all.length).toBe(1) // 已排定重试，onend 不立即重启
+      vi.advanceTimersByTime(500)
+      expect(FakeRecognition.all.length).toBe(2) // 由定时器恢复，仅一个新实例
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('a result resets the network fail counter', () => {
+    vi.useFakeTimers()
+    try {
+      install()
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      FakeRecognition.all[0].emitError('network')
+      FakeRecognition.all[0].emitEnd()
+      vi.advanceTimersByTime(500)
+      FakeRecognition.all[1].emitFinal('connected.') // 出结果说明连通，计数归零
+      FakeRecognition.all[1].emitError('network') // 重新计 1 次，不致命
+      FakeRecognition.all[1].emitEnd()
+      vi.advanceTimersByTime(500)
+      expect(onError).not.toHaveBeenCalled()
+      expect(FakeRecognition.all.length).toBe(3)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('stop() cancels pending network retry', () => {
+    vi.useFakeTimers()
+    try {
+      install()
+      const onError = vi.fn()
+      start('en-US', { onFinal: () => {}, onInterim: () => {}, onError })
+      FakeRecognition.all[0].emitError('network')
+      stop()
+      vi.advanceTimersByTime(1000)
+      expect(FakeRecognition.all.length).toBe(1)
+      expect(onError).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
   it('unknown error names pass through as fatal', () => {
     install()

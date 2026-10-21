@@ -130,7 +130,7 @@ const srError = ref('')
 const srLang = computed(() => (props.direction === 'zh2en' ? 'en-US' : 'zh-CN'))
 const SR_ERROR_TEXT = {
   'not-allowed': '语音识别权限被拒，可在地址栏允许后重试；录音不受影响',
-  network: '语音识别服务不可用（需联网）；录音不受影响',
+  network: '识别服务连接不稳定，多次重试仍失败；录音不受影响',
   'audio-capture': '麦克风不可用于识别；录音不受影响'
 }
 function onSrFinal(text) {
