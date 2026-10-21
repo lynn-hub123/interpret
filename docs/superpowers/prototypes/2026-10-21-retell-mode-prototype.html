@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>复述模式 · 交互原型</title>
+<style>
+  :root { --radius-card: 16px; }
+  :root[data-theme='dark'] {
+    --bg: #1c1c1f; --surface: #232327; --surface-deep: #17171a;
+    --text: #e7e7ea; --text-muted: #9a9aa3; --border: rgba(231, 231, 234, 0.1);
+    --accent: #32f08c; --accent-soft: rgba(50, 240, 140, 0.14); --accent-text: #b8ffd9;
+    --shadow-out: 6px 6px 14px rgba(0, 0, 0, 0.55), -6px -6px 14px rgba(255, 255, 255, 0.045);
+    --shadow-in: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.04);
+    color-scheme: dark;
+  }
+  :root[data-theme='light'] {
+    --bg: #eceef1; --surface: #f2f4f7; --surface-deep: #e3e6ea;
+    --text: #26282c; --text-muted: #62676f; --border: rgba(38, 40, 44, 0.12);
+    --accent: #0ab861; --accent-soft: rgba(10, 184, 97, 0.12); --accent-text: #00632f;
+    --shadow-out: 6px 6px 14px rgba(163, 172, 184, 0.6), -6px -6px 14px rgba(255, 255, 255, 0.95);
+    --shadow-in: inset 4px 4px 8px rgba(163, 172, 184, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, 'PingFang SC', 'Segoe UI', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .view { max-width: 480px; margin: 0 auto; padding: 16px 16px 96px; min-height: 100dvh; }
+  .neu-raised { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow-out); }
+  .neu-inset { background: var(--surface-deep); border-radius: var(--radius-card); box-shadow: var(--shadow-in); }
+  .btn {
+    border: none; cursor: pointer; color: var(--text); background: var(--surface);
+    font: inherit; border-radius: 14px; padding: 12px 18px; font-size: 15px; box-shadow: var(--shadow-out);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn:active { transform: scale(0.97); box-shadow: var(--shadow-in); }
+  .btn-primary { color: #062d18; background: var(--accent); }
+  :root[data-theme='dark'] .btn-primary { color: #062d18; }
+  :root[data-theme='light'] .btn-primary { color: #ffffff; }
+
+  /* —— 顶部条 —— */
+  .proto-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .proto-tag { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+  .proto-info {
+    margin-left: auto; border: none; cursor: pointer; font-size: 12px; color: var(--text-muted);
+    background: var(--surface); border-radius: 999px; padding: 6px 14px; box-shadow: var(--shadow-out);
+  }
+  .practice-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .count { font-size: 14px; color: var(--text-muted); }
+  .timer { font-size: 14px; color: var(--accent-text); }
+  .btn-history { margin-left: auto; font-size: 13px; padding: 8px 14px; }
+
+  /* —— 卡片 —— */
+  .card { padding: 28px 20px; display: flex; justify-content: center; }
+  .card-face { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
+  .dir-pill { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+  .source { font-size: 22px; line-height: 1.6; text-align: center; margin: 0; }
+  .reference { padding: 14px 16px; width: 100%; text-align: center; font-size: 16px; line-height: 1.6; color: var(--accent-text); }
+  .reference-label { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; }
+  .audio-warn { font-size: 12px; color: #e8463a; opacity: 0.8; margin: 0; }
+  .btn-skip { font-size: 13px; opacity: 0.6; }
+
+  /* —— 播放区 —— */
+  .play-zone { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+  .btn-listen { font-size: 16px; padding: 14px 26px; min-width: 200px; position: relative; overflow: hidden; }
+  .play-progress {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+    background: rgba(255, 255, 255, 0.18); pointer-events: none;
+  }
+  .speed-seg { display: flex; gap: 4px; }
+  .speed-btn {
+    border: none; cursor: pointer; font: inherit; font-size: 12px; color: var(--text-muted);
+    background: var(--surface); border-radius: 10px; padding: 6px 12px; box-shadow: var(--shadow-out);
+    transition: box-shadow 0.12s ease, color 0.12s ease;
+  }
+  .speed-btn.active { color: var(--accent-text); box-shadow: var(--shadow-in); }
+  .play-tip { font-size: 12px; color: var(--text-muted); opacity: 0.7; margin: 0; }
+
+  /* —— 录音区 —— */
+  .rec-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+  .btn-rec { font-size: 13px; padding: 8px 16px; }
+  .btn-rec.recording { color: #e8463a; animation: rec-pulse 1.6s ease-in-out infinite; }
+  .rec-live { display: flex; align-items: center; gap: 8px; }
+  .rec-time { font-size: 13px; color: #e8463a; font-variant-numeric: tabular-nums; }
+  .rec-actions { display: flex; gap: 18px; }
+  .btn-rec-aux {
+    border: none; background: none; cursor: pointer; font: inherit; font-size: 13px;
+    color: var(--text-muted); padding: 2px 4px; border-radius: 8px;
+    transition: color 0.15s ease, transform 0.12s ease;
+  }
+  .btn-rec-aux:active { transform: scale(0.95); color: var(--accent-text); }
+  .rec-sr { font-size: 13px; line-height: 1.6; color: var(--text-muted); text-align: center; margin: 0; min-height: 1.6em; width: 100%; }
+  .sr-interim { opacity: 0.45; }
+  .rec-playback {
+    display: flex; align-items: center; gap: 10px; padding: 8px 14px; width: 100%;
+  }
+  .rp-btn {
+    border: none; cursor: pointer; font: inherit; font-size: 14px; color: var(--accent-text);
+    background: none; padding: 2px 6px;
+  }
+  .rp-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--bg); position: relative; overflow: hidden; }
+  .rp-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent); border-radius: 999px; transition: width 0.2s linear; }
+  .rp-time { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  @keyframes rec-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 70, 58, 0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(232, 70, 58, 0); }
+  }
+
+  /* —— 评分区 —— */
+  .rating-zone { margin-top: 20px; min-height: 56px; display: flex; align-items: center; justify-content: center; }
+  .hint { font-size: 13px; color: var(--text-muted); text-align: center; margin: 0; }
+  .rating-row { display: flex; gap: 12px; }
+  .rate-btn { font-size: 14px; padding: 12px 22px; }
+  .rate-btn span { display: block; font-size: 11px; opacity: 0.65; margin-top: 2px; }
+
+  /* —— 模式切换 —— */
+  .toggles { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .dir-toggle { font-size: 13px; opacity: 0.7; }
+  .mode-toggle { display: flex; gap: 4px; }
+  .mode-btn { font-size: 13px; opacity: 0.7; padding: 8px 12px; }
+  .mode-btn.active { opacity: 1; color: var(--accent-text); box-shadow: var(--shadow-in); }
+
+  /* —— 说明浮层 —— */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 40;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .overlay.hidden { display: none; }
+  .sheet {
+    width: 100%; max-width: 480px; background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); max-height: 72dvh; overflow-y: auto;
+  }
+  .sheet h3 { margin: 0 0 12px; font-size: 15px; }
+  .sheet li { font-size: 13px; line-height: 1.7; color: var(--text-muted); margin-bottom: 8px; }
+  .sheet b { color: var(--text); font-weight: 600; }
+  .sheet .btn { margin-top: 12px; width: 100%; }
+
+  /* —— Tab bar（装饰） —— */
+  .tab-bar {
+    position: fixed; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; padding: 8px 4px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    border-radius: 20px;
+  }
+  .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 12px; padding: 4px 10px; border-radius: 12px; text-decoration: none; }
+  .tab-item.active { color: var(--accent-text); background: var(--accent-soft); }
+  .tab-icon { font-size: 20px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%) translateY(8px);
+    background: var(--surface); box-shadow: var(--shadow-out); border-radius: 12px;
+    font-size: 13px; color: var(--text-muted); padding: 10px 18px; opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; z-index: 30;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="view">
+  <div class="proto-bar">
+    <span class="proto-tag">复述模式 · 交互原型</span>
+    <button class="proto-info" onclick="toggleSheet()">设计要点</button>
+  </div>
+
+  <header class="practice-header">
+    <span class="count" id="count">第 1 句</span>
+    <span class="timer" id="timer">0s</span>
+    <button class="btn btn-history">历史</button>
+  </header>
+
+  <div class="card neu-raised">
+    <div class="card-face">
+      <span class="dir-pill" id="dirPill">复述 · 中文原声</span>
+
+      <!-- 听音区：播放 + 语速 -->
+      <div class="play-zone">
+        <button class="btn btn-primary btn-listen" id="playBtn" onclick="onPlay()">
+          <span class="play-progress" id="playProgress"></span>
+          <span id="playBtnText">▶ 播放原句</span>
+        </button>
+        <div class="speed-seg" id="speedSeg">
+          <button class="speed-btn" data-rate="0.75" onclick="setSpeed(0.75, this)">0.75x</button>
+          <button class="speed-btn active" data-rate="1" onclick="setSpeed(1, this)">1x</button>
+          <button class="speed-btn" data-rate="1.25" onclick="setSpeed(1.25, this)">1.25x</button>
+        </div>
+      </div>
+
+      <!-- 复述录音区 -->
+      <div class="rec-zone" id="recZone">
+        <button class="btn btn-rec" id="recBtn" onclick="onRec()">🎙 复述录音</button>
+        <div class="rec-live" id="recLive" style="display:none">
+          <button class="btn btn-rec recording" onclick="onRecStop()">⏹ 停止</button>
+          <span class="rec-time" id="recTime">00:00</span>
+        </div>
+        <p class="rec-sr" id="recSr"></p>
+        <div class="rec-playback neu-inset" id="recPlayback" style="display:none">
+          <button class="rp-btn" id="rpBtn" onclick="rpToggle()">▶</button>
+          <div class="rp-bar"><div class="rp-fill" id="rpFill"></div></div>
+          <span class="rp-time" id="rpTime">0:00 / 0:07</span>
+        </div>
+        <div class="rec-actions" id="recActions" style="display:none">
+          <button class="btn-rec-aux" onclick="onPlay()">🔊 听原句</button>
+          <button class="btn-rec-aux" onclick="onRerecord()">↻ 重录</button>
+        </div>
+      </div>
+
+      <!-- 揭晓区 -->
+      <div id="revealZone" style="display:none; width:100%">
+        <p class="source" id="sourceText"></p>
+        <div class="reference neu-inset" style="margin-top:12px">
+          <p class="reference-label">参考译文</p>
+          <p id="refText" style="margin:0"></p>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="revealBtn" style="display:none; min-width:160px" onclick="onReveal()">对照原文</button>
+      <p class="audio-warn" id="audioWarn" style="display:none"></p>
+      <button class="btn btn-skip" onclick="onSkip()">跳过</button>
+    </div>
+  </div>
+
+  <div class="rating-zone" id="ratingZone">
+    <p class="hint">听完 → 开口复述 → 对照原文后自评</p>
+  </div>
+
+  <div class="toggles">
+    <button class="btn dir-toggle" id="dirToggle" onclick="flipDirection()">英 → 中</button>
+    <div class="mode-toggle">
+      <button class="btn mode-btn" onclick="toast('原型仅演示复述模式')">视译</button>
+      <button class="btn mode-btn" onclick="toast('原型仅演示复述模式')">听辨</button>
+      <button class="btn mode-btn active">复述</button>
+    </div>
+  </div>
+
+  <div class="tab-bar neu-raised">
+    <a class="tab-item" href="javascript:void(0)"><span class="tab-icon">🎯</span>练习</a>
+    <a class="tab-item" href="javascript:void(0)"><span class="tab-icon">📚</span>题库</a>
+    <a class="tab-item" href="javascript:void(0)"><span class="tab-icon">📋</span>粘贴</a>
+    <a class="tab-item" href="javascript:void(0)"><span class="tab-icon">👤</span>我的</a>
+  </div>
+</div>
+
+<div class="overlay hidden" id="sheetOverlay" onclick="if(event.target===this)toggleSheet()">
+  <div class="sheet">
+    <h3>复述模式设计要点</h3>
+    <ul>
+      <li><b>源语复述：</b>听到什么语言就复述什么语言（中文原声→中文复述），训练短时记忆与逻辑重组。</li>
+      <li><b>与听辨模式的差异：</b>① 语音识别语言跟随源语（翻译模式识别目标语，复述模式识别源语）；② 揭晓按钮文案改为「对照原文」；③ 揭晓后原文为主展示，参考译文降为次级信息。</li>
+      <li><b>语速切换：</b>0.75x / 1x / 1.25x，仅复述模式提供，跟句记忆不跨会话持久化（预设 1x）。</li>
+      <li><b>重听：</b>播放按钮播完自动变「重听」，次数不限；播放与自己的回放互斥。</li>
+      <li><b>盲听自评：</b>停止录音后即可直接评分，不强制对照原文——想对照再点「对照原文」。</li>
+      <li><b>评分语义：</b>ok 复述完整流畅 / shaky 大意对但漏项卡顿 / miss 记不住内容；评分走现有 SRS 调度。</li>
+      <li><b>分段连续播放（后续迭代）：</b>需题库支持段落型素材，本期不做。</li>
+    </ul>
+    <button class="btn btn-primary" onclick="toggleSheet()">知道了</button>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+  // —— 示例句子池 ——
+  const ZH2EN = [
+    { zh: '这次会议的主要目的是加强两国之间的经贸合作。', en: 'The main purpose of this meeting is to strengthen economic and trade cooperation between the two countries.' },
+    { zh: '我们希望双方继续保持密切沟通，推动合作取得更多成果。', en: 'We hope both sides will maintain close communication and achieve more outcomes through cooperation.' },
+    { zh: '面对全球性挑战，没有任何国家能够独善其身。', en: 'Facing global challenges, no country can stay unaffected in isolation.' }
+  ];
+  const EN2ZH = [
+    { en: 'Let me begin by thanking everyone for joining us on such short notice.', zh: '首先，感谢各位在接到通知后这么快就赶来参加我们的会议。' },
+    { en: 'The figures we released today reflect a steady recovery across all major sectors.', zh: '我们今天发布的数据反映出各个主要行业都在稳步复苏。' }
+  ];
+  // 复述识别模拟词（按源语语言分组）
+  const SR_WORDS = {
+    zh: ['这次', '会议的', '主要目的', '是加强', '两国之间', '的经贸', '合作，', '我们希望', '继续保持', '密切沟通'],
+    en: ['Let me', 'begin by', 'thanking', 'everyone', 'for joining', 'us on such', 'short notice.']
+  };
+
+  let direction = 'zh2en';
+  let idx = 0;
+  let speed = 1;
+  let state = 'idle'; // idle | playing | recording | recorded | revealed
+  let playTimer = null, recTimer = null, rpTimer = null, srTimer = null;
+  let recSec = 0, srIdx = 0, srText = '';
+  let timerSec = 0;
+
+  function sentence() { return (direction === 'zh2en' ? ZH2EN : EN2ZH)[idx]; }
+  function sourceLang() { return direction === 'zh2en' ? 'zh' : 'en'; }
+
+  // —— 播放 ——
+  function onPlay() {
+    if (state === 'playing') { stopPlay(); return; }
+    stopPlayback();
+    state = 'playing';
+    setText('playBtnText', '⏹ 停止');
+    const dur = (sentence().zh.length * 0.11) / speed * 1000; // 模拟时长
+    const fill = el('playProgress');
+    fill.style.transition = 'none'; fill.style.width = '0%';
+    requestAnimationFrame(() => { fill.style.transition = `width ${dur}ms linear`; fill.style.width = '100%'; });
+    playTimer = setTimeout(() => { stopPlay(); state = state === 'recording' ? 'recording' : 'idle'; }, dur);
+  }
+  function stopPlay() {
+    clearTimeout(playTimer);
+    const fill = el('playProgress');
+    fill.style.transition = 'none'; fill.style.width = '0%';
+    setText('playBtnText', '↻ 重听');
+    if (state === 'playing') state = 'idle';
+  }
+
+  // —— 语速 ——
+  function setSpeed(r, btn) {
+    speed = r;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // —— 录音 ——
+  function onRec() {
+    if (state === 'playing') stopPlay();
+    stopPlayback();
+    state = 'recording';
+    show('recLive'); hide('recBtn'); hide('recPlayback'); hide('recActions');
+    srSecReset();
+    recSec = 0; setText('recTime', '00:00');
+    recTimer = setInterval(() => { recSec++; setText('recTime', fmt(recSec)); }, 1000);
+    // 模拟语音识别逐词出字
+    srText = ''; srIdx = 0; setText('recSr', '');
+    const words = SR_WORDS[sourceLang()];
+    srTimer = setInterval(() => {
+      if (srIdx >= words.length) return;
+      const w = words[srIdx++];
+      srText += (sourceLang() === 'en' && srText ? ' ' : '') + w;
+      el('recSr').innerHTML = escape(srText);
+    }, 900);
+  }
+  function srSecReset() { clearInterval(srTimer); }
+  function onRecStop() {
+    clearInterval(recTimer); srSecReset();
+    state = 'recorded';
+    hide('recLive'); show('recBtn'); setText('recBtn', '🎙 重新录音');
+    show('recPlayback'); show('recActions'); show('revealBtn');
+    // 评分按钮出现（盲听自评路径）
+    showRating();
+  }
+  function onRerecord() { onRec(); }
+
+  // —— 回放模拟 ——
+  let rpPlaying = false, rpSec = 0, rpTotal = 7;
+  function rpToggle() {
+    if (rpPlaying) { stopPlayback(); return; }
+    if (state === 'playing') stopPlay();
+    rpPlaying = true; rpSec = 0;
+    setText('rpBtn', '⏹');
+    rpTimer = setInterval(() => {
+      rpSec++;
+      setText('rpTime', `0:${String(rpSec).padStart(2, '0')} / 0:${String(rpTotal).padStart(2, '0')}`);
+      el('rpFill').style.width = (rpSec / rpTotal * 100) + '%';
+      if (rpSec >= rpTotal) stopPlayback(true);
+    }, 1000);
+  }
+  function stopPlayback(natural) {
+    clearInterval(rpTimer); rpPlaying = false;
+    setText('rpBtn', '▶');
+    el('rpFill').style.width = '0%';
+    setText('rpTime', `0:00 / 0:${String(rpTotal).padStart(2, '0')}`);
+  }
+
+  // —— 揭晓 ——
+  function onReveal() {
+    state = 'revealed';
+    hide('revealBtn');
+    show('revealZone');
+    setText('sourceText', sourceLang() === 'zh' ? sentence().zh : sentence().en);
+    setText('refText', sourceLang() === 'zh' ? sentence().en : sentence().zh);
+    showRating();
+  }
+
+  // —— 评分 ——
+  function showRating() {
+    el('ratingZone').innerHTML = `
+      <div class="rating-row">
+        <button class="btn rate-btn" onclick="onRate('ok')">流畅<span>复述完整</span></button>
+        <button class="btn rate-btn" onclick="onRate('shaky')">磕绊<span>大意漏项</span></button>
+        <button class="btn rate-btn" onclick="onRate('miss')">没记住<span>重新来</span></button>
+      </div>`;
+  }
+  function onRate(r) {
+    el('count').textContent = `第 ${idx + 1} 句 · ${r === 'ok' ? '流畅' : r === 'shaky' ? '磕绊' : '没记住'}`;
+    idx = (idx + 1) % (direction === 'zh2en' ? ZH2EN.length : EN2ZH.length);
+    nextSentence();
+  }
+  function onSkip() { idx = (idx + 1) % (direction === 'zh2en' ? ZH2EN.length : EN2ZH.length); nextSentence(); }
+
+  // —— 换句 ——
+  function nextSentence() {
+    clearTimeout(playTimer); srSecReset(); clearInterval(recTimer); stopPlayback();
+    state = 'idle';
+    stopPlayVisualOnly();
+    setText('playBtnText', '▶ 播放原句');
+    setText('recBtn', '🎙 复述录音'); show('recBtn'); hide('recLive');
+    hide('recPlayback'); hide('recActions');
+    setText('recSr', ''); setText('recTime', '00:00');
+    hide('revealZone'); hide('revealBtn');
+    el('ratingZone').innerHTML = '<p class="hint">听完 → 开口复述 → 对照原文后自评</p>';
+    el('dirPill').textContent = direction === 'zh2en' ? '复述 · 中文原声' : '复述 · 英文原声';
+    timerSec = 0; setText('timer', '0s');
+  }
+  function stopPlayVisualOnly() {
+    const fill = el('playProgress');
+    fill.style.transition = 'none'; fill.style.width = '0%';
+  }
+
+  // —— 方向切换 ——
+  function flipDirection() {
+    direction = direction === 'zh2en' ? 'en2zh' : 'zh2en';
+    idx = 0;
+    setText('dirToggle', direction === 'zh2en' ? '英 → 中' : '中 → 英');
+    nextSentence();
+    setText('count', '第 1 句');
+  }
+
+  // —— 工具 ——
+  function el(id) { return document.getElementById(id); }
+  function setText(id, t) { if (t !== null && el(id)) el(id).textContent = t; }
+  function show(id) { el(id).style.display = id === 'revealZone' ? 'block' : (id === 'recPlayback' || id === 'recActions' ? 'flex' : ''); }
+  function hide(id) { el(id).style.display = 'none'; }
+  function fmt(s) { return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+  function escape(s) { const d = document.createElement('span'); d.textContent = s; return d.innerHTML; }
+  function toggleSheet() { el('sheetOverlay').classList.toggle('hidden'); }
+  let toastTimer = null;
+  function toast(msg) {
+    const t = el('toastEl');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+  setInterval(() => { timerSec++; setText('timer', timerSec + 's'); }, 1000);
+</script>
+</body>
+</html>
