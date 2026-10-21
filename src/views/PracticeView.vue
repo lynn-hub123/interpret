@@ -7,16 +7,17 @@
     </header>
 
     <template v-if="current">
-      <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @skip="next(false)" />
+      <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @rec-stopped="onRecStopped" @skip="next(false)" />
       <div class="rating-zone">
-        <RatingButtons v-if="current.revealed" @rate="rate" />
-        <p v-else class="hint">口头译出后，点「看参考译文」对照</p>
+        <RatingButtons v-if="showRating" :variant="settings.mode === 'retell' ? 'retell' : 'translate'" @rate="rate" />
+        <p v-else class="hint">{{ modeHint }}</p>
       </div>
       <div class="toggles">
         <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
         <div class="mode-toggle">
           <button class="btn mode-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
           <button class="btn mode-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
+          <button class="btn mode-btn" :class="{ active: settings.mode === 'retell' }" @click="applyMode('retell')">复述</button>
         </div>
       </div>
     </template>
@@ -49,6 +50,8 @@ const history = ref([])
 const showHistory = ref(false)
 const saveWarn = ref(!storageAvailable())
 const done = computed(() => history.value.length)
+const showRating = computed(() => current.value && (current.value.revealed || (settings.value.mode === 'retell' && current.value.recDone)))
+const modeHint = computed(() => settings.value.mode === 'retell' ? '听完 → 开口复述 → 对照原文后自评' : '口头译出后，点「看参考译文」对照')
 const elapsed = ref(0)
 let startedAt = 0
 let timerId = null
@@ -63,12 +66,16 @@ function startTimer() {
 function next(counted, rating) {
   if (counted) history.value.push({ ...current.value, rating })
   const s = drawSentence({ pool: pool.value, lastId: current.value?.sentence.id ?? null, dueIds: dueQueue(pool.value), dueAllowed: quotaAvailable() })
-  current.value = s ? { sentence: { ...s }, direction: settings.value.direction, revealed: false } : null
+  current.value = s ? { sentence: { ...s }, direction: settings.value.direction, revealed: false, recDone: false } : null
   startTimer()
 }
 
 function onRevealed() {
   if (current.value) current.value.revealed = true
+}
+
+function onRecStopped() {
+  if (current.value) current.value.recDone = true
 }
 
 function rate(rating) {
