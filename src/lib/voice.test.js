@@ -55,7 +55,7 @@ describe('voice.playText', () => {
   it('falls back to TTS when audio errors, resolves on tts end', async () => {
     const p = playText({ id: 'x_9', source: 'builtin', text: 'hi', lang: 'en' })
     FakeAudio.instances[0].onerror()
-    expect(speak).toHaveBeenCalledWith('hi', 'en', expect.any(Function))
+    expect(speak).toHaveBeenCalledWith('hi', 'en', expect.any(Function), 1)
     speak.mock.calls[0][2]() // 手动触发 TTS onend
     await expect(p).resolves.toBe('played')
   })
@@ -97,5 +97,27 @@ describe('voice.playText', () => {
     expect(speak).not.toHaveBeenCalled()
     stop()
     await expect(p).resolves.toBe('stopped')
+  })
+  it('builtin applies rate to prerecorded audio', async () => {
+    const p = playText({ id: 'a', source: 'builtin', text: 'a', lang: 'zh', rate: 0.75 })
+    expect(FakeAudio.instances[0].playbackRate).toBe(0.75)
+    FakeAudio.instances[0].onended()
+    await expect(p).resolves.toBe('played')
+  })
+  it('rate 1.25 applies to audio and forwards to tts fallback', async () => {
+    const p = playText({ id: 'a', source: 'builtin', text: 'a', lang: 'zh', rate: 1.25 })
+    expect(FakeAudio.instances[0].playbackRate).toBe(1.25)
+    FakeAudio.instances[0].onerror()
+    expect(speak).toHaveBeenCalledWith('a', 'zh', expect.any(Function), 1.25)
+    speak.mock.calls[0][2]()
+    await expect(p).resolves.toBe('played')
+  })
+  it('omitted rate leaves playbackRate untouched and tts fallback gets rate 1', async () => {
+    const p = playText({ id: 'a', source: 'builtin', text: 'a', lang: 'zh' })
+    expect(FakeAudio.instances[0].playbackRate).toBeUndefined()
+    FakeAudio.instances[0].onerror()
+    expect(speak).toHaveBeenCalledWith('a', 'zh', expect.any(Function), 1)
+    speak.mock.calls[0][2]()
+    await expect(p).resolves.toBe('played')
   })
 })

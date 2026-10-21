@@ -21,7 +21,9 @@ export function stop() {
 }
 
 // Promise<'played' | 'stopped' | 'failed'>：正常播完 / 被新播放或 stop() 打断 / 兜底 TTS 也不可用
-export function playText({ id, source, text, lang }) {
+// rate：语速（0.75/1/1.25），MP3 走 playbackRate（preservesPitch 默认 true 变速不变调），TTS 透传；
+// 缺省时不触碰 playbackRate、TTS 兜底按 1
+export function playText({ id, source, text, lang, rate }) {
   stop() // 播新停旧
   return new Promise(resolve => {
     let state = null
@@ -36,12 +38,13 @@ export function playText({ id, source, text, lang }) {
     current = state // custom 句 TTS 播放期间也要可被 stop()
     // TTS 播放：custom 句直接走此路径；builtin 句音频失败后也落到这里
     const speakFallback = () => {
-      const ok = speak(text, lang, () => settle('played'))
+      const ok = speak(text, lang, () => settle('played'), rate ?? 1)
       if (!ok) settle('failed')
     }
     if (source !== 'builtin') { speakFallback(); return }
     const audio = new Audio(`${import.meta.env.BASE_URL}audio/${id}.${lang}.mp3`)
     state.audio = audio
+    if (rate !== undefined) audio.playbackRate = rate
     audio.onended = () => settle('played')
     audio.onerror = () => speakFallback()
     audio.play().catch(() => {}) // 播放失败最终会走 onerror 回退 TTS；autoplay 策略拒绝（NotAllowedError）只拒 promise 不触发 error，此处静默（接线处均为点击触发，有用户激活）
