@@ -21,7 +21,7 @@ export function setTheme(v) { settings.value.theme = v; applyTheme(); return sav
 export function setShowTimer(v) { settings.value.showTimer = v; return saveSettings() }
 
 export function setMode(v) {
-  if (v !== 'sight' && v !== 'listen') return false
+  if (v !== 'sight' && v !== 'listen' && v !== 'retell') return false
   settings.value.mode = v
   return saveSettings()
 }

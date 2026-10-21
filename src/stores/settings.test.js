@@ -51,4 +51,9 @@ describe('mode setting', () => {
     expect(settings.value.mode).toBe('sight')
     expect(localStorage.getItem('interpret.settings.v1')).toBe(null)
   })
+  it('setMode accepts retell and persists', () => {
+    expect(setMode('retell')).toBe(true)
+    expect(settings.value.mode).toBe('retell')
+    expect(JSON.parse(localStorage.getItem('interpret.settings.v1')).mode).toBe('retell')
+  })
 })
