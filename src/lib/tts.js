@@ -16,7 +16,7 @@ export function voicesFor(lang) {
   return list.find(v => /natural/i.test(v.name)) || list.find(v => /google/i.test(v.name)) || list[0]
 }
 
-export function speak(text, lang, onend) {
+export function speak(text, lang, onend, rate = 1) {
   if (!ttsSupported()) return false
   const synth = window.speechSynthesis
   cancel()
@@ -26,6 +26,7 @@ export function speak(text, lang, onend) {
   const u = new window.SpeechSynthesisUtterance(text)
   u.lang = lang === 'zh' ? 'zh-CN' : 'en-US'
   if (v) u.voice = v
+  u.rate = rate
   if (onend) u.onend = onend
   synth.speak(u)
   return true

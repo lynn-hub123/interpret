@@ -82,4 +82,14 @@ describe('tts', () => {
     ] })
     expect(voicesFor('zh').name).toMatch(/Natural/i)
   })
+  it('speak forwards rate to utterance', () => {
+    const calls = stubSynth()
+    speak('你好', 'zh', null, 0.75)
+    expect(calls.speak[0].rate).toBe(0.75)
+  })
+  it('speak defaults rate to 1', () => {
+    const calls = stubSynth()
+    speak('你好', 'zh')
+    expect(calls.speak[0].rate).toBe(1)
+  })
 })
