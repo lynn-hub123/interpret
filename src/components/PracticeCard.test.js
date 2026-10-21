@@ -525,3 +525,81 @@ describe('speech recognition zone', () => {
     expect(wrapper.find('.rec-sr').exists()).toBe(false)
   })
 })
+
+const RETELL_SPEEDS = ['0.75x', '1x', '1.25x']
+
+describe('retell mode', () => {
+  it('hides source text and shows speed control on front', () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    expect(wrapper.text()).not.toContain('你好。')
+    expect(wrapper.find('.speed-seg').exists()).toBe(true)
+    expect(wrapper.findAll('.speed-btn').map(b => b.text())).toEqual(RETELL_SPEEDS)
+  })
+  it('plays with rate from speed control', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.findAll('.speed-btn')[0].trigger('click') // 0.75x
+    await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
+    expect(playText).toHaveBeenCalledWith(expect.objectContaining({ text: '你好。', lang: 'zh', rate: 0.75 }))
+    expect(wrapper.find('.btn-listen').text()).toBe('↻ 重听')
+  })
+  it('shows play label initially and stop while playing', async () => {
+    playText.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    expect(wrapper.find('.btn-listen').text()).toBe('▶ 播放原句')
+    await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.btn-listen').text()).toBe('⏹ 停止')
+  })
+  it('recognizes source language: zh2en sentence retells zh (opposite of translate modes)', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(srStart).toHaveBeenCalledWith('zh-CN', expect.anything())
+  })
+  it('emits recStopped on stop and shows reveal button only after recording', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    expect(wrapper.find('.btn-reveal').exists()).toBe(false)
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(wrapper.emitted('recStopped')).toBeFalsy()
+    await wrapper.find('.btn-rec.recording').trigger('click')
+    await flushPromises()
+    expect(wrapper.emitted('recStopped')).toBeTruthy()
+    expect(wrapper.find('.btn-reveal').exists()).toBe(true)
+  })
+  it('reveal shows source and reference together in one step', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec.recording').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-reveal').trigger('click')
+    expect(wrapper.text()).toContain('你好。')
+    expect(wrapper.text()).toContain('Hello.')
+    expect(wrapper.text()).toContain('参考译文')
+    expect(wrapper.emitted('revealed')).toBeTruthy()
+  })
+  it('auto-reveals when play fails (no speech engine)', async () => {
+    playText.mockResolvedValueOnce('failed')
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('无语音引擎')
+    expect(wrapper.emitted('revealed')).toBeTruthy()
+  })
+  it('keeps speed across sentence change but resets played/recDone state', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.findAll('.speed-btn')[2].trigger('click') // 1.25x
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec.recording').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.btn-reveal').exists()).toBe(true)
+    await wrapper.setProps({ sentence: { ...sentence, id: 'daily_002', zh: '新句子。' } })
+    expect(wrapper.find('.btn-reveal').exists()).toBe(false) // retellRecDone 已重置
+    await wrapper.find('.btn-listen').trigger('click')
+    await flushPromises()
+    expect(playText).toHaveBeenLastCalledWith(expect.objectContaining({ rate: 1.25 })) // 语速保留
+  })
+})

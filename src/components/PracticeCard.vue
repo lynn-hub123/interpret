@@ -6,6 +6,13 @@
         <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
         <button class="btn btn-skip" @click="listenTextShown = true">显示原文</button>
       </template>
+      <template v-else-if="mode === 'retell' && !revealed">
+        <button class="btn btn-primary btn-listen" @click="onRetellPlay">{{ playing ? '⏹ 停止' : (retellPlayed ? '↻ 重听' : '▶ 播放原句') }}</button>
+        <div class="speed-seg">
+          <button v-for="r in SPEEDS" :key="r" class="speed-btn" :class="{ active: speed === r }" @click="speed = r">{{ r }}x</button>
+        </div>
+        <button class="btn btn-primary btn-reveal" v-if="retellRecDone" @click="revealed = true; emit('revealed')">对照原文</button>
+      </template>
       <template v-else>
         <p class="source">
           {{ sourceText }}
@@ -14,6 +21,7 @@
         <p v-if="speakError" class="audio-warn">{{ speakError }}</p>
         <button class="btn btn-primary btn-reveal" v-if="!revealed" @click="revealed = true; emit('revealed')">看参考译文</button>
         <div class="reference neu-inset" v-else>
+          <p v-if="mode === 'retell'" class="reference-label">参考译文</p>
           <p>{{ referenceText }}</p>
         </div>
       </template>
@@ -53,7 +61,7 @@ const props = defineProps({
   direction: { type: String, default: 'zh2en' },
   mode: { type: String, default: 'sight' }
 })
-const emit = defineEmits(['revealed', 'skip'])
+const emit = defineEmits(['revealed', 'skip', 'recStopped'])
 
 const revealed = ref(false)
 const listenTextShown = ref(false)
@@ -64,6 +72,26 @@ const ttsOK = ttsSupported() // 运行期不变，无需响应式
 const canPlay = computed(() => props.sentence.source === 'builtin' || ttsOK)
 const playing = ref(false)
 
+// —— 复述模式：语速跟句保持（换句不重置），重听/已录状态随句重置 ——
+const SPEEDS = [0.75, 1, 1.25]
+const speed = ref(1)
+const retellPlayed = ref(false)
+const retellRecDone = ref(false)
+
+function onRetellPlay() {
+  listenError.value = ''
+  if (playing.value) { stop(); return }
+  playing.value = true
+  playCurrent().then(ok => {
+    if (ok) retellPlayed.value = true
+    else {
+      listenError.value = '当前设备无语音引擎，已显示原文'
+      revealed.value = true
+      emit('revealed')
+    }
+  })
+}
+
 watch(() => props.sentence, () => {
   revealed.value = false
   listenTextShown.value = false
@@ -71,6 +99,9 @@ watch(() => props.sentence, () => {
   speakError.value = ''
   stop()
   playing.value = false
+  retellPlayed.value = false
+  retellRecDone.value = false
+  // speed 故意不重置：调一次多句沿用
   isRec.value = false
   stopRecTimer()
   srStop() // 防旧句识别跨句继续出字
@@ -94,7 +125,7 @@ const referenceText = computed(() => {
 
 async function playCurrent() {
   if (recPlayback.value) recPlayback.value.pause() // 互斥：播原句前先停自己的回放
-  const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value })
+  const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value, rate: speed.value })
   playing.value = false
   return r !== 'failed'
 }
@@ -127,7 +158,10 @@ const srOK = speechSupported()
 const recFinal = ref('')
 const recInterim = ref('')
 const srError = ref('')
-const srLang = computed(() => (props.direction === 'zh2en' ? 'en-US' : 'zh-CN'))
+const srLang = computed(() => {
+  if (props.mode === 'retell') return sourceLang.value === 'zh' ? 'zh-CN' : 'en-US'
+  return props.direction === 'zh2en' ? 'en-US' : 'zh-CN'
+})
 const SR_ERROR_TEXT = {
   'not-allowed': '语音识别权限被拒，可在地址栏允许后重试；录音不受影响',
   network: '识别服务连接不稳定，多次重试仍失败；录音不受影响',
@@ -194,6 +228,7 @@ async function onRecStop() {
   const url = await stopRecording()
   isRec.value = false
   if (url) recUrl.value = url
+  if (props.mode === 'retell') { retellRecDone.value = true; emit('recStopped') }
 }
 
 // 互斥：自己的回放开播时停掉原句（听原句与上方 🔊 共用 playing 状态）
@@ -245,6 +280,15 @@ onUnmounted(() => {
 
 .rec-sr { font-size: 13px; line-height: 1.6; color: var(--text-muted); text-align: center; margin: 0; }
 .sr-interim { opacity: 0.45; }
+
+.speed-seg { display: flex; gap: 4px; }
+.speed-btn {
+  border: none; cursor: pointer; font: inherit; font-size: 12px; color: var(--text-muted);
+  background: var(--surface); border-radius: 10px; padding: 6px 12px; box-shadow: var(--shadow-out);
+  transition: box-shadow 0.12s ease, color 0.12s ease;
+}
+.speed-btn.active { color: var(--accent-text); box-shadow: var(--shadow-in); }
+.reference-label { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; }
 
 @keyframes rec-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 70, 58, 0.3); }
