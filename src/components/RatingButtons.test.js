@@ -10,4 +10,12 @@ describe('RatingButtons', () => {
     await btns[1].trigger('click')
     expect(w.emitted('rate')).toEqual([['shaky']])
   })
+
+  it('retell variant shows retell labels with same emit values', async () => {
+    const w = mount(RatingButtons, { props: { variant: 'retell' } })
+    const btns = w.findAll('button')
+    expect(btns.map(b => b.text())).toEqual(['流畅', '磕绊', '没记住'])
+    await btns[0].trigger('click')
+    expect(w.emitted('rate')).toEqual([['ok']])
+  })
 })

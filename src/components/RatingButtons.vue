@@ -5,12 +5,23 @@
 </template>
 
 <script setup>
+const props = defineProps({
+  variant: { type: String, default: 'translate' }
+})
 const emit = defineEmits(['rate'])
-const ratings = [
-  { value: 'ok', label: '能译' },
-  { value: 'shaky', label: '磕绊' },
-  { value: 'miss', label: '不会' }
-]
+const LABELS = {
+  translate: [
+    { value: 'ok', label: '能译' },
+    { value: 'shaky', label: '磕绊' },
+    { value: 'miss', label: '不会' }
+  ],
+  retell: [
+    { value: 'ok', label: '流畅' },
+    { value: 'shaky', label: '磕绊' },
+    { value: 'miss', label: '没记住' }
+  ]
+}
+const ratings = LABELS[props.variant] || LABELS.translate
 </script>
 
 <style scoped>
