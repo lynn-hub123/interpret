@@ -602,4 +602,14 @@ describe('retell mode', () => {
     await flushPromises()
     expect(playText).toHaveBeenLastCalledWith(expect.objectContaining({ rate: 1.25 })) // 语速保留
   })
+  it('does not leak speed to other modes after mode switch', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    await wrapper.findAll('.speed-btn')[2].trigger('click') // 1.25x
+    await wrapper.setProps({ mode: 'sight' })
+    await wrapper.find('.btn-speak').trigger('click')
+    await flushPromises()
+    expect(playText).toHaveBeenLastCalledWith(expect.objectContaining({ rate: undefined }))
+    await wrapper.setProps({ mode: 'retell' })
+    expect(wrapper.findAll('.speed-btn')[2].classes()).not.toContain('active') // 语速已重置
+  })
 })

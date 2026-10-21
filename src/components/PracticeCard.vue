@@ -109,10 +109,11 @@ watch(() => props.sentence, () => {
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
 })
 
-// 中途切模式不换句：清掉旧模式的音频提示，避免失真残留（朗读停止由父级 applyMode 负责）
+// 中途切模式不换句：清音频提示并重置语速，避免旧模式状态残留（朗读停止由父级 applyMode 负责）
 watch(() => props.mode, () => {
   listenError.value = ''
   speakError.value = ''
+  speed.value = 1
 })
 
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
@@ -125,7 +126,8 @@ const referenceText = computed(() => {
 
 async function playCurrent() {
   if (recPlayback.value) recPlayback.value.pause() // 互斥：播原句前先停自己的回放
-  const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value, rate: speed.value })
+  // rate 仅复述模式生效；其他模式走 playText 缺省路径（rate undefined 时不触碰 playbackRate）
+  const r = await playText({ id: props.sentence.id, source: props.sentence.source, text: sourceText.value, lang: sourceLang.value, rate: props.mode === 'retell' ? speed.value : undefined })
   playing.value = false
   return r !== 'failed'
 }
@@ -170,7 +172,7 @@ const SR_ERROR_TEXT = {
 function onSrFinal(text) {
   if (!text) return
   recInterim.value = '' // final 送达后清除 stale interim，防重复残影
-  recFinal.value += (props.direction === 'zh2en' && recFinal.value ? ' ' : '') + text
+  recFinal.value += (srLang.value === 'en-US' && recFinal.value ? ' ' : '') + text
 }
 function onSrInterim(text) { recInterim.value = text }
 const srHandlers = {

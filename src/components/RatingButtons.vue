@@ -5,6 +5,8 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   variant: { type: String, default: 'translate' }
 })
@@ -21,7 +23,7 @@ const LABELS = {
     { value: 'miss', label: '没记住' }
   ]
 }
-const ratings = LABELS[props.variant] || LABELS.translate
+const ratings = computed(() => LABELS[props.variant] || LABELS.translate)
 </script>
 
 <style scoped>
