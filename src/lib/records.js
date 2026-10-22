@@ -46,3 +46,14 @@ export function stats(nowFn = Date.now) {
     topicStrength: strength
   }
 }
+
+// 按句子聚合练习次数与最近练习时间，供自定义句列表展示
+export function practiceCounts() {
+  const counts = {}
+  for (const r of getRecords()) {
+    const c = (counts[r.sentenceId] ??= { count: 0, lastTs: 0 })
+    c.count += 1
+    if (r.ts > c.lastTs) c.lastTs = r.ts
+  }
+  return counts
+}

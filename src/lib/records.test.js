@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { addRecord, getRecords, stats } from './records.js'
+import { addRecord, getRecords, stats, practiceCounts } from './records.js'
 import { save } from './storage.js'
 
 const now = new Date('2026-10-14T12:00:00+08:00').getTime()
@@ -41,5 +41,21 @@ describe('getRecords guard', () => {
   it('returns empty array when records.v1 is not an array', () => {
     localStorage.setItem('interpret.records.v1', JSON.stringify({ broken: true }))
     expect(getRecords()).toEqual([])
+  })
+})
+
+describe('practiceCounts', () => {
+  it('aggregates count and latest ts per sentence', () => {
+    save('records.v1', [
+      { id: 'r1', sentenceId: 'c_1', direction: 'zh2en', rating: 'ok', ts: now - 2 * day },
+      { id: 'r2', sentenceId: 'c_1', direction: 'zh2en', rating: 'shaky', ts: now },
+      { id: 'r3', sentenceId: 'c_2', direction: 'en2zh', rating: 'miss', ts: now - day }
+    ])
+    const counts = practiceCounts()
+    expect(counts.c_1).toEqual({ count: 2, lastTs: now })
+    expect(counts.c_2).toEqual({ count: 1, lastTs: now - day })
+  })
+  it('returns empty object with no records', () => {
+    expect(practiceCounts()).toEqual({})
   })
 })
