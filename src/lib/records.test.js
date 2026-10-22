@@ -47,8 +47,8 @@ describe('getRecords guard', () => {
 describe('practiceCounts', () => {
   it('aggregates count and latest ts per sentence', () => {
     save('records.v1', [
-      { id: 'r1', sentenceId: 'c_1', direction: 'zh2en', rating: 'ok', ts: now - 2 * day },
-      { id: 'r2', sentenceId: 'c_1', direction: 'zh2en', rating: 'shaky', ts: now },
+      { id: 'r1', sentenceId: 'c_1', direction: 'zh2en', rating: 'ok', ts: now },
+      { id: 'r2', sentenceId: 'c_1', direction: 'zh2en', rating: 'shaky', ts: now - 2 * day },
       { id: 'r3', sentenceId: 'c_2', direction: 'en2zh', rating: 'miss', ts: now - day }
     ])
     const counts = practiceCounts()
