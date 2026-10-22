@@ -99,6 +99,18 @@ describe('custom sentence panel', () => {
     expect(w.find('.saved').exists()).toBe(false)
   })
 
+  it('keeps the list and warns when deletion cannot be persisted', async () => {
+    seedSentences()
+    const w = mountView()
+    await w.find('.saved-head').trigger('click')
+    const spy = vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('quota') })
+    await w.findAll('.btn-remove')[0].trigger('click')
+    spy.mockRestore()
+    expect(w.findAll('.saved-item')).toHaveLength(2)
+    expect(w.text()).toContain('删除未保存：存储不可用')
+    expect(w.find('.undo-bar').exists()).toBe(false)
+  })
+
   it('undo bar auto-hides after 6 seconds', async () => {
     vi.useFakeTimers()
     seedSentences()

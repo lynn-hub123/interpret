@@ -190,7 +190,7 @@ textarea { width: 100%; border: none; resize: vertical; padding: 14px; font-size
 .btn-del { width: 100%; margin-top: 10px; color: #e8463a; font-size: 14px; }
 .btn-del:disabled { opacity: 0.4; }
 .undo-bar {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: 88px; z-index: 20;
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 20;
   display: flex; align-items: center; gap: 14px;
   background: var(--surface); border-radius: 999px; padding: 10px 18px;
   box-shadow: var(--shadow-out); font-size: 14px;
