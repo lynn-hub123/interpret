@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { TOPICS, allBuiltinSentences, splitPasteText, detectLang, addCustomSentences, getCustomSentences, sentenceById } from './sentences.js'
+import { TOPICS, allBuiltinSentences, splitPasteText, detectLang, addCustomSentences, getCustomSentences, sentenceById, removeCustomSentences, restoreCustomSentences } from './sentences.js'
 
 beforeEach(() => localStorage.clear())
 
@@ -65,5 +65,61 @@ describe('persistence hardening', () => {
   })
   it('detectLang treats empty string as en', () => {
     expect(detectLang('')).toBe('en')
+  })
+})
+
+describe('removeCustomSentences', () => {
+  const seed = () => {
+    addCustomSentences(['第一句。', '第二句。', '第三句。'])
+    return getCustomSentences()
+  }
+
+  it('removes target and reports original index, keeping order of the rest', () => {
+    const list = seed()
+    const { removed, persisted } = removeCustomSentences([list[1].id])
+    expect(persisted).toBe(true)
+    expect(removed).toHaveLength(1)
+    expect(removed[0]).toEqual({ index: 1, item: list[1] })
+    expect(getCustomSentences().map(s => s.zh)).toEqual(['第一句。', '第三句。'])
+  })
+
+  it('removes multiple ids in one pass', () => {
+    const list = seed()
+    const { removed } = removeCustomSentences([list[0].id, list[2].id])
+    expect(removed.map(r => r.index)).toEqual([0, 2])
+    expect(getCustomSentences().map(s => s.zh)).toEqual(['第二句。'])
+  })
+
+  it('is a no-op for unknown ids and does not write storage', () => {
+    const list = seed()
+    const { removed, persisted } = removeCustomSentences(['nope'])
+    expect(removed).toEqual([])
+    expect(persisted).toBe(true)
+    expect(getCustomSentences()).toHaveLength(list.length)
+  })
+})
+
+describe('restoreCustomSentences', () => {
+  it('restores at original indices so order matches pre-delete state', () => {
+    addCustomSentences(['甲。', '乙。', '丙。'])
+    const before = getCustomSentences()
+    const { removed } = removeCustomSentences([before[0].id, before[2].id])
+    restoreCustomSentences(removed)
+    expect(getCustomSentences().map(s => s.zh)).toEqual(['甲。', '乙。', '丙。'])
+  })
+
+  it('skips entries whose id already exists', () => {
+    addCustomSentences(['甲。'])
+    const one = getCustomSentences()[0]
+    restoreCustomSentences([{ index: 0, item: one }])
+    expect(getCustomSentences()).toHaveLength(1)
+  })
+
+  it('clamps out-of-range index to the tail', () => {
+    addCustomSentences(['甲。'])
+    const one = getCustomSentences()[0]
+    removeCustomSentences([one.id])
+    restoreCustomSentences([{ index: 99, item: one }])
+    expect(getCustomSentences().map(s => s.zh)).toEqual(['甲。'])
   })
 })

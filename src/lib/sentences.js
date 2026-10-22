@@ -68,3 +68,27 @@ export function getCustomSentences() {
   const list = load('custom.v1', [])
   return Array.isArray(list) ? list : []
 }
+
+// 批量移除自定义句；返回被删条目及原始索引，供撤销按位恢复
+export function removeCustomSentences(ids) {
+  const list = getCustomSentences()
+  const idSet = new Set(ids)
+  const removed = []
+  const kept = []
+  list.forEach((s, index) => {
+    if (idSet.has(s.id)) removed.push({ index, item: s })
+    else kept.push(s)
+  })
+  if (removed.length === 0) return { removed: [], persisted: true }
+  return { removed, persisted: save('custom.v1', kept) }
+}
+
+// 按原始索引升序插回；已存在的 id 跳过，防撤销时重复插入
+export function restoreCustomSentences(entries) {
+  const list = getCustomSentences()
+  const exist = new Set(list.map(s => s.id))
+  const sorted = entries.filter(e => !exist.has(e.item.id)).sort((a, b) => a.index - b.index)
+  const next = [...list]
+  for (const e of sorted) next.splice(Math.min(e.index, next.length), 0, e.item)
+  return save('custom.v1', next)
+}
