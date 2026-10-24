@@ -367,3 +367,60 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
 - **`ai.v1` 永不进入导出文件**
 - 练习、题库、粘贴、我的四个 tab 的既有行为零改动
 - 语音识别、录音、复述模式、SRS 调度语义全部不变
+
+## 15. 卡库文案（初稿）
+
+文案原则：语气按人设区分；句长随稀有度递增（超稀有最长、最难）；每句都保留口译练习价值（有转折、有从句、不是纯短情话）。
+
+| id | 角色 | 稀有度 | 人设 | 主题色 |
+|---|---|---|---|---|
+| `zhouye` | 周野 | 普通 | 运动系，直球 | `#e08a5a` |
+| `chenmo` | 陈默 | 普通 | 安静系，话少 | `#6f8fa8` |
+| `subai` | 苏白 | 普通 | 温和医生 | `#7fb3a8` |
+| `jiangyu` | 江屿 | 普通 | 冷淡建筑师 | `#5d6b7d` |
+| `guyan` | 顾言 | 稀有 | 声音好听的主播 | `#8a7bd8` |
+| `shenyan` | 沈砚 | 稀有 | 古董修复师，古意 | `#5b7a6a` |
+| `peizhao` | 裴照 | 稀有 | 律师，锋利 | `#a85a63` |
+| `xielin` | 谢临 | 超稀有 | 指挥家，疏离 | `#c9a25a` |
+
+**周野**
+
+- 中：别光顾着往前跑，偶尔也回头看看，我一直跟在你后面。
+- 英：Stop looking only at the road ahead — turn around once in a while. I've been right behind you the whole time.
+
+**陈默**
+
+- 中：你不需要说很多话，我听得懂你沉默里的每一个字。
+- 英：You don't have to say much — I can hear every word inside your silence.
+
+**苏白**
+
+- 中：如果我发烧了，你能不能一整晚坐在床边，而不是只给我开张药方。
+- 英：If I get a fever, will you sit by my bed all night instead of just writing me a prescription?
+
+**江屿**
+
+- 中：你画过那么多房子，什么时候也画一间，让我住进去。
+- 英：You've designed so many houses — when will you draw one for me to live in?
+
+**顾言**
+
+- 中：你的声音从耳机里响起来的时候，整条街的噪音好像都安静了。
+- 英：Whenever your voice comes through my headphones, the whole street seems to go quiet.
+
+**沈砚**
+
+- 中：你修好了那么多旧东西，能不能也帮我，把那段没说完的话接回去。
+- 英：You've restored so many old things — could you also help me piece together the sentence we never finished?
+
+**裴照**
+
+- 中：你赢过那么多场官司，这一局，能不能故意输给我。
+- 英：You've won so many cases — could you lose this one to me on purpose?
+
+**谢临**
+
+- 中：全场都在等你抬手的那个瞬间，可我只想让你在所有人里，先看见我。
+- 英：The whole hall is waiting for the moment you raise your hand — but of all those people, I just want you to see me first.
+
+数据落位：`src/data/cards.json`，每条包含 `id` / `name` / `tier` / `accent` / `unlock: { zh, en }`，解锁句 id 由 `card_<id>_unlock` 生成。
