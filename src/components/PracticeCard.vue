@@ -52,7 +52,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
-import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
+import { recorderSupported, startRecording, stopRecording, revoke, isRecording, lastErrorName } from '../lib/recorder.js'
 import { speechSupported, start as srStart, stop as srStop } from '../lib/speech.js'
 import RecPlayback from './RecPlayback.vue'
 
@@ -252,6 +252,8 @@ onUnmounted(() => {
   srStop()
   stopRecTimer()
   if (recUrl.value) revoke(recUrl.value)
+  // 卸载时若仍在录音，真正停掉 MediaRecorder 并释放麦克风；回调只 revoke，不碰组件状态
+  if (isRecording()) stopRecording().then(url => { if (url) revoke(url) })
 })
 </script>
 

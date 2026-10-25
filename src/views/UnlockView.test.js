@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UnlockView from './UnlockView.vue'
 import PracticeCard from '../components/PracticeCard.vue'
-import { onDrawn, getCardState } from '../lib/cards.js'
+import CardReveal from '../components/CardReveal.vue'
+import { onDrawn, getCardState, recordAttempt } from '../lib/cards.js'
 import { saveAiConfig } from '../lib/grade.js'
 
 vi.mock('vue-router', () => ({
@@ -16,6 +17,7 @@ vi.mock('../lib/recorder.js', () => ({
   recorderSupported: () => recSupported,
   startRecording: vi.fn(),
   stopRecording: vi.fn(),
+  isRecording: vi.fn(() => false),
   revoke: vi.fn(),
   lastErrorName: () => ''
 }))
@@ -57,6 +59,20 @@ describe('录音门禁', () => {
     expect(w.findAll('.rating-row .btn')).toHaveLength(5)
     expect(w.text()).toContain('本设备无法录音')
   })
+
+  it('录音不可用时再试一次仍直接给五档，不回到录音门禁', async () => {
+    recSupported = false
+    const w = mountView()
+    await w.findAll('.rating-row .btn')[2].trigger('click')
+    await w.vm.$nextTick()
+    expect(w.find('.result').exists()).toBe(true)
+
+    await w.findAll('.result-actions .btn').find(b => b.text() === '再试一次').trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findAll('.rating-row .btn')).toHaveLength(5)
+    expect(w.text()).not.toContain('先录一次音')
+    expect(w.text()).toContain('本设备无法录音')
+  })
 })
 
 describe('提交评分', () => {
@@ -95,6 +111,38 @@ describe('提交评分', () => {
     expect(getCardState('zhouye').hidden).toBe(false)
     expect(w.text()).toContain('看过参考译文')
   })
+
+  it('首次偷看且未满 100%：提示隐藏资格作废', async () => {
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('revealed')
+    await w.vm.$nextTick()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'part')
+    await w.vm.$nextTick()
+    await w.findAll('.rating-row .btn')[2].trigger('click')
+    await w.vm.$nextTick()
+    expect(w.text()).toContain('隐藏形态资格已作废')
+    expect(w.text()).not.toContain('看过参考译文')
+  })
+
+  it('已解锁未隐藏的卡：首次未拿满 100% 后重试，隐藏挑战与完整卡面都消失', async () => {
+    recordAttempt({ cardId: 'zhouye', bucket: 50 })
+    recordAttempt({ cardId: 'zhouye', bucket: 100 }) // 先解锁普通形态，hidden 仍为 false
+    onDrawn('zhouye') // 重新抽到：attempts 归零，隐藏挑战成立
+    const w = mountView()
+    expect(w.findComponent(CardReveal).props('full')).toBe(true)
+    expect(w.text()).toContain('隐藏挑战')
+
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'part')
+    await w.vm.$nextTick()
+    await w.findAll('.rating-row .btn')[2].trigger('click')
+    await w.vm.$nextTick()
+    await w.findAll('.result-actions .btn').find(b => b.text() === '再试一次').trigger('click')
+    await w.vm.$nextTick()
+
+    expect(w.findComponent(CardReveal).props('full')).toBe(false)
+    expect(w.text()).not.toContain('隐藏挑战')
+    expect(w.text()).toContain('再练一次，卡面进度只升不降')
+  })
 })
 
 describe('AI 软校验', () => {
@@ -122,5 +170,61 @@ describe('AI 软校验', () => {
     await w.vm.$nextTick()
     expect(getCardState('zhouye').progress).toBe(75)
     expect(w.find('.confirm').exists()).toBe(false)
+  })
+
+  it('AI 请求未返回时重试，旧结果不写入新面板', async () => {
+    saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
+    let resolveFetch
+    const pending = new Promise(r => { resolveFetch = r })
+    vi.stubGlobal('fetch', vi.fn(() => pending))
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'old words')
+    await w.vm.$nextTick()
+    await w.find('.btn-ai').trigger('click')
+    expect(w.find('.btn-ai').text()).toBe('AI 评分中…')
+
+    await w.findAll('.rating-row .btn')[2].trigger('click')
+    await w.vm.$nextTick()
+    await w.findAll('.result-actions .btn').find(b => b.text() === '再试一次').trigger('click')
+    await w.vm.$nextTick()
+
+    resolveFetch({ ok: true, json: async () => ({ choices: [{ message: { content: '{"score": 100, "reason": "旧结果"}' } }] }) })
+    await flush()
+    await w.vm.$nextTick()
+
+    expect(w.find('.ai-note').exists()).toBe(false)
+    expect(w.text()).not.toContain('AI 认为')
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'new words')
+    await w.vm.$nextTick()
+    expect(w.find('.btn-ai').text()).toBe('让 AI 评一下') // aiBusy 已复位
+  })
+
+  it('识别文本为空时不出现 AI 按钮，并标注本次为自评', async () => {
+    saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', '   ')
+    await w.vm.$nextTick()
+    expect(w.find('.btn-ai').exists()).toBe(false)
+    expect(w.text()).toContain('本次为自评')
+  })
+
+  it('AI 给出结果后不显示本次为自评；改识别文本后 AI 结论失效', async () => {
+    saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 75, "reason": "基本完整"}' } }] })
+    })))
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'some words')
+    await w.vm.$nextTick()
+    await w.find('.btn-ai').trigger('click')
+    await flush()
+    await w.vm.$nextTick()
+    expect(w.find('.ai-note').text()).toContain('AI 认为 75%')
+    expect(w.text()).not.toContain('本次为自评')
+
+    await w.find('textarea').setValue('changed words')
+    expect(w.find('.ai-note').exists()).toBe(false)
+    expect(w.text()).toContain('本次为自评')
   })
 })

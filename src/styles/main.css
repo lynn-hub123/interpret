@@ -9,6 +9,7 @@
   --accent: #32f08c;
   --accent-soft: rgba(50, 240, 140, 0.14);
   --accent-text: #b8ffd9;
+  --gold-text: #e0b95a;
   --shadow-out: 6px 6px 14px rgba(0, 0, 0, 0.55), -6px -6px 14px rgba(255, 255, 255, 0.045);
   --shadow-in: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.04);
   color-scheme: dark;
@@ -23,6 +24,7 @@
   --accent: #0ab861;
   --accent-soft: rgba(10, 184, 97, 0.12);
   --accent-text: #00632f;
+  --gold-text: #8a6516;
   --shadow-out: 6px 6px 14px rgba(163, 172, 184, 0.6), -6px -6px 14px rgba(255, 255, 255, 0.95);
   --shadow-in: inset 4px 4px 8px rgba(163, 172, 184, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
   color-scheme: light;

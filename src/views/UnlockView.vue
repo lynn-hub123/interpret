@@ -30,14 +30,14 @@
           <template v-else>
             <p v-if="!recOK" class="hint">本设备无法录音，本次为自评</p>
             <label class="sr-edit">识别文本（可修改，改完再让 AI 评）
-              <textarea v-model="spokenText" rows="2" placeholder="没有识别文字也可以直接自评"></textarea>
+              <textarea v-model="spokenText" rows="2" maxlength="1000" placeholder="没有识别文字也可以直接自评" @input="onSpokenInput"></textarea>
             </label>
-            <button v-if="aiConfigured && recOK" class="btn btn-ai" :disabled="aiBusy" @click="askAi">
+            <button v-if="aiConfigured && recOK && spokenText.trim()" class="btn btn-ai" :disabled="aiBusy" @click="askAi">
               {{ aiBusy ? 'AI 评分中…' : '让 AI 评一下' }}
             </button>
             <p v-if="aiNote" class="ai-note">{{ aiNote }}</p>
             <RatingButtons variant="unlock" @rate="onRate" />
-            <p v-if="!aiConfigured || !spokenText.trim()" class="hint">本次为自评</p>
+            <p v-if="!aiResult" class="hint">本次为自评</p>
           </template>
 
           <div v-if="confirm" class="confirm neu-raised">
@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PracticeCard from '../components/PracticeCard.vue'
 import CardReveal from '../components/CardReveal.vue'
@@ -95,7 +95,7 @@ const card = cardById(route.params.id)
 const direction = settings.value.direction // 进页即固定，不跟随全局切换
 const sentence = card ? unlockSentence(card) : null
 const entry = ref(card ? getCardState(card.id) : null)
-const hiddenChallenge = card ? hiddenChallengeOf(entry.value) : false
+const hiddenChallenge = computed(() => (card ? hiddenChallengeOf(entry.value) : false))
 
 const recOK = recorderSupported() // 运行期不变
 const recorded = ref(!recOK) // 无法录音时直接进入自评，避免死路
@@ -105,13 +105,15 @@ const aiConfigured = aiReady(aiConfig)
 const aiBusy = ref(false)
 const aiNote = ref('')
 const aiResult = ref(null)
+let aiSeq = 0
 const confirm = ref(null)
 const result = ref(null)
 const saveWarn = ref(!storageAvailable())
 const attemptKey = ref(0)
 
 const tip = computed(() => {
-  if (hiddenChallenge) return '隐藏挑战：卡面已完整显示，这次第一发翻到 100% 才能拿到隐藏形态'
+  if (entry.value?.attempts > 0) return '再练一次，卡面进度只升不降'
+  if (hiddenChallenge.value) return '隐藏挑战：卡面已完整显示，这次第一发翻到 100% 才能拿到隐藏形态'
   return '口译这一句，剪影会按你翻出的程度露出；第一次就翻到 100% 可得隐藏形态'
 })
 
@@ -136,16 +138,33 @@ function onRecStopped(text) {
 
 async function askAi() {
   if (!card) return
+  const seq = ++aiSeq
   aiBusy.value = true
-  const r = await gradeWithAI({
-    config: aiConfig,
-    sourceText: sourceText(),
-    referenceText: referenceText(),
-    spokenText: spokenText.value
-  })
+  try {
+    const r = await gradeWithAI({
+      config: aiConfig,
+      sourceText: sourceText(),
+      referenceText: referenceText(),
+      spokenText: spokenText.value.trim().slice(0, 1000)
+    })
+    if (seq !== aiSeq) return
+    aiResult.value = r
+    aiNote.value = r.bucket === null ? 'AI 暂时给不出分，本次为自评' : `AI 认为 ${r.bucket}%${r.reason ? '：' + r.reason : ''}`
+  } catch {
+    if (seq !== aiSeq) return
+    aiResult.value = null
+    aiNote.value = 'AI 暂时给不出分，本次为自评'
+  } finally {
+    if (seq === aiSeq) aiBusy.value = false
+  }
+}
+
+// 识别文本一变，上一轮 AI 结论立即失效（含仍在途的请求）
+function onSpokenInput() {
+  aiSeq += 1
   aiBusy.value = false
-  aiResult.value = r
-  aiNote.value = r.bucket === null ? 'AI 暂时给不出分，本次为自评' : `AI 认为 ${r.bucket}%${r.reason ? '：' + r.reason : ''}`
+  aiResult.value = null
+  aiNote.value = ''
 }
 
 function onRate(bucket) {
@@ -165,7 +184,7 @@ function submit(bucket) {
 
   const rating = bucket >= 75 ? 'ok' : bucket > 0 ? 'shaky' : 'miss'
   if (!addRecord({ sentenceId: sentence.id, direction, rating })) saveWarn.value = true
-  onRated({ sentenceId: sentence.id, rating })
+  if (!onRated({ sentenceId: sentence.id, rating })) saveWarn.value = true
   if (!addPractice().persisted) saveWarn.value = true
 
   result.value = {
@@ -173,15 +192,17 @@ function submit(bucket) {
     progress: attempt.entry.progress,
     unlockedNow: !prev.unlocked && attempt.entry.unlocked,
     hiddenNow: attempt.hiddenNow,
-    hiddenMissed: prev.attempts === 0 && bucket < 100 && !prev.peeked && !prev.hidden,
+    hiddenMissed: prev.attempts === 0 && bucket < 100 && !prev.hidden,
     peekedBlocked: prev.attempts === 0 && bucket === 100 && prev.peeked && !prev.hidden
   }
 }
 
 function retry() {
   result.value = null
-  recorded.value = false
+  recorded.value = !recOK
   spokenText.value = ''
+  aiSeq += 1
+  aiBusy.value = false
   aiResult.value = null
   aiNote.value = ''
   attemptKey.value += 1
@@ -190,6 +211,13 @@ function retry() {
 function backToPractice() {
   router.push('/')
 }
+
+onUnmounted(() => {
+  aiSeq += 1
+  aiBusy.value = false
+  aiResult.value = null
+  aiNote.value = ''
+})
 </script>
 
 <style scoped>
@@ -215,7 +243,7 @@ function backToPractice() {
 .result { padding: 16px; margin-top: 14px; }
 .result-title { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
 .result p { font-size: 13px; margin: 4px 0; }
-.gold { color: #e0b95a; }
+.gold { color: var(--gold-text); }
 .save-warn { text-align: center; font-size: 12px; color: #e8463a; opacity: 0.8; margin: 12px 0 0; }
 .empty { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 </style>

@@ -5,7 +5,7 @@ import { nextTick } from 'vue'
 import RecPlayback from './RecPlayback.vue'
 import { playText, stop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
-import { recorderSupported, startRecording, stopRecording, revoke, lastErrorName } from '../lib/recorder.js'
+import { recorderSupported, startRecording, stopRecording, revoke, isRecording, lastErrorName } from '../lib/recorder.js'
 import { speechSupported, start as srStart, stop as srStop } from '../lib/speech.js'
 
 vi.mock('../lib/voice.js', () => ({
@@ -292,6 +292,15 @@ describe('recording zone', () => {
     await flushPromises()
     expect(intervalSpy).not.toHaveBeenCalled()
     intervalSpy.mockRestore()
+  })
+  it('stops recorder and revokes new url on unmount while recording', async () => {
+    isRecording.mockReturnValueOnce(true)
+    stopRecording.mockResolvedValueOnce('blob:unmount')
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    wrapper.unmount()
+    await flushPromises()
+    expect(stopRecording).toHaveBeenCalled()
+    expect(revoke).toHaveBeenCalledWith('blob:unmount')
   })
   it('keeps single timer when start clicked twice quickly', async () => {
     let resolveStart
