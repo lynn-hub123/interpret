@@ -83,4 +83,7 @@ describe('allCollected', () => {
   it('空状态为 false', () => {
     expect(allCollected(CARDS, {})).toBe(false)
   })
+  it('state 传 null 时不抛错，视为未收集', () => {
+    expect(allCollected(CARDS, null)).toBe(false)
+  })
 })

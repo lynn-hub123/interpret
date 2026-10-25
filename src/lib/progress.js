@@ -13,6 +13,7 @@ export function normalizeProgress(v) {
   for (const k of Object.keys(DEFAULTS)) {
     if (Number.isFinite(s[k]) && s[k] >= 0) out[k] = s[k]
   }
+  out.practiced = Math.min(out.practiced, TICKET_EVERY - 1)
   return out
 }
 

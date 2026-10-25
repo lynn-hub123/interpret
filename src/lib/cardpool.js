@@ -31,5 +31,6 @@ export function drawCard({ cards, owned = [], sinceNew = 0, rng = Math.random })
 
 // 收集终点：8 张普通形态 + 8 个隐藏形态全部拿到
 export function allCollected(cards, state = {}) {
-  return Array.isArray(cards) && cards.length > 0 && cards.every(c => state[c.id]?.unlocked === true && state[c.id]?.hidden === true)
+  const s = state && typeof state === 'object' ? state : {}
+  return Array.isArray(cards) && cards.length > 0 && cards.every(c => s[c.id]?.unlocked === true && s[c.id]?.hidden === true)
 }

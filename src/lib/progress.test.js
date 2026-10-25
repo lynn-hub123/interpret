@@ -19,6 +19,13 @@ describe('常量与容错', () => {
     expect(getProgress()).toEqual({ practiced: 0, total: 0, tickets: 0, earned: 0, sinceNew: 0, draws: 0 })
   })
 
+  it('practiced 脏数据夹到 14，避免一次发大量券', () => {
+    const r = nextProgress({ practiced: 1e9, total: 0, tickets: 0, earned: 0, sinceNew: 0, draws: 0 })
+    expect(r.gained).toBeLessThanOrEqual(1)
+    expect(r.state.tickets).toBeLessThanOrEqual(1)
+    expect(r.state.practiced).toBeLessThan(15)
+  })
+
   it('thresholdFor：首张券 5，之后 15', () => {
     expect(thresholdFor({ earned: 0 })).toBe(5)
     expect(thresholdFor({ earned: 3 })).toBe(15)
@@ -85,6 +92,6 @@ describe('remainingForTicket', () => {
   it('按当前门槛返回还差几句', () => {
     expect(remainingForTicket({ earned: 0, practiced: 2 })).toBe(3)
     expect(remainingForTicket({ earned: 1, practiced: 10 })).toBe(5)
-    expect(remainingForTicket({ earned: 1, practiced: 15 })).toBe(0)
+    expect(remainingForTicket({ earned: 1, practiced: 15 })).toBe(1)
   })
 })
