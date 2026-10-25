@@ -230,7 +230,8 @@ async function onRecStop() {
   const url = await stopRecording()
   isRec.value = false
   if (url) recUrl.value = url
-  if (props.mode === 'retell') { retellRecDone.value = true; emit('recStopped') }
+  if (props.mode === 'retell') retellRecDone.value = true
+  emit('recStopped', recFinal.value || '')
 }
 
 // 互斥：自己的回放开播时停掉原句（听原句与上方 🔊 共用 playing 状态）
