@@ -21,11 +21,13 @@ describe('RatingButtons', () => {
 })
 
 describe('unlock variant', () => {
-  it('渲染五档并原样回传 0/25/50/75/100', async () => {
+  it('渲染五档并逐档原样回传 0/25/50/75/100', async () => {
     const w = mount(RatingButtons, { props: { variant: 'unlock' } })
     const btns = w.findAll('button')
     expect(btns.map(b => b.text())).toEqual(['完全翻不出来', '翻出一小部分', '翻出大半', '基本完整', '完整流畅'])
-    await btns[4].trigger('click')
-    expect(w.emitted('rate')).toEqual([[100]])
+    for (let i = 0; i < 5; i++) {
+      await btns[i].trigger('click')
+      expect(w.emitted('rate').at(-1)).toEqual([[0, 25, 50, 75, 100][i]])
+    }
   })
 })
