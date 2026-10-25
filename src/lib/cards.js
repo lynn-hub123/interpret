@@ -74,7 +74,7 @@ export function recordAttempt({ cardId, bucket }, nowFn = Date.now) {
 // 重复抽到已解锁卡 → 隐藏挑战（卡面完整显示，只判本次第一发）
 export function hiddenChallengeOf(entry) {
   const e = normalize(entry)
-  return e.unlocked && !e.hidden && e.attempts === 0
+  return e.unlocked && !e.hidden && e.attempts === 0 && !e.peeked
 }
 
 export function unlockSentence(card) {

@@ -37,7 +37,7 @@
             </button>
             <p v-if="aiNote" class="ai-note">{{ aiNote }}</p>
             <RatingButtons variant="unlock" @rate="onRate" />
-            <p v-if="!aiResult" class="hint">本次为自评</p>
+            <p v-if="!aiResult && aiConfigured && recOK" class="hint">本次为自评</p>
           </template>
 
           <div v-if="confirm" class="confirm neu-raised">
@@ -114,6 +114,7 @@ const attemptKey = ref(0)
 const tip = computed(() => {
   if (entry.value?.attempts > 0) return '再练一次，卡面进度只升不降'
   if (hiddenChallenge.value) return '隐藏挑战：卡面已完整显示，这次第一发翻到 100% 才能拿到隐藏形态'
+  if (entry.value?.peeked) return '已看过参考译文，本次隐藏形态资格已作废；剪影会按你翻出的程度露出'
   return '口译这一句，剪影会按你翻出的程度露出；第一次就翻到 100% 可得隐藏形态'
 })
 
@@ -128,6 +129,7 @@ function referenceText() {
 function onRevealed() {
   if (!card) return
   const r = markPeeked(card.id)
+  entry.value = { ...entry.value, peeked: true }
   if (!r.persisted) saveWarn.value = true
 }
 
@@ -139,6 +141,7 @@ function onRecStopped(text) {
 async function askAi() {
   if (!card) return
   const seq = ++aiSeq
+  confirm.value = null // 新请求进行中，旧 AI 档位不能再用于提交
   aiBusy.value = true
   try {
     const r = await gradeWithAI({
@@ -153,7 +156,7 @@ async function askAi() {
   } catch {
     if (seq !== aiSeq) return
     aiResult.value = null
-    aiNote.value = 'AI 暂时给不出分，本次为自评'
+    aiNote.value = 'AI 暂时给不出分' // 底部「本次为自评」已说明降级，避免重复
   } finally {
     if (seq === aiSeq) aiBusy.value = false
   }
@@ -165,6 +168,7 @@ function onSpokenInput() {
   aiBusy.value = false
   aiResult.value = null
   aiNote.value = ''
+  confirm.value = null
 }
 
 function onRate(bucket) {

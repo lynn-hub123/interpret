@@ -40,6 +40,12 @@ afterEach(() => {
   speechSupported.mockReturnValue(true)
   srStart.mockClear()
   srStop.mockClear()
+  recorderSupported.mockReturnValue(true)
+  startRecording.mockImplementation(async () => true)
+  stopRecording.mockImplementation(async () => 'blob:fake-rec')
+  revoke.mockClear()
+  isRecording.mockReturnValue(false)
+  lastErrorName.mockReturnValue('')
 })
 
 const sentence = { id: 'daily_001', zh: '你好。', en: 'Hello.', topic: 'daily', source: 'builtin' }
@@ -301,6 +307,40 @@ describe('recording zone', () => {
     await flushPromises()
     expect(stopRecording).toHaveBeenCalled()
     expect(revoke).toHaveBeenCalledWith('blob:unmount')
+  })
+  it('stops recorder and revokes url when unmounted during start pending', async () => {
+    let resolveStart
+    startRecording.mockImplementationOnce(() => new Promise(r => { resolveStart = r }))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    const click = wrapper.find('.btn-rec').trigger('click')
+    wrapper.unmount()
+    isRecording.mockReturnValue(true) // getUserMedia 完成后 MediaRecorder 才真正开始录
+    stopRecording.mockResolvedValueOnce('blob:late-start')
+    resolveStart(true)
+    await click
+    await flushPromises()
+    expect(stopRecording).toHaveBeenCalled()
+    expect(revoke).toHaveBeenCalledWith('blob:late-start')
+  })
+  it('revokes late stop url and emits nothing when unmounted while stop pending', async () => {
+    let resolveStop
+    stopRecording.mockImplementationOnce(() => new Promise(r => { resolveStop = r }))
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    const click = wrapper.find('.btn-rec.recording').trigger('click')
+    wrapper.unmount()
+    resolveStop('blob:stop-late')
+    await click
+    await flushPromises()
+    expect(revoke).toHaveBeenCalledWith('blob:stop-late')
+    expect(wrapper.emitted('recStopped')).toBeFalsy()
+  })
+  it('does not call stopRecording on unmount when recording never started', async () => {
+    const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
+    wrapper.unmount()
+    await flushPromises()
+    expect(stopRecording).not.toHaveBeenCalled()
   })
   it('keeps single timer when start clicked twice quickly', async () => {
     let resolveStart

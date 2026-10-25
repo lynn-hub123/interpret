@@ -218,9 +218,14 @@ async function onRecStart() {
   if (recUrl.value) { revoke(recUrl.value); recUrl.value = '' }
   recFinal.value = ''; recInterim.value = ''; srError.value = '' // 文字与回放同生命周期
   const ok = await startRecording()
-  isRec.value = ok && alive
-  if (ok && alive) startRecTimer()
-  if (ok && alive && srOK) srStart(srLang.value, srHandlers)
+  // 启动期间组件已卸载：recorder 此刻才真正开始录音，需主动停掉并释放麦克风
+  if (!alive) {
+    if (isRecording()) stopRecording().then(u => { if (u) revoke(u) })
+    return
+  }
+  isRec.value = ok
+  if (ok) startRecTimer()
+  if (ok && srOK) srStart(srLang.value, srHandlers)
   if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
 }
 
@@ -228,6 +233,11 @@ async function onRecStop() {
   stopRecTimer()
   srStop()
   const url = await stopRecording()
+  // 停止在途时组件已卸载：只回收 URL，不再写组件状态或 emit
+  if (!alive) {
+    if (url) revoke(url)
+    return
+  }
   isRec.value = false
   if (url) recUrl.value = url
   if (props.mode === 'retell') retellRecDone.value = true

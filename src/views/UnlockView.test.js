@@ -143,6 +143,22 @@ describe('提交评分', () => {
     expect(w.text()).not.toContain('隐藏挑战')
     expect(w.text()).toContain('再练一次，卡面进度只升不降')
   })
+
+  it('已解锁 progress=75 的卡偷看后，隐藏挑战与完整卡面失效', async () => {
+    localStorage.setItem('interpret.cards.v1', JSON.stringify({
+      zhouye: { attempts: 0, progress: 75, unlocked: true, hidden: false, peeked: false, lastAt: 0 }
+    }))
+    const w = mountView()
+    expect(w.findComponent(CardReveal).props('full')).toBe(true)
+    expect(w.text()).toContain('隐藏挑战')
+
+    w.findComponent(PracticeCard).vm.$emit('revealed')
+    await w.vm.$nextTick()
+
+    expect(w.findComponent(CardReveal).props('full')).toBe(false)
+    expect(w.text()).not.toContain('隐藏挑战')
+    expect(w.text()).toContain('已看过参考译文')
+  })
 })
 
 describe('AI 软校验', () => {
@@ -197,6 +213,50 @@ describe('AI 软校验', () => {
     w.findComponent(PracticeCard).vm.$emit('recStopped', 'new words')
     await w.vm.$nextTick()
     expect(w.find('.btn-ai').text()).toBe('让 AI 评一下') // aiBusy 已复位
+  })
+
+  it('AI 请求未返回时修改识别文本，旧结果不写入面板', async () => {
+    saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
+    let resolveFetch
+    const pending = new Promise(r => { resolveFetch = r })
+    vi.stubGlobal('fetch', vi.fn(() => pending))
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'old words')
+    await w.vm.$nextTick()
+    await w.find('.btn-ai').trigger('click')
+    expect(w.find('.btn-ai').text()).toBe('AI 评分中…')
+
+    await w.find('textarea').setValue('new words')
+
+    resolveFetch({ ok: true, json: async () => ({ choices: [{ message: { content: '{"score": 100, "reason": "旧结果"}' } }] }) })
+    await flush()
+    await w.vm.$nextTick()
+
+    expect(w.find('.ai-note').exists()).toBe(false)
+    expect(w.text()).not.toContain('AI 认为')
+    expect(w.find('.btn-ai').text()).toBe('让 AI 评一下')
+  })
+
+  it('修改识别文本后关闭确认框，避免用过期 AI 档位提交', async () => {
+    saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 75, "reason": "基本完整"}' } }] })
+    })))
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'some words')
+    await w.vm.$nextTick()
+    await w.find('.btn-ai').trigger('click')
+    await flush()
+    await w.vm.$nextTick()
+
+    await w.findAll('.rating-row .btn')[0].trigger('click') // 自评 0%，差 3 档
+    await w.vm.$nextTick()
+    expect(w.find('.confirm').exists()).toBe(true)
+
+    await w.find('textarea').setValue('changed words')
+    expect(w.find('.confirm').exists()).toBe(false)
+    expect(w.find('.ai-note').exists()).toBe(false)
   })
 
   it('识别文本为空时不出现 AI 按钮，并标注本次为自评', async () => {

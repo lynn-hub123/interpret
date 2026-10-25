@@ -93,6 +93,9 @@ describe('hiddenChallengeOf', () => {
     expect(hiddenChallengeOf({ attempts: 0, progress: 100, unlocked: true, hidden: true })).toBe(false)
     expect(hiddenChallengeOf({ attempts: 1, progress: 100, unlocked: true, hidden: false })).toBe(false)
   })
+  it('本轮已看过参考译文 → 不是隐藏挑战', () => {
+    expect(hiddenChallengeOf({ attempts: 0, progress: 75, unlocked: true, hidden: false, peeked: true })).toBe(false)
+  })
 })
 
 describe('markPeeked', () => {
