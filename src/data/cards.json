@@ -1,0 +1,82 @@
+[
+  {
+    "id": "zhouye",
+    "name": "周野",
+    "tier": "normal",
+    "accent": "#e08a5a",
+    "unlock": {
+      "zh": "别光顾着往前跑，偶尔也回头看看，我一直跟在你后面。",
+      "en": "Stop looking only at the road ahead — turn around once in a while. I've been right behind you the whole time."
+    }
+  },
+  {
+    "id": "chenmo",
+    "name": "陈默",
+    "tier": "normal",
+    "accent": "#6f8fa8",
+    "unlock": {
+      "zh": "你不需要说很多话，我听得懂你沉默里的每一个字。",
+      "en": "You don't have to say much — I can hear every word inside your silence."
+    }
+  },
+  {
+    "id": "subai",
+    "name": "苏白",
+    "tier": "normal",
+    "accent": "#7fb3a8",
+    "unlock": {
+      "zh": "如果我发烧了，你能不能一整晚坐在床边，而不是只给我开张药方。",
+      "en": "If I get a fever, will you sit by my bed all night instead of just writing me a prescription?"
+    }
+  },
+  {
+    "id": "jiangyu",
+    "name": "江屿",
+    "tier": "normal",
+    "accent": "#5d6b7d",
+    "unlock": {
+      "zh": "你画过那么多房子，什么时候也画一间，让我住进去。",
+      "en": "You've designed so many houses — when will you draw one for me to live in?"
+    }
+  },
+  {
+    "id": "guyan",
+    "name": "顾言",
+    "tier": "rare",
+    "accent": "#8a7bd8",
+    "unlock": {
+      "zh": "你的声音从耳机里响起来的时候，整条街的噪音好像都安静了。",
+      "en": "Whenever your voice comes through my headphones, the whole street seems to go quiet."
+    }
+  },
+  {
+    "id": "shenyan",
+    "name": "沈砚",
+    "tier": "rare",
+    "accent": "#5b7a6a",
+    "unlock": {
+      "zh": "你修好了那么多旧东西，能不能也帮我，把那段没说完的话接回去。",
+      "en": "You've restored so many old things — could you also help me piece together the sentence we never finished?"
+    }
+  },
+  {
+    "id": "peizhao",
+    "name": "裴照",
+    "tier": "rare",
+    "accent": "#a85a63",
+    "unlock": {
+      "zh": "你赢过那么多场官司，这一局，能不能故意输给我。",
+      "en": "You've won so many cases — could you lose this one to me on purpose?"
+    }
+  },
+  {
+    "id": "xielin",
+    "name": "谢临",
+    "tier": "super",
+    "accent": "#c9a25a",
+    "unlock": {
+      "zh": "全场都在等你抬手的那个瞬间，可我只想让你在所有人里，先看见我。",
+      "en": "The whole hall is waiting for the moment you raise your hand — but of all those people, I just want you to see me first."
+    }
+  }
+]
