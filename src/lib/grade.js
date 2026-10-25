@@ -50,7 +50,8 @@ export function parseGradeResponse(raw) {
   if (start < 0 || end <= start) return null
   try {
     const obj = JSON.parse(raw.slice(start, end + 1))
-    const score = Number(obj.score)
+    const rawScore = obj.score
+    const score = typeof rawScore === 'number' ? rawScore : (typeof rawScore === 'string' && rawScore.trim() !== '' ? Number(rawScore) : NaN)
     if (!Number.isFinite(score)) return null
     return {
       score: Math.min(100, Math.max(0, score)),

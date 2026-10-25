@@ -68,6 +68,11 @@ describe('响应解析', () => {
     expect(parseGradeResponse('{"reason":"x"}')).toBeNull()
     expect(parseGradeResponse(null)).toBeNull()
   })
+  it('score 为 null / 空串 / 布尔值视为解析失败', () => {
+    expect(parseGradeResponse('{"score": null}')).toBeNull()
+    expect(parseGradeResponse('{"score": ""}')).toBeNull()
+    expect(parseGradeResponse('{"score": true}')).toBeNull()
+  })
 })
 
 describe('gradeWithAI', () => {
