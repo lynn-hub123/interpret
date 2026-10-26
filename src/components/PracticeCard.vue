@@ -43,7 +43,7 @@
         </div>
       </div>
       <p v-if="recError" class="audio-warn">{{ recError }}</p>
-      <button class="btn btn-skip" @click="emit('skip')">跳过</button>
+      <button v-if="!hideSkip" class="btn btn-skip" @click="emit('skip')">跳过</button>
     </div>
   </div>
 </template>
@@ -59,7 +59,8 @@ import RecPlayback from './RecPlayback.vue'
 const props = defineProps({
   sentence: { type: Object, required: true },
   direction: { type: String, default: 'zh2en' },
-  mode: { type: String, default: 'sight' }
+  mode: { type: String, default: 'sight' },
+  hideSkip: { type: Boolean, default: false }
 })
 const emit = defineEmits(['revealed', 'skip', 'recStopped'])
 

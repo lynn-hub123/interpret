@@ -6,7 +6,7 @@
       <span v-if="card" class="tier-tag">{{ TIER_LABEL[card.tier] }}</span>
     </header>
 
-    <template v-if="card">
+    <template v-if="card && owned">
       <div class="reveal-wrap">
         <CardReveal
           :name="card.name" :tier="card.tier" :accent="card.accent"
@@ -20,6 +20,7 @@
         :sentence="sentence"
         :direction="direction"
         mode="sight"
+        hide-skip
         @revealed="onRevealed"
         @rec-stopped="onRecStopped"
       />
@@ -37,7 +38,7 @@
             </button>
             <p v-if="aiNote" class="ai-note">{{ aiNote }}</p>
             <RatingButtons variant="unlock" @rate="onRate" />
-            <p v-if="!aiResult && aiConfigured && recOK" class="hint">本次为自评</p>
+            <p v-if="recOK && !aiResult" class="hint">本次为自评</p>
           </template>
 
           <div v-if="confirm" class="confirm neu-raised">
@@ -78,7 +79,7 @@ import { useRoute, useRouter } from 'vue-router'
 import PracticeCard from '../components/PracticeCard.vue'
 import CardReveal from '../components/CardReveal.vue'
 import RatingButtons from '../components/RatingButtons.vue'
-import { cardById, getCardState, markPeeked, recordAttempt, hiddenChallengeOf, unlockSentence } from '../lib/cards.js'
+import { cardById, getCards, getCardState, markPeeked, recordAttempt, hiddenChallengeOf, unlockSentence } from '../lib/cards.js'
 import { addRecord } from '../lib/records.js'
 import { onRated } from '../lib/srs.js'
 import { storageAvailable } from '../lib/storage.js'
@@ -92,6 +93,8 @@ const router = useRouter()
 const TIER_LABEL = { normal: '普通', rare: '稀有', super: '超稀有' }
 
 const card = cardById(route.params.id)
+// 门禁：未抽到的卡不允许直接解锁评分（手工改 URL 也拦下）
+const owned = Boolean(getCards()[route.params.id])
 const direction = settings.value.direction // 进页即固定，不跟随全局切换
 const sentence = card ? unlockSentence(card) : null
 const entry = ref(card ? getCardState(card.id) : null)

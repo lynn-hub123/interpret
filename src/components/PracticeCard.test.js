@@ -72,6 +72,10 @@ describe('PracticeCard', () => {
     await w.find('.btn-skip').trigger('click')
     expect(w.emitted('skip')).toBeTruthy()
   })
+  it('hideSkip 为 true 时不渲染跳过按钮', () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', hideSkip: true } })
+    expect(w.find('.btn-skip').exists()).toBe(false)
+  })
 })
 
 describe('play button (sight mode)', () => {

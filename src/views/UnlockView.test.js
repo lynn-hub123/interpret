@@ -6,8 +6,10 @@ import CardReveal from '../components/CardReveal.vue'
 import { onDrawn, getCardState, recordAttempt } from '../lib/cards.js'
 import { saveAiConfig } from '../lib/grade.js'
 
+// 路由 id 可控：默认已抽到的 «zhouye»，个别用例切到未抽到的卡验证门禁
+const { routeRef } = vi.hoisted(() => ({ routeRef: { id: 'zhouye' } }))
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { id: 'zhouye' } }),
+  useRoute: () => ({ params: { id: routeRef.id } }),
   useRouter: () => ({ push: vi.fn() })
 }))
 
@@ -33,6 +35,7 @@ async function flush() {
 beforeEach(() => {
   localStorage.clear()
   recSupported = true
+  routeRef.id = 'zhouye'
   onDrawn('zhouye')
 })
 
@@ -268,6 +271,14 @@ describe('AI 软校验', () => {
     expect(w.text()).toContain('本次为自评')
   })
 
+  it('未配置 AI Key 时也标注本次为自评，且不出现 AI 按钮', async () => {
+    const w = mountView()
+    w.findComponent(PracticeCard).vm.$emit('recStopped', 'some words')
+    await w.vm.$nextTick()
+    expect(w.find('.btn-ai').exists()).toBe(false)
+    expect(w.text()).toContain('本次为自评')
+  })
+
   it('AI 给出结果后不显示本次为自评；改识别文本后 AI 结论失效', async () => {
     saveAiConfig({ baseUrl: 'https://api.example.com/v1', model: 'm', apiKey: 'k' })
     vi.stubGlobal('fetch', vi.fn(async () => ({
@@ -286,5 +297,26 @@ describe('AI 软校验', () => {
     await w.find('textarea').setValue('changed words')
     expect(w.find('.ai-note').exists()).toBe(false)
     expect(w.text()).toContain('本次为自评')
+  })
+})
+
+describe('解锁页控件门禁', () => {
+  it('不出现跳过按钮，传给 PracticeCard 的 hideSkip 为 true', () => {
+    const w = mountView()
+    expect(w.find('.btn-skip').exists()).toBe(false)
+    expect(w.findComponent(PracticeCard).props('hideSkip')).toBe(true)
+  })
+})
+
+describe('抽卡门禁', () => {
+  it('未抽到的卡显示空态、无评分按钮，也不写 cards.v1', () => {
+    routeRef.id = 'xielin' // 有效卡号，但本用例未抽到
+    localStorage.clear()
+    const w = mountView()
+    expect(w.text()).toContain('这张卡还没有抽到')
+    expect(w.find('.rating-row').exists()).toBe(false)
+    expect(w.findComponent(PracticeCard).exists()).toBe(false)
+    expect(getCardState('xielin').attempts).toBe(0)
+    expect(localStorage.getItem('interpret.cards.v1')).toBeNull()
   })
 })
