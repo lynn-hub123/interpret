@@ -15,6 +15,23 @@
       <span class="topic-rate">{{ (t.rate * 100).toFixed(0) }}%</span>
     </div>
 
+    <h3>卡牌图鉴</h3>
+    <div class="gallery">
+      <div
+        v-for="c in cardList" :key="c.id"
+        class="gallery-item"
+        :class="{ 'is-locked': !hasCard(c.id) }"
+        @click="openCard(c)"
+      >
+        <CardReveal
+          :name="c.name" :tier="c.tier" :accent="c.accent"
+          :progress="c.st.progress" :hidden="c.st.hidden" :full="c.st.unlocked"
+        />
+        <span v-if="hasCard(c.id)" class="gallery-progress">{{ c.st.progress }}%</span>
+        <span class="slot" :class="{ got: c.st.hidden }">{{ c.st.hidden ? '隐藏形态 ✓' : '隐藏形态 ?' }}</span>
+      </div>
+    </div>
+
     <h3>设置</h3>
     <label class="setting">默认方向
       <select :value="settings.direction" @change="setDirection($event.target.value)">
@@ -24,6 +41,19 @@
     </label>
     <label class="setting">计时显示 <input type="checkbox" :checked="settings.showTimer" @change="setShowTimer($event.target.checked)" /></label>
     <label class="setting">深色主题 <input type="checkbox" :checked="settings.theme === 'dark'" @change="setTheme($event.target.checked ? 'dark' : 'light')" /></label>
+
+    <h3>AI 判分配置</h3>
+    <div class="ai-form">
+      <label class="setting">Base URL <input v-model="ai.baseUrl" placeholder="https://api.openai.com/v1" /></label>
+      <label class="setting">模型 <input v-model="ai.model" placeholder="gpt-4o-mini" /></label>
+      <label class="setting">API Key <input v-model="ai.apiKey" type="password" placeholder="sk-..." /></label>
+      <div class="data-row">
+        <button class="btn btn-ai-save" @click="saveAi">保存</button>
+        <button class="btn" :disabled="testing" @click="testAi">{{ testing ? '测试中…' : '测试连接' }}</button>
+      </div>
+      <p class="ai-msg">{{ aiMsg }}</p>
+      <p class="hint">密钥只存在本机浏览器，清缓存会丢失；识别文本会发送给你配置的服务商。未配置或调用失败时自动降级为自评。</p>
+    </div>
 
     <h3>数据</h3>
     <div class="data-row">
@@ -37,14 +67,44 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import CardReveal from '../components/CardReveal.vue'
 import { stats } from '../lib/records.js'
 import { TOPICS } from '../lib/sentences.js'
 import { settings, setDirection, setTheme, setShowTimer } from '../stores/settings.js'
 import { exportAll, importAll } from '../lib/storage.js'
+import { allCards, getCards, EMPTY_CARD_STATE } from '../lib/cards.js'
+import { getAiConfig, saveAiConfig, testConnection } from '../lib/grade.js'
 
 const s = stats()
 const fileInput = ref(null)
 const msg = ref('')
+const router = useRouter()
+// 图鉴在页面挂载时读一次；从解锁页回来会重新挂载，自然刷新
+const cards = getCards()
+const cardList = allCards().map(c => ({ ...c, st: { ...EMPTY_CARD_STATE, ...(cards[c.id] || {}) } }))
+const ai = ref(getAiConfig())
+const aiMsg = ref('')
+const testing = ref(false)
+
+function hasCard(id) {
+  return Boolean(cards[id])
+}
+
+function openCard(c) {
+  if (hasCard(c.id) && !c.st.unlocked) router.push(`/unlock/${c.id}`)
+}
+
+function saveAi() {
+  aiMsg.value = saveAiConfig(ai.value) ? '已保存（将在下次解锁评分时生效）' : '保存失败：存储不可用'
+}
+
+async function testAi() {
+  testing.value = true
+  const ok = await testConnection(ai.value)
+  testing.value = false
+  aiMsg.value = ok ? '连接成功' : '连接失败：请检查 Base URL / 模型名 / Key，或网络'
+}
 
 const topics = computed(() =>
   Object.entries(s.topicStrength)
@@ -85,4 +145,18 @@ h2 { font-size: 20px; } h3 { font-size: 15px; margin-top: 24px; }
 .data-row { display: flex; gap: 12px; }
 .msg { font-size: 13px; color: var(--accent-text); }
 select { background: var(--surface); color: var(--text); border: none; border-radius: 8px; padding: 6px 10px; box-shadow: var(--shadow-in); }
+.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.gallery-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.gallery-item.is-locked { opacity: 0.42; }
+/* 4 列窄卡里卡面角标会重叠，改用图鉴自身的进度与暗格文字 */
+.gallery-item :deep(.pct), .gallery-item :deep(.hidden-badge) { display: none; }
+.gallery-progress { font-size: 11px; color: var(--text); }
+.slot { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+.slot.got { color: var(--gold-text); }
+.ai-form { display: flex; flex-direction: column; gap: 4px; }
+.ai-form input {
+  background: var(--surface); color: var(--text); border: none; border-radius: 8px;
+  padding: 6px 10px; font: inherit; font-size: 13px; box-shadow: var(--shadow-in); min-width: 0;
+}
+.ai-msg { font-size: 12px; color: var(--accent-text); margin: 6px 0 0; min-height: 16px; }
 </style>

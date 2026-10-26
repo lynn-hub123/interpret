@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PracticeView from './PracticeView.vue'
 import PracticeCard from '../components/PracticeCard.vue'
+import DrawOverlay from '../components/DrawOverlay.vue'
 import { loadSettings } from '../stores/settings.js'
 
 vi.mock('../lib/sentences.js', () => ({
@@ -21,7 +22,17 @@ vi.mock('../lib/srs.js', () => ({
   onRated: vi.fn()
 }))
 vi.mock('../lib/records.js', () => ({ addRecord: vi.fn(() => true) }))
-vi.mock('../lib/storage.js', () => ({ storageAvailable: () => true, load: () => ({}), save: () => true }))
+vi.mock('../lib/storage.js', () => ({
+  storageAvailable: () => true,
+  load: (k, fb) => {
+    const raw = localStorage.getItem('interpret.' + k)
+    return raw ? JSON.parse(raw) : fb
+  },
+  save: (k, v) => {
+    localStorage.setItem('interpret.' + k, JSON.stringify(v))
+    return true
+  }
+}))
 vi.mock('../lib/voice.js', () => ({ stop: vi.fn() }))
 
 beforeEach(() => { localStorage.clear(); loadSettings() })
@@ -68,5 +79,44 @@ describe('PracticeView rating visibility', () => {
     await w.findAll('.mode-btn')[2].trigger('click')
     const { settings } = await import('../stores/settings.js')
     expect(settings.value.mode).toBe('retell')
+  })
+})
+
+describe('抽卡入口', () => {
+  it('初始显示 0/5、券 ×0、按钮禁用且提示还差 5 句', async () => {
+    const w = await mountView()
+    expect(w.find('.prog').text()).toContain('0/5')
+    expect(w.find('.prog').text()).toContain('券 ×0')
+    const btn = w.find('.btn-draw')
+    expect(btn.text()).toBe('还差 5 句')
+    expect(btn.attributes('disabled')).toBeDefined()
+  })
+
+  it('评分一次后进度变 1/5', async () => {
+    const w = await mountView()
+    w.findComponent(PracticeCard).vm.$emit('revealed')
+    await w.vm.$nextTick()
+    await w.findAll('.rating-row .btn')[0].trigger('click')
+    await w.vm.$nextTick()
+    expect(w.find('.prog').text()).toContain('1/5')
+  })
+
+  it('练满 5 句后按钮可用并显示抽卡；点击后弹出遮罩并扣券', async () => {
+    const w = await mountView()
+    for (let i = 0; i < 5; i++) {
+      w.findComponent(PracticeCard).vm.$emit('revealed')
+      await w.vm.$nextTick()
+      await w.findAll('.rating-row .btn')[0].trigger('click')
+      await w.vm.$nextTick()
+    }
+    expect(w.find('.prog').text()).toContain('券 ×1')
+    const btn = w.find('.btn-draw')
+    expect(btn.text()).toBe('抽卡')
+    expect(btn.attributes('disabled')).toBeUndefined()
+    await btn.trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findComponent(DrawOverlay).exists()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(0)
+    expect(JSON.parse(localStorage.getItem('interpret.cards.v1'))).toBeTruthy()
   })
 })

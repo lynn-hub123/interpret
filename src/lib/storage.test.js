@@ -66,4 +66,34 @@ describe('export/import', () => {
     expect(importAll('not json')).toBe(false)
     expect(importAll({ records: 42 })).toBe(false)
   })
+
+  it('导出 progress 与 cards，且永不包含 ai', () => {
+    save('progress.v1', { tickets: 2, practiced: 3 })
+    save('cards.v1', { zhouye: { attempts: 1, progress: 50, unlocked: false, hidden: false, peeked: false, lastAt: 1 } })
+    save('ai.v1', { baseUrl: 'u', model: 'm', apiKey: 'secret-key' })
+    const dump = exportAll()
+    expect(dump.progress).toEqual({ tickets: 2, practiced: 3 })
+    expect(dump.cards.zhouye.progress).toBe(50)
+    expect('ai' in dump).toBe(false)
+    expect(JSON.stringify(dump)).not.toContain('secret-key')
+  })
+
+  it('导入 progress 与 cards', () => {
+    const dump = {
+      records: [], custom: [],
+      progress: { tickets: 1, practiced: 4 },
+      cards: { zhouye: { attempts: 0, progress: 25, unlocked: false, hidden: false, peeked: false, lastAt: 0 } }
+    }
+    expect(importAll(dump)).toBe(true)
+    expect(load('progress.v1', null)).toEqual({ tickets: 1, practiced: 4 })
+    expect(load('cards.v1', null).zhouye.progress).toBe(25)
+  })
+
+  it('旧备份没有 progress/cards 时不动现有数据', () => {
+    save('progress.v1', { tickets: 5 })
+    save('cards.v1', { zhouye: { progress: 75 } })
+    importAll({ records: [], custom: [] })
+    expect(load('progress.v1', null)).toEqual({ tickets: 5 })
+    expect(load('cards.v1', null)).toEqual({ zhouye: { progress: 75 } })
+  })
 })

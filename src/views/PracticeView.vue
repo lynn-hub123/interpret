@@ -1,8 +1,10 @@
 <template>
   <main class="view">
     <header class="practice-header">
-      <span class="count">{{ done }}</span>
+      <span class="count">已完成 {{ done }}</span>
       <span v-if="settings.showTimer" class="timer">{{ elapsed }}s</span>
+      <span class="prog">{{ prog.practiced }}/{{ progThreshold }} · 券 ×{{ prog.tickets }}</span>
+      <button class="btn btn-draw" :disabled="drawDisabled" @click="draw">{{ drawLabel }}</button>
       <button class="btn btn-history" @click="showHistory = true">历史</button>
     </header>
 
@@ -28,14 +30,24 @@
 
     <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录与复习进度不保存</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
+    <DrawOverlay
+      v-if="drawn"
+      :card="drawn.def"
+      :is-new="drawn.isNew"
+      :hidden-challenge="drawn.hiddenChallenge"
+      @start="startUnlock"
+      @later="drawn = null"
+    />
   </main>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import PracticeCard from '../components/PracticeCard.vue'
 import RatingButtons from '../components/RatingButtons.vue'
 import SessionHistory from '../components/SessionHistory.vue'
+import DrawOverlay from '../components/DrawOverlay.vue'
 import { settings, setMode } from '../stores/settings.js'
 import { allBuiltinSentences, getCustomSentences } from '../lib/sentences.js'
 import { drawSentence } from '../lib/picker.js'
@@ -43,6 +55,9 @@ import { dueQueue, quotaAvailable, isDue, onRated } from '../lib/srs.js'
 import { addRecord } from '../lib/records.js'
 import { storageAvailable } from '../lib/storage.js'
 import { stop } from '../lib/voice.js'
+import { allCards, cardById, getCards, onDrawn, hiddenChallengeOf } from '../lib/cards.js'
+import { drawCard, allCollected } from '../lib/cardpool.js'
+import { getProgress, addPractice, spendTicket, applyDraw, remainingForTicket, thresholdFor } from '../lib/progress.js'
 
 const pool = ref([])
 const current = ref(null)
@@ -50,6 +65,19 @@ const history = ref([])
 const showHistory = ref(false)
 const saveWarn = ref(!storageAvailable())
 const done = computed(() => history.value.length)
+const router = useRouter()
+const prog = ref(getProgress())
+const cardsState = ref(getCards())
+const drawn = ref(null)
+const cardList = allCards()
+const progThreshold = computed(() => thresholdFor(prog.value))
+const collected = computed(() => allCollected(cardList, cardsState.value))
+const drawDisabled = computed(() => prog.value.tickets < 1 || collected.value || cardList.length === 0)
+const drawLabel = computed(() => {
+  if (collected.value) return '全部收集完成'
+  if (prog.value.tickets < 1) return `还差 ${remainingForTicket(prog.value)} 句`
+  return '抽卡'
+})
 const showRating = computed(() => current.value && (current.value.revealed || (settings.value.mode === 'retell' && current.value.recDone)))
 const modeHint = computed(() => settings.value.mode === 'retell' ? '听完 → 开口复述 → 对照原文后自评' : '口头译出后，点「看参考译文」对照')
 const elapsed = ref(0)
@@ -85,7 +113,41 @@ function rate(rating) {
   if (!saved) saveWarn.value = true
   // 硬上限：配额满后随机撞到的到期句不再计入配额，used 精确封顶 DAILY_CAP
   onRated({ sentenceId, rating, wasDue: isDue(sentenceId) && quotaAvailable() })
+  const p = addPractice()
+  prog.value = p.state
+  if (!p.persisted) saveWarn.value = true
   next(true, rating)
+}
+
+function draw() {
+  if (drawDisabled.value) return
+  const spent = spendTicket()
+  if (!spent) return
+  prog.value = spent.state
+  if (!spent.persisted) saveWarn.value = true
+
+  const pick = drawCard({ cards: cardList, owned: Object.keys(getCards()), sinceNew: prog.value.sinceNew })
+  if (!pick) return
+
+  const drawnState = onDrawn(pick.cardId)
+  cardsState.value = drawnState.state
+  if (!drawnState.persisted) saveWarn.value = true
+
+  const after = applyDraw(pick.isNew)
+  prog.value = after.state
+  if (!after.persisted) saveWarn.value = true
+
+  drawn.value = {
+    def: cardById(pick.cardId),
+    isNew: pick.isNew,
+    hiddenChallenge: hiddenChallengeOf(cardsState.value[pick.cardId])
+  }
+}
+
+function startUnlock() {
+  const id = drawn.value?.def?.id
+  drawn.value = null
+  if (id) router.push(`/unlock/${id}`)
 }
 
 onUnmounted(() => { clearInterval(timerId); stop() })
@@ -101,6 +163,8 @@ function applyMode(m) {
 }
 
 onMounted(() => {
+  prog.value = getProgress()
+  cardsState.value = getCards()
   const raw = sessionStorage.getItem('interpret.session')
   if (raw) sessionStorage.removeItem('interpret.session')
   let session = null
@@ -126,9 +190,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.practice-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.practice-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .count { font-size: 14px; color: var(--text-muted); }
 .timer { font-size: 14px; color: var(--accent-text); }
+.prog { font-size: 13px; color: var(--text-muted); }
+.btn-draw { font-size: 13px; padding: 8px 14px; }
+.btn-draw:disabled { opacity: 0.5; }
 .btn-history { margin-left: auto; font-size: 13px; padding: 8px 14px; }
 .rating-zone { margin-top: 20px; min-height: 56px; display: flex; align-items: center; justify-content: center; }
 .hint { font-size: 13px; color: var(--text-muted); }
