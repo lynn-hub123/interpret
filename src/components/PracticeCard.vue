@@ -5,7 +5,8 @@
       <template v-if="mode === 'listen' && !listenTextShown && !revealed">
         <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
         <button class="btn btn-skip" :disabled="!canReveal" @click="listenTextShown = true">显示原文</button>
-        <p v-if="revealHint" class="gate-hint">{{ revealHint }}</p>
+        <p v-if="!canReveal" class="gate-hint">先录音作答，再看原文</p>
+        <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
       </template>
       <template v-else-if="mode === 'retell' && !revealed">
         <button class="btn btn-primary btn-listen" @click="onRetellPlay">{{ playing ? '⏹ 停止' : (retellPlayed ? '↻ 重听' : '▶ 播放原句') }}</button>
@@ -13,6 +14,8 @@
           <button v-for="r in SPEEDS" :key="r" class="speed-btn" :class="{ active: speed === r }" @click="speed = r">{{ r }}x</button>
         </div>
         <button class="btn btn-primary btn-reveal" v-if="canReveal" @click="revealed = true; emit('revealed')">对照原文</button>
+        <p v-if="!canReveal" class="gate-hint">先录音作答，再看参考译文</p>
+        <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
       </template>
       <template v-else>
         <p class="source">
@@ -22,7 +25,8 @@
         <p v-if="speakError" class="audio-warn">{{ speakError }}</p>
         <template v-if="!revealed">
           <button class="btn btn-primary btn-reveal" :disabled="!canReveal" @click="revealed = true; emit('revealed')">看参考译文</button>
-          <p v-if="revealHint" class="gate-hint">{{ revealHint }}</p>
+          <p v-if="!canReveal" class="gate-hint">先录音作答，再看参考译文</p>
+          <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
         </template>
         <div class="reference neu-inset" v-else>
           <p v-if="mode === 'retell'" class="reference-label">参考译文</p>
@@ -163,11 +167,6 @@ const recOK = recorderSupported() // 运行期不变
 // —— 揭晓门禁：录音作答后才能揭晓原文/参考译文 ——
 // 无录音能力时不设门禁，否则用户永远无法揭晓（死锁）
 const canReveal = computed(() => !recOK || answered.value)
-const revealHint = computed(() => {
-  if (!recOK) return '本设备无法录音，可直接查看'
-  if (answered.value) return ''
-  return props.mode === 'listen' ? '先录音作答，再看原文' : '先录音作答，再看参考译文'
-})
 
 // —— 语音识别：跟录音绑定，识别是增强功能，任何失败不影响录音 ——
 const srOK = speechSupported()

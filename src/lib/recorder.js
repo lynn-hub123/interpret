@@ -23,9 +23,19 @@ export async function startRecording() {
   }
   state.errorName = ''
   state.chunks = []
-  state.recorder = new MediaRecorder(state.stream)
-  state.recorder.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data) }
-  state.recorder.start()
+  try {
+    state.recorder = new MediaRecorder(state.stream)
+    state.recorder.ondataavailable = e => { if (e.data && e.data.size) state.chunks.push(e.data) }
+    state.recorder.start()
+  } catch (e) {
+    // 构造或 start 失败时麦克风已授权，必须停掉轨道释放设备，
+    // 否则浏览器麦克风指示灯会一直亮着；同时清空状态供下次调用安全覆盖。
+    if (state.stream) state.stream.getTracks().forEach(t => t.stop())
+    state.recorder = null
+    state.stream = null
+    state.errorName = (e && e.name) || ''
+    return false
+  }
   return true
 }
 

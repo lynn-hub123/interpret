@@ -110,6 +110,7 @@ describe('reveal gate (揭晓门禁)', () => {
   it('retell: 未作答时无对照原文入口', () => {
     const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
     expect(w.find('.btn-reveal').exists()).toBe(false)
+    expect(w.text()).toContain('先录音作答，再看参考译文') // 未作答时有提示文案说明按钮为何不在
   })
   it('无录音能力时门禁豁免：按钮可点且注明可直接查看', () => {
     recorderSupported.mockReturnValueOnce(false)
