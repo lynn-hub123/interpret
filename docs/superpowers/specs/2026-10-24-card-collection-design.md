@@ -164,7 +164,8 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
 
 - **必须先录过音**，评分按钮才出现（防纯点按钮）
 - 录音能力不可用（`recorderSupported()` 为 false）时，直接显示按钮并在下方提示「本设备无法录音，本次为纯自评」
-- 参考译文随时可看；**一旦看过参考译文，本次抽卡的隐藏形态资格即作废**（见 §9）
+- **揭晓有门禁**：必须先录音作答，才能看参考译文 / 显示原文；无录音能力或录音启动失败时豁免门禁（否则用户永远无法揭晓）
+- 揭晓参考译文**不影响**隐藏形态资格（见 §9）
 
 ### 7.4 提交评分
 
@@ -220,7 +221,7 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
 ## 9. 隐藏形态
 
 - 定义：卡面的第二套外观（换配色 + 叠加效果），视觉由美术后续决定，数据上只是一个布尔
-- 获得条件：**本次抽卡后的第一次解锁尝试**，档位 100%，且未看过参考译文
+- 获得条件：**本次抽卡后的第一次解锁尝试**，档位 100%
 - 首次抽到的卡：第一次尝试 100% → 同时解锁普通形态 + 隐藏形态
 - 第一次尝试未达 100% → 本次抽卡永久失去隐藏形态资格，只能等下次再抽到这张卡
 - 已解锁普通形态的卡被重复抽到时：进入「隐藏挑战」模式——卡面完整显示，只判定本次第一发是否 100%，不展示剪影进度
@@ -250,13 +251,12 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
     progress: 0,          // 当前尝试的历史最高档位 0|25|50|75|100
     unlocked: false,      // 普通形态永久解锁
     hidden: false,        // 隐藏形态已获得
-    peeked: false,        // 本次抽卡是否看过参考译文
     lastAt: 0
   }
 }
 ```
 
-- 抽到一张已拥有的卡 → `attempts = 0`、`peeked = false`，其余字段保持
+- 抽到一张已拥有的卡 → `attempts = 0`，其余字段保持
 - 抽到一张新卡 → 新建条目，全部默认值
 
 ### 10.3 `ai.v1`
@@ -303,10 +303,12 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
 | `src/components/RatingButtons.vue` | 新增 `variant="unlock"`（五档） |
 | `src/router.js` | 新增 `/unlock/:id` |
 | `src/lib/storage.js` | `exportAll` / `importAll` 纳入 `progress.v1`、`cards.v1`；**排除 `ai.v1`** |
+| `src/components/PracticeCard.vue` | 新增揭晓门禁：录音作答后才能揭晓原文/参考译文 |
+| `src/lib/recorder.js` | `startRecording()` 在 MediaRecorder 构造/start 失败时释放麦克风并返回 false（不再抛出） |
 
 ### 11.3 零改动
 
-`picker.js`、`srs.js`、`records.js`、`sentences.js`、`PracticeCard.vue`、`RecPlayback.vue`、`voice.js`、`speech.js`、`recorder.js` 不改。每日到期配额 `DAILY_CAP = 10` 不受影响。
+`picker.js`、`srs.js`、`records.js`、`sentences.js`、`RecPlayback.vue`、`voice.js`、`speech.js` 不改。每日到期配额 `DAILY_CAP = 10` 不受影响。
 
 ## 12. 边界与错误处理
 
@@ -318,7 +320,6 @@ export function drawCard({ cards, owned, sinceNew, rng = Math.random }) {
 | 解锁练习中途退出 | 每次评分已落库，下次从图鉴继续 |
 | 重复抽到已解锁的卡 | 进入隐藏挑战模式，不展示剪影进度 |
 | 重复抽到未解锁的卡 | 继续普通解锁，不进入隐藏挑战 |
-| 首次尝试看过参考译文 | 本次永久失去隐藏形态资格 |
 | AI 未配置 / 失败 | 纯自评，标注「本次为自评」 |
 | 录音不可用 | 允许自评，提示本设备无法录音 |
 | 识别文本为空 | 跳过 AI 判定，走自评 |

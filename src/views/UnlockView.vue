@@ -53,7 +53,7 @@
           <p class="result-title">本次 {{ result.bucket }}% · 卡面进度 {{ result.progress }}%</p>
           <p v-if="result.unlockedNow">普通形态已永久解锁</p>
           <p v-if="result.hiddenNow" class="gold">隐藏形态已获得</p>
-          <p v-if="result.hiddenMissed" class="hint">隐藏形态资格已作废，等下次再抽到这张卡</p>
+          <p v-if="result.hiddenMissed" class="hint">这次没有翻到 100%，等下次再抽到这张卡可以重新挑战隐藏形态</p>
           <div class="result-actions">
             <button class="btn" @click="backToPractice">返回练习</button>
             <button class="btn" @click="retry">再试一次</button>
@@ -115,6 +115,7 @@ const attemptKey = ref(0)
 const tip = computed(() => {
   if (entry.value?.attempts > 0) return '再练一次，卡面进度只升不降'
   if (hiddenChallenge.value) return '隐藏挑战：卡面已完整显示，这次第一发翻到 100% 才能拿到隐藏形态'
+  if (entry.value?.hidden) return '已拥有隐藏形态，剪影已完整显示'
   return '口译这一句，剪影会按你翻出的程度露出；第一次就翻到 100% 可得隐藏形态'
 })
 
