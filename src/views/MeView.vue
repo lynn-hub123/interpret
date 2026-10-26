@@ -17,8 +17,9 @@
 
     <h3>卡牌图鉴</h3>
     <div class="gallery">
-      <div
+      <button
         v-for="c in cardList" :key="c.id"
+        type="button"
         class="gallery-item"
         :class="{ 'is-locked': !hasCard(c.id) }"
         @click="openCard(c)"
@@ -29,7 +30,7 @@
         />
         <span v-if="hasCard(c.id)" class="gallery-progress">{{ c.st.progress }}%</span>
         <span class="slot" :class="{ got: c.st.hidden }">{{ c.st.hidden ? '隐藏形态 ✓' : '隐藏形态 ?' }}</span>
-      </div>
+      </button>
     </div>
 
     <h3>设置</h3>
@@ -101,9 +102,12 @@ function saveAi() {
 
 async function testAi() {
   testing.value = true
-  const ok = await testConnection(ai.value)
-  testing.value = false
-  aiMsg.value = ok ? '连接成功' : '连接失败：请检查 Base URL / 模型名 / Key，或网络'
+  try {
+    const ok = await testConnection(ai.value)
+    aiMsg.value = ok ? '连接成功' : '连接失败：请检查 Base URL / 模型名 / Key，或网络'
+  } finally {
+    testing.value = false
+  }
 }
 
 const topics = computed(() =>
@@ -146,7 +150,7 @@ h2 { font-size: 20px; } h3 { font-size: 15px; margin-top: 24px; }
 .msg { font-size: 13px; color: var(--accent-text); }
 select { background: var(--surface); color: var(--text); border: none; border-radius: 8px; padding: 6px 10px; box-shadow: var(--shadow-in); }
 .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.gallery-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.gallery-item { display: flex; flex-direction: column; align-items: center; gap: 6px; border: none; background: none; padding: 0; font: inherit; color: inherit; text-align: center; cursor: pointer; }
 .gallery-item.is-locked { opacity: 0.42; }
 /* 4 列窄卡里卡面角标会重叠，改用图鉴自身的进度与暗格文字 */
 .gallery-item :deep(.pct), .gallery-item :deep(.hidden-badge) { display: none; }

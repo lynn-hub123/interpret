@@ -5,6 +5,24 @@ import PracticeCard from '../components/PracticeCard.vue'
 import DrawOverlay from '../components/DrawOverlay.vue'
 import { loadSettings } from '../stores/settings.js'
 
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: vi.fn() })
+}))
+
+// 默认委托真实实现，仅在被测试覆盖时接管，避免影响既有抽卡用例
+const drawOverride = vi.hoisted(() => ({ impl: null }))
+vi.mock('../lib/cardpool.js', async (importOriginal) => {
+  const actual = await importOriginal()
+  return { ...actual, drawCard: (args) => (drawOverride.impl ? drawOverride.impl(args) : actual.drawCard(args)) }
+})
+
+const cardsOverride = vi.hoisted(() => ({ onDrawn: null, actual: null }))
+vi.mock('../lib/cards.js', async (importOriginal) => {
+  const actual = await importOriginal()
+  cardsOverride.actual = actual
+  return { ...actual, onDrawn: (id) => (cardsOverride.onDrawn ? cardsOverride.onDrawn(id) : actual.onDrawn(id)) }
+})
+
 vi.mock('../lib/sentences.js', () => ({
   allBuiltinSentences: () => [
     { id: 't1', zh: '第一句。', en: 'one', topic: 'daily', source: 'builtin' },
@@ -35,7 +53,12 @@ vi.mock('../lib/storage.js', () => ({
 }))
 vi.mock('../lib/voice.js', () => ({ stop: vi.fn() }))
 
-beforeEach(() => { localStorage.clear(); loadSettings() })
+beforeEach(() => {
+  localStorage.clear()
+  loadSettings()
+  drawOverride.impl = null
+  cardsOverride.onDrawn = null
+})
 
 // onMounted 里才抽句（current 初次渲染为空态），等一个 tick 让卡片渲染出来
 async function mountView() {
@@ -118,5 +141,37 @@ describe('抽卡入口', () => {
     expect(w.findComponent(DrawOverlay).exists()).toBe(true)
     expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(0)
     expect(JSON.parse(localStorage.getItem('interpret.cards.v1'))).toBeTruthy()
+  })
+
+  it('onDrawn 持久化失败仍扣券并弹卡（先发卡后扣券）', async () => {
+    const w = await mountView()
+    for (let i = 0; i < 5; i++) {
+      w.findComponent(PracticeCard).vm.$emit('revealed')
+      await w.vm.$nextTick()
+      await w.findAll('.rating-row .btn')[0].trigger('click')
+      await w.vm.$nextTick()
+    }
+    expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(1)
+    cardsOverride.onDrawn = (id) => ({ ...cardsOverride.actual.onDrawn(id), persisted: false })
+    await w.find('.btn-draw').trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findComponent(DrawOverlay).exists()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(0)
+  })
+
+  it('drawCard 返回 null 时不扣券、不弹遮罩（先发卡后扣券）', async () => {
+    const w = await mountView()
+    for (let i = 0; i < 5; i++) {
+      w.findComponent(PracticeCard).vm.$emit('revealed')
+      await w.vm.$nextTick()
+      await w.findAll('.rating-row .btn')[0].trigger('click')
+      await w.vm.$nextTick()
+    }
+    expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(1)
+    drawOverride.impl = () => null
+    await w.find('.btn-draw').trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findComponent(DrawOverlay).exists()).toBe(false)
+    expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).tickets).toBe(1)
   })
 })

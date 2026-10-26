@@ -26,7 +26,7 @@ describe('卡牌图鉴', () => {
     expect(w.findAll('.gallery-item.is-locked')).toHaveLength(7)
     const unlocked = w.findAll('.gallery-item').filter(i => !i.classes().includes('is-locked'))
     expect(unlocked).toHaveLength(1)
-    expect(unlocked[0].text()).toContain('75%')
+    expect(unlocked[0].find('.gallery-progress').text()).toBe('75%')
   })
 
   it('已获得隐藏形态的暗格点亮', () => {

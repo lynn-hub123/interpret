@@ -28,7 +28,7 @@
       <p class="hint">去「题库」挑个主题，或到「粘贴」丢一段文字进来</p>
     </div>
 
-    <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录与复习进度不保存</p>
+    <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录、复习进度与抽卡进度不保存</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
     <DrawOverlay
       v-if="drawn"
@@ -121,17 +121,19 @@ function rate(rating) {
 
 function draw() {
   if (drawDisabled.value) return
-  const spent = spendTicket()
-  if (!spent) return
-  prog.value = spent.state
-  if (!spent.persisted) saveWarn.value = true
-
   const pick = drawCard({ cards: cardList, owned: Object.keys(getCards()), sinceNew: prog.value.sinceNew })
   if (!pick) return
 
+  // 先发卡再扣券：极端存储失败下最多「多送一张卡」，不会出现「券扣了但没卡」
   const drawnState = onDrawn(pick.cardId)
   cardsState.value = drawnState.state
   if (!drawnState.persisted) saveWarn.value = true
+
+  const spent = spendTicket()
+  if (spent) {
+    prog.value = spent.state
+    if (!spent.persisted) saveWarn.value = true
+  }
 
   const after = applyDraw(pick.isNew)
   prog.value = after.state
