@@ -2,8 +2,8 @@
   <main class="view">
     <header class="unlock-header">
       <button class="btn btn-back" @click="backToPractice">返回</button>
-      <span class="unlock-name">{{ card ? card.name : '' }}</span>
-      <span v-if="card" class="tier-tag">{{ TIER_LABEL[card.tier] }}</span>
+      <span class="unlock-name">{{ owned ? card.name : '' }}</span>
+      <span v-if="owned" class="tier-tag">{{ TIER_LABEL[card.tier] }}</span>
     </header>
 
     <template v-if="card && owned">
