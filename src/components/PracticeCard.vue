@@ -4,14 +4,15 @@
       <span class="dir-pill">{{ direction === 'zh2en' ? '中 → 英' : '英 → 中' }}</span>
       <template v-if="mode === 'listen' && !listenTextShown && !revealed">
         <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
-        <button class="btn btn-skip" @click="listenTextShown = true">显示原文</button>
+        <button class="btn btn-skip" :disabled="!canReveal" @click="listenTextShown = true">显示原文</button>
+        <p v-if="revealHint" class="gate-hint">{{ revealHint }}</p>
       </template>
       <template v-else-if="mode === 'retell' && !revealed">
         <button class="btn btn-primary btn-listen" @click="onRetellPlay">{{ playing ? '⏹ 停止' : (retellPlayed ? '↻ 重听' : '▶ 播放原句') }}</button>
         <div class="speed-seg">
           <button v-for="r in SPEEDS" :key="r" class="speed-btn" :class="{ active: speed === r }" @click="speed = r">{{ r }}x</button>
         </div>
-        <button class="btn btn-primary btn-reveal" v-if="retellRecDone" @click="revealed = true; emit('revealed')">对照原文</button>
+        <button class="btn btn-primary btn-reveal" v-if="canReveal" @click="revealed = true; emit('revealed')">对照原文</button>
       </template>
       <template v-else>
         <p class="source">
@@ -19,7 +20,10 @@
           <button v-if="canPlay" class="btn-speak" :title="playing ? '停止' : '朗读原句'" @click="onSpeak">{{ playing ? '⏹' : '🔊' }}</button>
         </p>
         <p v-if="speakError" class="audio-warn">{{ speakError }}</p>
-        <button class="btn btn-primary btn-reveal" v-if="!revealed" @click="revealed = true; emit('revealed')">看参考译文</button>
+        <template v-if="!revealed">
+          <button class="btn btn-primary btn-reveal" :disabled="!canReveal" @click="revealed = true; emit('revealed')">看参考译文</button>
+          <p v-if="revealHint" class="gate-hint">{{ revealHint }}</p>
+        </template>
         <div class="reference neu-inset" v-else>
           <p v-if="mode === 'retell'" class="reference-label">参考译文</p>
           <p>{{ referenceText }}</p>
@@ -65,6 +69,7 @@ const props = defineProps({
 const emit = defineEmits(['revealed', 'skip', 'recStopped'])
 
 const revealed = ref(false)
+const answered = ref(false) // 本句是否已作答（产生过一次录音），揭晓门禁依据
 const listenTextShown = ref(false)
 const listenError = ref('')
 const speakError = ref('')
@@ -73,11 +78,10 @@ const ttsOK = ttsSupported() // 运行期不变，无需响应式
 const canPlay = computed(() => props.sentence.source === 'builtin' || ttsOK)
 const playing = ref(false)
 
-// —— 复述模式：语速跟句保持（换句不重置），重听/已录状态随句重置 ——
+// —— 复述模式：语速跟句保持（换句不重置），重听状态随句重置 ——
 const SPEEDS = [0.75, 1, 1.25]
 const speed = ref(1)
 const retellPlayed = ref(false)
-const retellRecDone = ref(false)
 
 function onRetellPlay() {
   listenError.value = ''
@@ -95,13 +99,13 @@ function onRetellPlay() {
 
 watch(() => props.sentence, () => {
   revealed.value = false
+  answered.value = false
   listenTextShown.value = false
   listenError.value = ''
   speakError.value = ''
   stop()
   playing.value = false
   retellPlayed.value = false
-  retellRecDone.value = false
   // speed 故意不重置：调一次多句沿用
   isRec.value = false
   stopRecTimer()
@@ -155,6 +159,15 @@ function onListenPlay() {
 }
 
 const recOK = recorderSupported() // 运行期不变
+
+// —— 揭晓门禁：录音作答后才能揭晓原文/参考译文 ——
+// 无录音能力时不设门禁，否则用户永远无法揭晓（死锁）
+const canReveal = computed(() => !recOK || answered.value)
+const revealHint = computed(() => {
+  if (!recOK) return '本设备无法录音，可直接查看'
+  if (answered.value) return ''
+  return props.mode === 'listen' ? '先录音作答，再看原文' : '先录音作答，再看参考译文'
+})
 
 // —— 语音识别：跟录音绑定，识别是增强功能，任何失败不影响录音 ——
 const srOK = speechSupported()
@@ -227,7 +240,10 @@ async function onRecStart() {
   isRec.value = ok
   if (ok) startRecTimer()
   if (ok && srOK) srStart(srLang.value, srHandlers)
-  if (!ok) recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
+  if (!ok) {
+    recError.value = REC_ERROR_TEXT[lastErrorName()] || '无法访问麦克风'
+    answered.value = true // 想答但答不了（权限被拒/设备异常），不锁死揭晓
+  }
 }
 
 async function onRecStop() {
@@ -240,8 +256,10 @@ async function onRecStop() {
     return
   }
   isRec.value = false
-  if (url) recUrl.value = url
-  if (props.mode === 'retell') retellRecDone.value = true
+  if (url) {
+    recUrl.value = url
+    answered.value = true // 产生过一次录音即成作答，解锁揭晓
+  }
   emit('recStopped', recFinal.value || '')
 }
 
@@ -275,6 +293,7 @@ onUnmounted(() => {
 .source { font-size: 22px; line-height: 1.6; text-align: center; margin: 12px 0; }
 .reference { padding: 14px 16px; width: 100%; text-align: center; font-size: 16px; line-height: 1.6; color: var(--accent-text); }
 .btn-skip { font-size: 13px; opacity: 0.6; }
+.gate-hint { font-size: 12px; color: var(--text-muted); margin: 0; }
 .btn-speak { border: none; background: none; cursor: pointer; font-size: 16px; vertical-align: middle; margin-left: 6px; opacity: 0.7; padding: 4px; }
 .btn-speak:active { transform: scale(0.92); }
 .audio-warn { font-size: 12px; color: #e8463a; opacity: 0.8; margin: 0; }

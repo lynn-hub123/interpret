@@ -56,14 +56,22 @@ describe('PracticeCard', () => {
     expect(w.text()).toContain('你好。')
     expect(w.text()).not.toContain('Hello.')
   })
-  it('reveals reference on button click and emits revealed', async () => {
+  it('reveals reference after answering and emits revealed', async () => {
     const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await w.find('.btn-rec').trigger('click') // 录音停止即成一次作答
+    await flushPromises()
     await w.find('.btn-reveal').trigger('click')
     expect(w.text()).toContain('Hello.')
     expect(w.emitted('revealed')).toBeTruthy()
   })
   it('shows hint when reference side missing (custom paste)', async () => {
     const w = mount(PracticeCard, { props: { sentence: { ...sentence, en: '' }, direction: 'zh2en' } })
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
     await w.find('.btn-reveal').trigger('click')
     expect(w.text()).toContain('此句无参考译文')
   })
@@ -75,6 +83,57 @@ describe('PracticeCard', () => {
   it('hideSkip 为 true 时不渲染跳过按钮', () => {
     const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', hideSkip: true } })
     expect(w.find('.btn-skip').exists()).toBe(false)
+  })
+})
+
+describe('reveal gate (揭晓门禁)', () => {
+  it('sight: 未作答时看参考译文按钮禁用并显示提示', () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeDefined()
+    expect(w.text()).toContain('先录音作答，再看参考译文')
+  })
+  it('sight: 作答后可揭晓', async () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeUndefined()
+    expect(w.text()).not.toContain('先录音作答')
+  })
+  it('listen: 未作答时显示原文按钮禁用并提示', () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'listen' } })
+    const btn = w.findAll('button').find(b => b.text() === '显示原文')
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(w.text()).toContain('先录音作答，再看原文')
+  })
+  it('retell: 未作答时无对照原文入口', () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', mode: 'retell' } })
+    expect(w.find('.btn-reveal').exists()).toBe(false)
+  })
+  it('无录音能力时门禁豁免：按钮可点且注明可直接查看', () => {
+    recorderSupported.mockReturnValueOnce(false)
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeUndefined()
+    expect(w.text()).toContain('本设备无法录音，可直接查看')
+  })
+  it('录音启动失败不锁死：按钮可点（防死锁）', async () => {
+    startRecording.mockReturnValueOnce(false)
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeUndefined()
+  })
+  it('换句后门禁复位', async () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await w.find('.btn-rec').trigger('click')
+    await flushPromises()
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeUndefined()
+    await w.setProps({ sentence: { ...sentence, id: 'daily_002', zh: '新句子。' } })
+    expect(w.find('.btn-reveal').attributes('disabled')).toBeDefined()
+    expect(w.text()).toContain('先录音作答')
   })
 })
 
@@ -141,6 +200,10 @@ describe('listen mode', () => {
     await flushPromises()
     expect(playText).toHaveBeenCalledWith(expect.objectContaining({ text: '你好', lang: 'zh' }))
     expect(wrapper.find('.source').exists()).toBe(false)
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click') // 作答后才能揭晓
+    await flushPromises()
     const showBtn = wrapper.findAll('button').find(b => b.text() === '显示原文')
     await showBtn.trigger('click')
     expect(wrapper.find('.source').exists()).toBe(true)
@@ -168,6 +231,10 @@ describe('listen mode', () => {
   it('resets listen state and stops playback on sentence change', async () => {
     playText.mockImplementation(() => new Promise(() => {}))
     const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en', mode: 'listen' } })
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-rec').trigger('click')
+    await flushPromises()
     const showBtn = wrapper.findAll('button').find(b => b.text() === '显示原文')
     await showBtn.trigger('click')
     expect(wrapper.find('.source').exists()).toBe(true)
@@ -279,6 +346,10 @@ describe('recording zone', () => {
     try {
       const wrapper = mount(PracticeCard, { props: { sentence: { id: 'x_001', zh: '你好', en: 'hello' }, direction: 'zh2en' } })
       await wrapper.find('.btn-rec').trigger('click')
+      await flushPromises()
+      await wrapper.find('.btn-rec').trigger('click') // 先作答一次，解锁揭晓
+      await flushPromises()
+      await wrapper.find('.btn-rec').trigger('click') // 重录，计时继续
       await flushPromises()
       await vi.advanceTimersByTimeAsync(2000)
       await wrapper.find('.btn-reveal').trigger('click')
@@ -650,7 +721,7 @@ describe('retell mode', () => {
     await flushPromises()
     expect(wrapper.find('.btn-reveal').exists()).toBe(true)
     await wrapper.setProps({ sentence: { ...sentence, id: 'daily_002', zh: '新句子。' } })
-    expect(wrapper.find('.btn-reveal').exists()).toBe(false) // retellRecDone 已重置
+    expect(wrapper.find('.btn-reveal').exists()).toBe(false) // 作答状态已随句重置
     await wrapper.find('.btn-listen').trigger('click')
     await flushPromises()
     expect(playText).toHaveBeenLastCalledWith(expect.objectContaining({ rate: 1.25 })) // 语速保留
