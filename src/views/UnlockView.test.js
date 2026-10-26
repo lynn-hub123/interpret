@@ -87,6 +87,7 @@ describe('提交评分', () => {
     await w.vm.$nextTick()
     expect(getCardState('zhouye')).toMatchObject({ attempts: 1, progress: 100, unlocked: true, hidden: true })
     expect(w.text()).toContain('隐藏形态已获得')
+    expect(w.text()).not.toContain('看过参考译文')
     expect(JSON.parse(localStorage.getItem('interpret.progress.v1')).total).toBe(1)
     expect(JSON.parse(localStorage.getItem('interpret.records.v1'))).toHaveLength(1)
   })
@@ -100,31 +101,6 @@ describe('提交评分', () => {
     expect(getCardState('zhouye')).toMatchObject({ progress: 50, unlocked: false, hidden: false })
     expect(w.text()).toContain('本次 50%')
     expect(w.text()).not.toContain('普通形态已永久解锁')
-  })
-
-  it('看过参考译文后 100% 不给隐藏形态', async () => {
-    const w = mountView()
-    w.findComponent(PracticeCard).vm.$emit('revealed')
-    await w.vm.$nextTick()
-    expect(getCardState('zhouye').peeked).toBe(true)
-    w.findComponent(PracticeCard).vm.$emit('recStopped', 'all of it')
-    await w.vm.$nextTick()
-    await w.findAll('.rating-row .btn')[4].trigger('click')
-    await w.vm.$nextTick()
-    expect(getCardState('zhouye').hidden).toBe(false)
-    expect(w.text()).toContain('看过参考译文')
-  })
-
-  it('首次偷看且未满 100%：提示隐藏资格作废', async () => {
-    const w = mountView()
-    w.findComponent(PracticeCard).vm.$emit('revealed')
-    await w.vm.$nextTick()
-    w.findComponent(PracticeCard).vm.$emit('recStopped', 'part')
-    await w.vm.$nextTick()
-    await w.findAll('.rating-row .btn')[2].trigger('click')
-    await w.vm.$nextTick()
-    expect(w.text()).toContain('隐藏形态资格已作废')
-    expect(w.text()).not.toContain('看过参考译文')
   })
 
   it('已解锁未隐藏的卡：首次未拿满 100% 后重试，隐藏挑战与完整卡面都消失', async () => {
@@ -145,22 +121,6 @@ describe('提交评分', () => {
     expect(w.findComponent(CardReveal).props('full')).toBe(false)
     expect(w.text()).not.toContain('隐藏挑战')
     expect(w.text()).toContain('再练一次，卡面进度只升不降')
-  })
-
-  it('已解锁 progress=75 的卡偷看后，隐藏挑战与完整卡面失效', async () => {
-    localStorage.setItem('interpret.cards.v1', JSON.stringify({
-      zhouye: { attempts: 0, progress: 75, unlocked: true, hidden: false, peeked: false, lastAt: 0 }
-    }))
-    const w = mountView()
-    expect(w.findComponent(CardReveal).props('full')).toBe(true)
-    expect(w.text()).toContain('隐藏挑战')
-
-    w.findComponent(PracticeCard).vm.$emit('revealed')
-    await w.vm.$nextTick()
-
-    expect(w.findComponent(CardReveal).props('full')).toBe(false)
-    expect(w.text()).not.toContain('隐藏挑战')
-    expect(w.text()).toContain('已看过参考译文')
   })
 })
 

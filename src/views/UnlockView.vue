@@ -21,7 +21,6 @@
         :direction="direction"
         mode="sight"
         hide-skip
-        @revealed="onRevealed"
         @rec-stopped="onRecStopped"
       />
 
@@ -55,7 +54,6 @@
           <p v-if="result.unlockedNow">普通形态已永久解锁</p>
           <p v-if="result.hiddenNow" class="gold">隐藏形态已获得</p>
           <p v-if="result.hiddenMissed" class="hint">隐藏形态资格已作废，等下次再抽到这张卡</p>
-          <p v-if="result.peekedBlocked" class="hint">看过参考译文，本次隐藏形态资格已作废</p>
           <div class="result-actions">
             <button class="btn" @click="backToPractice">返回练习</button>
             <button class="btn" @click="retry">再试一次</button>
@@ -79,7 +77,7 @@ import { useRoute, useRouter } from 'vue-router'
 import PracticeCard from '../components/PracticeCard.vue'
 import CardReveal from '../components/CardReveal.vue'
 import RatingButtons from '../components/RatingButtons.vue'
-import { cardById, getCards, getCardState, markPeeked, recordAttempt, hiddenChallengeOf, unlockSentence } from '../lib/cards.js'
+import { cardById, getCards, getCardState, recordAttempt, hiddenChallengeOf, unlockSentence } from '../lib/cards.js'
 import { addRecord } from '../lib/records.js'
 import { onRated } from '../lib/srs.js'
 import { storageAvailable } from '../lib/storage.js'
@@ -117,7 +115,6 @@ const attemptKey = ref(0)
 const tip = computed(() => {
   if (entry.value?.attempts > 0) return '再练一次，卡面进度只升不降'
   if (hiddenChallenge.value) return '隐藏挑战：卡面已完整显示，这次第一发翻到 100% 才能拿到隐藏形态'
-  if (entry.value?.peeked) return '已看过参考译文，本次隐藏形态资格已作废；剪影会按你翻出的程度露出'
   return '口译这一句，剪影会按你翻出的程度露出；第一次就翻到 100% 可得隐藏形态'
 })
 
@@ -127,13 +124,6 @@ function sourceText() {
 
 function referenceText() {
   return direction === 'zh2en' ? card.unlock.en : card.unlock.zh
-}
-
-function onRevealed() {
-  if (!card) return
-  const r = markPeeked(card.id)
-  entry.value = { ...entry.value, peeked: true }
-  if (!r.persisted) saveWarn.value = true
 }
 
 function onRecStopped(text) {
@@ -184,7 +174,7 @@ function onRate(bucket) {
 
 function submit(bucket) {
   confirm.value = null
-  const prev = getCardState(card.id) // 取落库的最新状态，偷看标记才能生效
+  const prev = getCardState(card.id) // 取落库的最新状态，用于判定本次是否新解锁
   const attempt = recordAttempt({ cardId: card.id, bucket })
   entry.value = attempt.entry
   if (!attempt.persisted) saveWarn.value = true
@@ -199,8 +189,7 @@ function submit(bucket) {
     progress: attempt.entry.progress,
     unlockedNow: !prev.unlocked && attempt.entry.unlocked,
     hiddenNow: attempt.hiddenNow,
-    hiddenMissed: prev.attempts === 0 && bucket < 100 && !prev.hidden,
-    peekedBlocked: prev.attempts === 0 && bucket === 100 && prev.peeked && !prev.hidden
+    hiddenMissed: prev.attempts === 0 && bucket < 100 && !prev.hidden
   }
 }
 
