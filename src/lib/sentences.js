@@ -1,4 +1,5 @@
 import { load, save } from './storage.js'
+import { sceneSentenceById } from './scenes.js'
 import daily from '../data/library/daily.json'
 import economy from '../data/library/economy.json'
 import diplomacy from '../data/library/diplomacy.json'
@@ -32,7 +33,7 @@ export function allBuiltinSentences() {
 }
 
 export function sentenceById(id) {
-  return allBuiltinSentences().find(s => s.id === id) || getCustomSentences().find(s => s.id === id) || null
+  return allBuiltinSentences().find(s => s.id === id) || getCustomSentences().find(s => s.id === id) || sceneSentenceById(id)
 }
 
 export function detectLang(text) {

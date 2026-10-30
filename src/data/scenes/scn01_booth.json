@@ -1,0 +1,42 @@
+{
+  "id": "scn01",
+  "index": 1,
+  "title": "第一站 · 同传间",
+  "place": "国际会议中心三层 · 同传间",
+  "time": "白天",
+  "spirit": { "id": "hui", "name": "回", "form": "兽形", "domain": "diplomacy" },
+  "register": "会议口译（正式口语）",
+  "level": "中等",
+  "premise": "回声兽靠同传耳机漏出来的声音活着。它听得懂所有语言，却一句也说不出来。",
+  "glossary": [
+    { "en": "agenda", "zh": "议程", "note": "会议固定术语，不用 schedule" },
+    { "en": "plenary", "zh": "全会", "note": "全体会议，区别于分组会" },
+    { "en": "consensus", "zh": "共识", "note": "不加 a，go by consensus" },
+    { "en": "mandate", "zh": "授权、任务授权", "note": "指机构被赋予的职权范围" },
+    { "en": "deliverables", "zh": "成果文件", "note": "会议产出的正式文件，常用复数" },
+    { "en": "side event", "zh": "边会", "note": "主会期之外的配套活动" },
+    { "en": "take the floor", "zh": "请求发言、取得发言权", "note": "不是「上台」" },
+    { "en": "capital", "zh": "本国政府、首都方面", "note": "外交口语，my capital = 我方国内" },
+    { "en": "rollover", "zh": "技术性顺延、延期", "note": "不涉及新授权" },
+    { "en": "circulate", "zh": "散发、分发（文件）", "note": "circulate a draft" }
+  ],
+  "focus": ["数字与百分比", "长定语从句", "被动语态", "否定与让步", "外交委婉语", "程序性表述"],
+  "lines": [
+    { "id": "scn01_01", "dir": "zh2en", "zh": "接下来这一节大约四十五分钟，其中二十分钟是问答，请把每个问题控制在一分钟以内。", "en": "This session runs about forty-five minutes, twenty of which are for questions — please keep each question under a minute.", "difficulty": 3, "tags": ["数字", "长定语"] },
+    { "id": "scn01_02", "dir": "zh2en", "zh": "那位代表刚才提到的第三点，我想补充一句：这个时间表我们内部还没有过会。", "en": "On the third point the previous speaker raised — one caveat: that timetable hasn't cleared our internal review.", "difficulty": 3, "tags": ["长定语", "被动"] },
+    { "id": "scn01_03", "dir": "zh2en", "zh": "这一条我们原则上同意，但措辞想再商量一下，「承诺」这个词对我们来说分量太重。", "en": "We agree with that in principle, but we'd like to revisit the wording — the word commitment is too strong for us.", "difficulty": 4, "tags": ["让步", "委婉"] },
+    { "id": "scn01_04", "dir": "zh2en", "zh": "主席先生，我想请求发言，就程序问题说两句。", "en": "Mr. Chair, I'd like to take the floor on a point of order.", "difficulty": 3, "tags": ["程序", "套语"] },
+    { "id": "scn01_05", "dir": "zh2en", "zh": "关于资金缺口，现在还有大约三分之一没有着落，我们希望在下一次全会之前解决。", "en": "On the funding gap, about a third is still unaccounted for, and we hope to settle it before the next plenary.", "difficulty": 4, "tags": ["分数", "被动"] },
+    { "id": "scn01_06", "dir": "zh2en", "zh": "我方并非反对这项提议，只是认为现在还不是合适的时机。", "en": "We're not opposed to the proposal; we simply don't think this is the right moment.", "difficulty": 3, "tags": ["否定与转折"] },
+    { "id": "scn01_07", "dir": "zh2en", "zh": "会议纪要我看过了，只有两处需要改，稍后交给秘书处。", "en": "I've been through the minutes; only two points need changing, and I'll pass them to the secretariat shortly.", "difficulty": 3, "tags": ["数字", "时态"] },
+    { "id": "scn01_08", "dir": "zh2en", "zh": "如果各方没有异议，我们就把这一段直接写进成果文件。", "en": "If there are no objections, we'll put this paragraph straight into the deliverables.", "difficulty": 3, "tags": ["条件", "程序"] },
+    { "id": "scn01_09", "dir": "en2zh", "zh": "我们今天不要承诺，只想听听各位的立场。", "en": "We're not asking for a commitment today, just an indication of where you stand.", "difficulty": 3, "tags": ["否定", "委婉"] },
+    { "id": "scn01_10", "dir": "en2zh", "zh": "我给个具体数字：三年大约二十四亿，而且这还是保守估计。", "en": "Let me put a number on that: roughly 2.4 billion over three years, and I'd call that conservative.", "difficulty": 4, "tags": ["数字", "评价"] },
+    { "id": "scn01_11", "dir": "en2zh", "zh": "这点我得先跟国内沟通，暂时不便公开表态。", "en": "I'd rather not go on record on that until I've spoken to my capital.", "difficulty": 4, "tags": ["外交委婉", "时间从句"] },
+    { "id": "scn01_12", "dir": "en2zh", "zh": "边会能不能挪到周四？有三个代表团说周三来不了。", "en": "Could we push the side event to Thursday? Three delegations say they can't make Wednesday.", "difficulty": 3, "tags": ["请求", "数字"] },
+    { "id": "scn01_13", "dir": "en2zh", "zh": "这个措辞我们恐怕不能接受原样通过，它暗示了我们尚未同意的义务。", "en": "I'm afraid we can't accept the wording as it stands — it implies obligations we haven't agreed to.", "difficulty": 4, "tags": ["长定语", "否定"] },
+    { "id": "scn01_14", "dir": "en2zh", "zh": "如果主席允许，我想在会议结束前再回到这一点。", "en": "With the Chair's permission, I'd like to come back to that at the end of the session.", "difficulty": 3, "tags": ["程序", "礼貌"] },
+    { "id": "scn01_15", "dir": "en2zh", "zh": "明确一下：这是技术性顺延，不是新的授权。", "en": "Just to be clear, this is a technical rollover, not a new mandate.", "difficulty": 3, "tags": ["术语", "否定"] },
+    { "id": "scn01_16", "dir": "en2zh", "zh": "修订稿已经发了。改动都标在页边，一共只有四处。", "en": "We've circulated a revised draft. The changes are in the margin, and there are only four.", "difficulty": 3, "tags": ["被动", "数字"] }
+  ]
+}

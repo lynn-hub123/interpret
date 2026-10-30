@@ -1,0 +1,214 @@
+{
+  "id": "scn02",
+  "index": 2,
+  "title": "第一幕 · 退潮第一天",
+  "place": "滩头",
+  "time": "退潮首日 · 未明",
+  "spirit": { "id": "ling", "name": "铃", "form": "寄居", "domain": "tide" },
+  "register": "日常口语",
+  "level": "中等",
+  "premise": "环汐退潮的第一天，全镇人天亮前下海。你是拾潮人的学徒，师父去年这一天下水，没回来。铃说还没到时间，但你等不了了。",
+  "hook": "你从守滩老妇人口中问出两条禁忌：在下面不许说自己的名字，听见背后有人喊也不许回头。她告诉你，师父是往断船滩的方向下的水。潮水比往年退得早，你只剩不到一夜。",
+  "glossary": [
+    { "en": "come back the same", "zh": "回来时还是原来的样子", "note": "the same 是补语，不是「同样的东西」" },
+    { "en": "the tide's turning", "zh": "潮水要转了", "note": "口语句型，the tide's = the tide is" },
+    { "en": "go under", "zh": "下水、沉下去", "note": "下海不说 go into the sea，口语多用 go under" },
+    { "en": "word for word", "zh": "一字不差地", "note": "转述时固定说法" },
+    { "en": "the table's still set", "zh": "桌上还摆着饭菜", "note": "set 指摆好餐具，不是「设置」" },
+    { "en": "before the water does", "zh": "赶在水回来之前", "note": "does 代指 comes back，避免重复" }
+  ],
+  "focus": ["否定与转折（不是……是……）", "委婉请求（能不能告诉我）", "口语省略与缩写", "转述与引语"],
+  "choice": {
+    "id": "scn02_choice_01",
+    "trigger": "守滩老妇人拦住你，问你天没亮下海做什么。",
+    "note": "三种说法各通向一处后果；分支只看选择，不看录音得分。",
+    "options": [
+      {
+        "id": "honest",
+        "stance": "照实说",
+        "zh": "我是来找我师父的。他去年这一天下水，没回来。",
+        "en": "I'm here to find my master. He went under on this same day last year and never came back.",
+        "consequence": "她放你过去，但会一直盯着你的方向，并在名册上记下你来了。",
+        "flag": "shore_knows_you"
+      },
+      {
+        "id": "lie",
+        "stance": "瞒一句",
+        "zh": "我是替我师父来收一笔旧账的。",
+        "en": "I'm here to settle an old debt for my master.",
+        "consequence": "当场放行。第二天全镇名册上多了一个假名，第三章会被人翻出来。",
+        "flag": "false_name_on_roll"
+      },
+      {
+        "id": "deflect",
+        "stance": "反问她",
+        "zh": "那他去年往哪个方向下的水？",
+        "en": "Then which way did he go into the water last year?",
+        "consequence": "她给了你一个方位——断船滩，但一个字也没提你师父是死是活。",
+        "flag": "got_direction"
+      }
+    ]
+  },
+  "lines": [
+    {
+      "id": "scn02_01",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "说明来意，让对方明白你不是来捡东西的",
+      "zh": "我是来找我师父的。他去年这一天下水，没回来。",
+      "en": "I'm here to find my master. He went under on this same day last year and never came back.",
+      "difficulty": 3,
+      "tags": ["说明", "过去时"]
+    },
+    {
+      "id": "scn02_02",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "复述师父留下的话，但不解释它是什么意思",
+      "zh": "他走之前说，只要走得够深，就能走到那一夜之前。",
+      "en": "Before he left he said that if you go deep enough, you can get to the night before it all happened.",
+      "difficulty": 3,
+      "tags": ["宾语从句", "条件"]
+    },
+    {
+      "id": "scn02_03",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "澄清自己不是来捡旧货换钱的",
+      "zh": "我不是来捡东西的，我不缺这点钱。",
+      "en": "I'm not here to pick up salvage. I don't need that kind of money.",
+      "difficulty": 2,
+      "tags": ["否定", "口语"]
+    },
+    {
+      "id": "scn02_04",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "低声下气地问一个方位",
+      "zh": "能不能告诉我，他是从哪个方向下的水？",
+      "en": "Could you tell me which way he went into the water?",
+      "difficulty": 2,
+      "tags": ["委婉请求", "疑问"]
+    },
+    {
+      "id": "scn02_05",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "问清最坏的结果，好做决定",
+      "zh": "要是天亮之前回不来，会怎么样？",
+      "en": "What happens if I don't make it back before daylight?",
+      "difficulty": 3,
+      "tags": ["条件", "将来"]
+    },
+    {
+      "id": "scn02_06",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "追问她话里的含糊处，不肯放过",
+      "zh": "你说他们回来「不一样了」，是哪一种不一样？",
+      "en": "You said they come back different. What kind of different?",
+      "difficulty": 3,
+      "tags": ["引语", "追问"]
+    },
+    {
+      "id": "scn02_07",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "让对方放心，也让自己站稳",
+      "zh": "我不怕。我只想知道我师父是不是还活着。",
+      "en": "I'm not afraid. I just want to know whether my master is still alive.",
+      "difficulty": 3,
+      "tags": ["否定", "宾语从句"]
+    },
+    {
+      "id": "scn02_08",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "答应把禁忌原样记下来，不添不改",
+      "zh": "那我把它记下来，一个字都不改。",
+      "en": "Then I'll write it down, word for word.",
+      "difficulty": 2,
+      "tags": ["承诺", "固定说法"]
+    },
+    {
+      "id": "scn02_09",
+      "dir": "en2zh",
+      "speaker": "守滩老妇人",
+      "intent": "警告，不是解释",
+      "zh": "去年下去的人，回来时都不一样了。有些压根没回来。",
+      "en": "Last year's people don't come back the same. Some don't come back at all.",
+      "difficulty": 2,
+      "tags": ["否定", "比较"]
+    },
+    {
+      "id": "scn02_10",
+      "dir": "en2zh",
+      "speaker": "守滩老妇人",
+      "intent": "提醒时间比你以为的短",
+      "zh": "今晚潮退得早。你能有的时间比你想的少。",
+      "en": "The tide's turning early tonight. You'll have less time than you think.",
+      "difficulty": 2,
+      "tags": ["比较", "将来"]
+    },
+    {
+      "id": "scn02_11",
+      "dir": "en2zh",
+      "speaker": "盐工",
+      "intent": "说一句让外乡人不安的闲话",
+      "zh": "镇上一半人已经下去了。他们也不是去捡东西的。",
+      "en": "Half the town's down there already. They're not looking for salvage either.",
+      "difficulty": 3,
+      "tags": ["否定", "口语缩写"]
+    },
+    {
+      "id": "scn02_12",
+      "dir": "en2zh",
+      "speaker": "少年",
+      "intent": "说一半就停，不想再讲",
+      "zh": "我哥三年前下去过。他回来了，但从不提那件事。",
+      "en": "My brother went under three years ago. He came back, but he never talks about it.",
+      "difficulty": 2,
+      "tags": ["过去时", "转折"]
+    },
+    {
+      "id": "scn02_13",
+      "dir": "en2zh",
+      "speaker": "守滩老妇人",
+      "intent": "交代第一条禁忌",
+      "zh": "在下面别说自己的名字。水最先拿走的就是名字。",
+      "en": "Don't say your name down there. Names are the first thing the water takes.",
+      "difficulty": 3,
+      "tags": ["祈使", "强调句"]
+    },
+    {
+      "id": "scn02_14",
+      "dir": "en2zh",
+      "speaker": "盐工",
+      "intent": "交代第二条禁忌，语气很轻，像在说常识",
+      "zh": "要是听见背后有人喊你，继续走，别回头。",
+      "en": "If you hear someone calling you from behind, keep walking. Don't turn around.",
+      "difficulty": 3,
+      "tags": ["条件", "祈使"]
+    },
+    {
+      "id": "scn02_15",
+      "dir": "en2zh",
+      "speaker": "少年",
+      "intent": "讲一件他自己也不信的事",
+      "zh": "下面有间屋子，桌上还摆着饭。菜还是热的。人不在。",
+      "en": "There's a house down there with the table still set. The food's still warm. Nobody's home.",
+      "difficulty": 3,
+      "tags": ["存在句", "短句并列"]
+    },
+    {
+      "id": "scn02_16",
+      "dir": "en2zh",
+      "speaker": "守滩老妇人",
+      "intent": "最后一次劝他上岸",
+      "zh": "你师父问过跟你一样的问题。赶在水回来之前上来吧。",
+      "en": "Your master asked the same questions you're asking. Come back before the water does.",
+      "difficulty": 3,
+      "tags": ["现在完成", "祈使"]
+    }
+  ]
+}

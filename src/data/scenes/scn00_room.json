@@ -1,0 +1,38 @@
+{
+  "id": "scn00",
+  "index": 0,
+  "title": "序章 · 你的房间",
+  "place": "你的房间",
+  "time": "夜",
+  "spirit": { "id": "ya", "name": "哑", "form": "器物", "domain": "daily" },
+  "register": "日常口语",
+  "level": "中等",
+  "premise": "录音笔里存着别人说过的话。你把这些话译出来，哑才能一点一点把声音接回去。",
+  "glossary": [
+    { "en": "wrap up", "zh": "收尾、把手里的事弄完", "note": "口语，不说 finish" },
+    { "en": "get away", "zh": "脱身、走不开", "note": "不是「离开」，是「腾不出身」" },
+    { "en": "be on my case", "zh": "念叨我、盯着我挑毛病", "note": "口语，勿直译" },
+    { "en": "pile up", "zh": "（事情）一件件堆起来", "note": "主语通常是 things / work" },
+    { "en": "split it", "zh": "各付各的、AA", "note": "结账场景固定说法" },
+    { "en": "cover", "zh": "（口语）付钱、替班", "note": "cover dinner / cover a shift" }
+  ],
+  "focus": ["否定与转折（不是……是……）", "口语省略", "比较结构", "模糊时间与量"],
+  "lines": [
+    { "id": "scn00_01", "dir": "zh2en", "zh": "你先别急着回他，等我把这边的事弄完，我陪你一起过去。", "en": "Don't rush to get back to him. Let me wrap up here and I'll go over with you.", "difficulty": 3, "tags": ["口语", "时间"] },
+    { "id": "scn00_02", "dir": "zh2en", "zh": "这雨看着不大，走两步鞋就全湿了。", "en": "The rain doesn't look like much, but two steps out and your shoes are soaked.", "difficulty": 3, "tags": ["转折", "程度"] },
+    { "id": "scn00_03", "dir": "zh2en", "zh": "我记得上次来这家店还挺便宜的，怎么现在涨了这么多？", "en": "I remember this place being pretty cheap last time — how come prices have gone up so much?", "difficulty": 3, "tags": ["比较", "疑问"] },
+    { "id": "scn00_04", "dir": "zh2en", "zh": "你要是赶时间就先走，别等我，我这儿还得好一会儿。", "en": "If you're in a hurry, go ahead — don't wait for me, I'll be a while.", "difficulty": 2, "tags": ["条件", "口语"] },
+    { "id": "scn00_05", "dir": "zh2en", "zh": "他不是不想来，是这两天实在走不开。", "en": "It's not that he doesn't want to come; he just can't get away these couple of days.", "difficulty": 3, "tags": ["否定与转折", "口语"] },
+    { "id": "scn00_06", "dir": "zh2en", "zh": "你有没有觉得，明明是周末，反而比上班还累。", "en": "Don't you feel like the weekend wears you out more than work does?", "difficulty": 3, "tags": ["比较", "反诘"] },
+    { "id": "scn00_07", "dir": "zh2en", "zh": "手机快没电了，我先挂，回头微信上跟你说。", "en": "My phone's about to die, so I'll hang up and message you later.", "difficulty": 2, "tags": ["口语", "将来"] },
+    { "id": "scn00_08", "dir": "zh2en", "zh": "这事你别跟他说是我讲的，不然他又得念叨我半天。", "en": "Don't tell him it came from me, or he'll be on my case for ages.", "difficulty": 3, "tags": ["否定", "条件"] },
+    { "id": "scn00_09", "dir": "en2zh", "zh": "帮我个忙行吗？我这边会走不开，取不了快递。", "en": "Can you do me a favor? I'm stuck in a meeting and can't pick up the package.", "difficulty": 2, "tags": ["请求", "口语"] },
+    { "id": "scn00_10", "dir": "en2zh", "zh": "我这周一直想给你打电话，可事情一件接一件地堆着。", "en": "I've been meaning to call you all week, but things kept piling up.", "difficulty": 3, "tags": ["现在完成进行", "转折"] },
+    { "id": "scn00_11", "dir": "en2zh", "zh": "说实话，这种天气我宁愿待在家，也不想出门。", "en": "Honestly, I'd rather stay in tonight than go out in this weather.", "difficulty": 2, "tags": ["比较", "意愿"] },
+    { "id": "scn00_12", "dir": "en2zh", "zh": "等一下，我看一眼——钥匙好像落在台面上了。", "en": "Hold on, let me check — I think I left the keys on the counter.", "difficulty": 2, "tags": ["口语", "推测"] },
+    { "id": "scn00_13", "dir": "en2zh", "zh": "不是什么大事，不过下次能提前跟我说一声就好了。", "en": "It's not a big deal, but it'd help if you could tell me in advance next time.", "difficulty": 3, "tags": ["委婉", "虚拟语气"] },
+    { "id": "scn00_14", "dir": "en2zh", "zh": "要不各付各的，要不这顿我来，晚饭你请。", "en": "We can split it, or I'll get this one and you cover dinner.", "difficulty": 3, "tags": ["口语", "并列选择"] },
+    { "id": "scn00_15", "dir": "en2zh", "zh": "抱歉来晚了，路上堵得厉害，还找不到车位。", "en": "Sorry I'm late — the traffic was awful and I couldn't find parking.", "difficulty": 2, "tags": ["道歉", "并列"] },
+    { "id": "scn00_16", "dir": "en2zh", "zh": "地址我发你。二楼右手边第一个门，敲门就行。", "en": "I'll text you the address. Second floor, first door on the right — just knock.", "difficulty": 3, "tags": ["方位", "祈使"] }
+  ]
+}

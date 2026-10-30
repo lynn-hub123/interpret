@@ -2,6 +2,10 @@
   <div class="card neu-raised" :class="{ flipped: revealed }">
     <div class="card-face">
       <span class="dir-pill">{{ direction === 'zh2en' ? '中 → 英' : '英 → 中' }}</span>
+      <div v-if="hasVoice" class="voice-bar">
+        <span class="voice-who">{{ sentence.speaker }}</span>
+        <span v-if="sentence.intent" class="voice-goal">{{ sentence.intent }}</span>
+      </div>
       <template v-if="mode === 'listen' && !listenTextShown && !revealed">
         <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
         <button class="btn btn-skip" :disabled="!canReveal" @click="listenTextShown = true">显示原文</button>
@@ -126,6 +130,8 @@ watch(() => props.mode, () => {
 })
 
 const sourceText = computed(() => (props.direction === 'zh2en' ? props.sentence.zh : props.sentence.en) || props.sentence.zh || props.sentence.en)
+// 角色层：场景句带 speaker / intent（谁在说、他想要什么）；普通句没有这一层
+const hasVoice = computed(() => Boolean(props.sentence.speaker || props.sentence.intent))
 // 源语言按实际文本判定：自定义句可能缺 zh 或 en 字段，direction 与实际语言可能不一致
 const sourceLang = computed(() => (/[\u4e00-\u9fff]/.test(sourceText.value) ? 'zh' : 'en'))
 const referenceText = computed(() => {
@@ -289,6 +295,9 @@ onUnmounted(() => {
 .card { padding: 28px 20px; display: flex; justify-content: center; }
 .card-face { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
 .dir-pill { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+.voice-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: -6px; text-align: center; }
+.voice-who { font-size: 12px; color: var(--accent-text); }
+.voice-goal { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 .source { font-size: 22px; line-height: 1.6; text-align: center; margin: 12px 0; }
 .reference { padding: 14px 16px; width: 100%; text-align: center; font-size: 16px; line-height: 1.6; color: var(--accent-text); }
 .btn-skip { font-size: 13px; opacity: 0.6; }
