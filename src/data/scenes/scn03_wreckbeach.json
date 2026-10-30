@@ -1,0 +1,261 @@
+{
+  "id": "scn03",
+  "index": 3,
+  "title": "第二幕 · 断船滩",
+  "place": "断船滩",
+  "time": "退潮第一夜 · 更深",
+  "spirit": { "id": "ling", "name": "铃", "form": "寄居", "domain": "tide" },
+  "register": "拾潮行话",
+  "level": "中等",
+  "premise": "断船滩在沉城的屋脊上。几十条船搁浅在那里，桅杆像一片枯树。铃在你肩上一路没说话，到了滩口才开口：我不下去。",
+  "openings": [
+    {
+      "flag": "shore_knows_you",
+      "text": "岸上那位已经知道你会来。篙叔守在滩口，第一句话就是：她让我等一个学徒。"
+    },
+    {
+      "flag": "false_name_on_roll",
+      "text": "你还没走到断船滩，名册上先多了你的名字。一个昨天才登记的名字，比人先到。"
+    },
+    {
+      "flag": "got_direction",
+      "text": "老妇人给的方位很准。你顺着桅杆一路走，没有走错一步，直接到了滩口。"
+    }
+  ],
+  "hook": "篙叔念完名册就上了岸，再没回头。铃的壳里，停了一年的表针动了一下。再往下，屋顶一直延伸到那一夜。",
+  "glossary": [
+    { "en": "go aground", "zh": "搁浅", "note": "船搁浅用 aground，不用 crash" },
+    { "en": "read out", "zh": "念出（名字）", "note": "read out 重音在 out，是「宣读」不是「读完」" },
+    { "en": "answer to a name", "zh": "应某个名字", "note": "answer to 是「应答」，不是「回答」" },
+    { "en": "strip a wreck", "zh": "拆沉船取料", "note": "拾潮人的行话，strip 是拆光可用的东西" },
+    { "en": "in your own hand", "zh": "亲笔写的", "note": "in one's own hand 指笔迹出自本人" },
+    { "en": "step for step", "zh": "一步不差地", "note": "数步数时用，强调一步都不能多" }
+  ],
+  "focus": ["否定与转折（不是……是……）", "被动语态", "转述别人的话", "祈使与条件"],
+  "choice": {
+    "id": "scn03_choice_01",
+    "trigger": "名册翻到最后一页。篙叔念出你的名字，声音很平，像在念一件早就登记好的事。",
+    "note": "三种做法各留一处痕迹；分支只看选择，不看录音得分。",
+    "options": [
+      {
+        "id": "answer",
+        "stance": "应一声",
+        "zh": "是我。我在这儿。",
+        "en": "That's me. I'm right here.",
+        "consequence": "水记住了你的声音，后面的船开始自己挪动；只是你第一次听见有人用师父的语气叫你的名字。",
+        "flag": "answered_the_name"
+      },
+      {
+        "id": "deny",
+        "stance": "否认",
+        "zh": "船上没有这个人。",
+        "en": "There's nobody on this boat by that name.",
+        "consequence": "名册上你的名字淡了一点，但没有消失。篙叔看你的眼神变了。",
+        "flag": "denied_your_name"
+      },
+      {
+        "id": "turn_page",
+        "stance": "翻过去",
+        "zh": "下一页是谁？",
+        "en": "Who's on the next page?",
+        "consequence": "下一页是师父的名字，后面空着一行，像在等人填。",
+        "flag": "read_ahead"
+      }
+    ]
+  },
+  "lines": [
+    {
+      "id": "scn03_01",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "让对方知道你不是来分船的，是来找人的",
+      "zh": "我不是来分船的。我来找一个去年没上岸的人。",
+      "en": "I'm not here to strip the wrecks. I'm looking for someone who didn't come back last year.",
+      "difficulty": 2,
+      "tags": ["否定", "口语"]
+    },
+    {
+      "id": "scn03_02",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "追问一件不合常理的事，要一个解释",
+      "zh": "船为什么会卡在屋顶上？水是慢慢退的，船不该这么高。",
+      "en": "Why are the boats sitting on rooftops? The water went out slowly — they shouldn't be this high.",
+      "difficulty": 3,
+      "tags": ["疑问", "比较"]
+    },
+    {
+      "id": "scn03_03",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "把师父留下的话再说一遍，不肯接受「死了」这个说法",
+      "zh": "他说下面没有死人，只有还没走回去的人。",
+      "en": "He said there are no dead people down there — only people who haven't walked back yet.",
+      "difficulty": 3,
+      "tags": ["转述", "否定"]
+    },
+    {
+      "id": "scn03_04",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "请求进那条还亮着灯的船，语气放低",
+      "zh": "那条船里还亮着灯。我想上去看一眼，就一眼。",
+      "en": "There's still a lamp burning in that boat. I want to go up and look — just once.",
+      "difficulty": 2,
+      "tags": ["委婉", "程度"]
+    },
+    {
+      "id": "scn03_05",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "向同龄人澄清立场，不想被当成抢东西的",
+      "zh": "我跟他一样是学徒。他教我的时候，一句怨话都没说过。",
+      "en": "I was his apprentice too. In all the time he taught me, he never once complained.",
+      "difficulty": 3,
+      "tags": ["比较", "过去时"]
+    },
+    {
+      "id": "scn03_06",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "要求看名册，客气但没有退路",
+      "zh": "名册能不能让我翻一下？我只找一个人的名字。",
+      "en": "Could I look through the roll? I'm only after one name.",
+      "difficulty": 2,
+      "tags": ["委婉请求", "疑问"]
+    },
+    {
+      "id": "scn03_07",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "质问对方，为什么自己的名字会先出现在这里",
+      "zh": "这一页上写着我的名字。是谁先写上去的？",
+      "en": "My name is on this page. Who wrote it down before I got here?",
+      "difficulty": 3,
+      "tags": ["被动", "疑问"]
+    },
+    {
+      "id": "scn03_08",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "答应铃的要求，但把话说得留有余地",
+      "zh": "好，我答应你。名字被念到的时候，我不应声。",
+      "en": "All right, I promise. When they read out a name, I won't answer to it.",
+      "difficulty": 3,
+      "tags": ["条件", "承诺"]
+    },
+    {
+      "id": "scn03_09",
+      "dir": "en2zh",
+      "speaker": "篙叔",
+      "intent": "纠正你以为的常识",
+      "zh": "这些船不是撞上去的。是水退的时候，把它们一条一条放上去的。",
+      "en": "These boats didn't crash here. When the tide went out, it set them down one by one.",
+      "difficulty": 3,
+      "tags": ["否定与转折", "被动"]
+    },
+    {
+      "id": "scn03_10",
+      "dir": "en2zh",
+      "speaker": "篙叔",
+      "intent": "透露一条不该轻易给出的信息",
+      "zh": "你师父上个月来过。他问的也是这句话：船为什么在屋顶上。",
+      "en": "Your master was here last month. He asked the same thing you just did: why the boats are on the rooftops.",
+      "difficulty": 3,
+      "tags": ["过去时", "引语"]
+    },
+    {
+      "id": "scn03_11",
+      "dir": "en2zh",
+      "speaker": "铃",
+      "intent": "提醒规则，不解释原因",
+      "zh": "他们念名字的时候，你只要一张嘴，水就会记住你的声音。",
+      "en": "When they read out the names, the moment you open your mouth, the water remembers your voice.",
+      "difficulty": 3,
+      "tags": ["条件", "时间"]
+    },
+    {
+      "id": "scn03_12",
+      "dir": "en2zh",
+      "speaker": "阿棠",
+      "intent": "交代自己的身份，也顺手试探你",
+      "zh": "我也跟他学过，三个月。他有没有跟你提过一个叫阿棠的？",
+      "en": "I trained under him too. Three months. Did he ever mention someone called Tang?",
+      "difficulty": 2,
+      "tags": ["过去时", "疑问"]
+    },
+    {
+      "id": "scn03_13",
+      "dir": "en2zh",
+      "speaker": "阿棠",
+      "intent": "说一件她自己也不明白的事",
+      "zh": "名册上不该有的名字，会自己长出来。第二天就长好了。",
+      "en": "Names that shouldn't be on the roll grow there by themselves. By the next day they're set.",
+      "difficulty": 4,
+      "tags": ["被动", "悬疑"]
+    },
+    {
+      "id": "scn03_14",
+      "dir": "en2zh",
+      "speaker": "船上的人",
+      "intent": "只留一句话，不露面",
+      "zh": "灯是给你留的。你师父那盏，我替他点着。",
+      "en": "The lamp was left for you. I keep your master's lit for him.",
+      "difficulty": 3,
+      "tags": ["被动", "短句"]
+    },
+    {
+      "id": "scn03_15",
+      "dir": "en2zh",
+      "speaker": "篙叔",
+      "intent": "给一条听着荒唐但必须照做的规矩",
+      "zh": "下去之前数清自己走了几步。回来的时候，一步都不能多。",
+      "en": "Count your steps before you go down. On the way back, not one more than that.",
+      "difficulty": 3,
+      "tags": ["祈使", "数字"]
+    },
+    {
+      "id": "scn03_16",
+      "dir": "en2zh",
+      "speaker": "铃",
+      "intent": "说出它一直瞒着的事",
+      "zh": "你师父不是没回来。他是回来过，然后又下去了。",
+      "en": "Your master didn't fail to come back. He came back — and then he went down again.",
+      "difficulty": 3,
+      "tags": ["否定", "过去时"]
+    },
+    {
+      "id": "scn03_17",
+      "dir": "en2zh",
+      "speaker": "篙叔",
+      "intent": "说明他为什么在滩口等你",
+      "zh": "岸上那位让我在这儿等你。她说你会来，而且不会走正路。",
+      "en": "The woman from the shore told me to wait here for you. She said you'd come, and not by the main path.",
+      "difficulty": 3,
+      "tags": ["引语", "否定"],
+      "when": "shore_knows_you"
+    },
+    {
+      "id": "scn03_18",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "先发制人，堵住对方关于假名的追问",
+      "zh": "名册上多出来的那个名字，不是我写的。",
+      "en": "That extra name on the roll — I didn't write it.",
+      "difficulty": 3,
+      "tags": ["否定", "过去时"],
+      "when": "false_name_on_roll"
+    },
+    {
+      "id": "scn03_19",
+      "dir": "zh2en",
+      "speaker": "你",
+      "intent": "把方位的来历说清楚，换取对方信任",
+      "zh": "是岸上那位指的方位。她说往断船的方向走，别停。",
+      "en": "The woman on the shore gave me the direction. She said to head for the wrecks and not stop.",
+      "difficulty": 3,
+      "tags": ["引语", "祈使"],
+      "when": "got_direction"
+    }
+  ]
+}

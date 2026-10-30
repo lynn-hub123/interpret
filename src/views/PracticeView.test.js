@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import PracticeView from './PracticeView.vue'
 import PracticeCard from '../components/PracticeCard.vue'
 import DrawOverlay from '../components/DrawOverlay.vue'
+import ChoiceOverlay from '../components/ChoiceOverlay.vue'
 import { loadSettings } from '../stores/settings.js'
 
 vi.mock('vue-router', () => ({
@@ -31,7 +32,11 @@ vi.mock('../lib/sentences.js', () => ({
   getCustomSentences: () => []
 }))
 vi.mock('../lib/picker.js', () => ({
-  drawSentence: vi.fn(({ pool, lastId }) => pool.find(s => s.id !== lastId) || pool[0])
+  drawSentence: vi.fn(({ pool, lastId }) => {
+    // 顺序轮转：场景测试要 16 句全部覆盖，不能只在两句之间来回跳
+    const i = pool.findIndex(s => s.id === lastId)
+    return pool[(i + 1) % pool.length]
+  })
 }))
 vi.mock('../lib/srs.js', () => ({
   dueQueue: vi.fn(() => []),
@@ -102,6 +107,66 @@ describe('PracticeView rating visibility', () => {
     await w.findAll('.mode-btn')[2].trigger('click')
     const { settings } = await import('../stores/settings.js')
     expect(settings.value.mode).toBe('retell')
+  })
+})
+
+describe('场景抉择', () => {
+  async function mountSceneView() {
+    sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'scene', sceneId: 'scn02' }))
+    return mountView()
+  }
+
+  // 场景句池 16 句全部评一遍：本场达标即触发抉择弹层
+  async function clearScene(w) {
+    for (let i = 0; i < 16; i++) {
+      w.findComponent(PracticeCard).vm.$emit('revealed')
+      await w.vm.$nextTick()
+      await w.find('.rating-row .btn').trigger('click')
+      await w.vm.$nextTick()
+    }
+  }
+
+  it('本场练完弹出三选一，选择后落 flag 并关闭', async () => {
+    const w = await mountSceneView()
+    expect(w.findComponent(ChoiceOverlay).exists()).toBe(false)
+    await clearScene(w)
+    expect(w.findComponent(ChoiceOverlay).exists()).toBe(true)
+    expect(w.findAll('.choice-card')).toHaveLength(3)
+
+    await w.findAll('.choice-card')[0].trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findComponent(ChoiceOverlay).exists()).toBe(false)
+
+    const story = JSON.parse(localStorage.getItem('interpret.story.v1'))
+    expect(story.choices.scn02).toBe('honest')
+    expect(story.flags.shore_knows_you).toBe(true)
+  })
+
+  it('「先不决定」只关闭弹层，不写抉择', async () => {
+    const w = await mountSceneView()
+    await clearScene(w)
+    await w.find('.choice-later').trigger('click')
+    await w.vm.$nextTick()
+    expect(w.findComponent(ChoiceOverlay).exists()).toBe(false)
+    const story = localStorage.getItem('interpret.story.v1')
+    expect(story ? JSON.parse(story).choices : {}).toEqual({})
+  })
+
+  it('上一幕的抉择会改变开场白与句池', async () => {
+    localStorage.setItem('interpret.story.v1', JSON.stringify({ node: 'scn03', flags: { got_direction: true } }))
+    sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'scene', sceneId: 'scn03' }))
+    const w = await mountView()
+    const opening = '老妇人给的方位很准。你顺着桅杆一路走，没有走错一步，直接到了滩口。'
+    expect(w.find('.scene-premise').text()).toBe(opening)
+    // 16 句基础池 + 1 句由 got_direction 解锁
+    expect(w.find('.scene-foot').text()).toContain('0/17')
+  })
+
+  it('没有上一幕标记时，断船滩回到默认开场与 16 句', async () => {
+    sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'scene', sceneId: 'scn03' }))
+    const w = await mountView()
+    expect(w.find('.scene-premise').text()).toContain('断船滩在沉城的屋脊上')
+    expect(w.find('.scene-foot').text()).toContain('0/16')
   })
 })
 

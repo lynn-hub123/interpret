@@ -84,6 +84,17 @@ describe('PracticeCard', () => {
     const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en', hideSkip: true } })
     expect(w.find('.btn-skip').exists()).toBe(false)
   })
+  it('场景句显示角色层：说话人与意图', () => {
+    const sceneSentence = { id: 'scn02_01', zh: '我是来找我师父的。', en: "I'm here to find my master.", source: 'scene', speaker: '你', intent: '说明来意' }
+    const w = mount(PracticeCard, { props: { sentence: sceneSentence, direction: 'zh2en' } })
+    expect(w.find('.voice-bar').exists()).toBe(true)
+    expect(w.find('.voice-who').text()).toBe('你')
+    expect(w.find('.voice-goal').text()).toBe('说明来意')
+  })
+  it('普通句没有角色层', () => {
+    const w = mount(PracticeCard, { props: { sentence, direction: 'zh2en' } })
+    expect(w.find('.voice-bar').exists()).toBe(false)
+  })
 })
 
 describe('reveal gate (揭晓门禁)', () => {

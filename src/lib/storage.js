@@ -49,13 +49,15 @@ export function save(key, value) {
 }
 
 export function exportAll() {
-  const dump = { version: 1, exportedAt: new Date().toISOString(), records: [], custom: [], settings: null, srs: null, progress: null, cards: null }
+  const dump = { version: 1, exportedAt: new Date().toISOString(), records: [], custom: [], settings: null, srs: null, progress: null, cards: null, bonds: null, story: null }
   dump.records = load('records.v1', [])
   dump.custom = load('custom.v1', [])
   dump.settings = load('settings.v1', null)
   dump.srs = load('srs.v1', null)
   dump.progress = load('progress.v1', null)
   dump.cards = load('cards.v1', null)
+  dump.bonds = load('bonds.v1', null)
+  dump.story = load('story.v1', null)
   // ai.v1 故意不导出：避免备份文件泄露用户密钥
   return dump
 }
@@ -75,5 +77,7 @@ export function importAll(payload) {
   if (d.srs) results.push(save('srs.v1', d.srs))
   if (d.progress) results.push(save('progress.v1', d.progress))
   if (d.cards) results.push(save('cards.v1', d.cards))
+  if (d.bonds) results.push(save('bonds.v1', d.bonds))
+  if (d.story) results.push(save('story.v1', d.story))
   return results.every(Boolean)
 }
