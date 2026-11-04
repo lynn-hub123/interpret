@@ -1,7 +1,5 @@
 <template>
-  <main class="view">
-    <h2>粘贴开练</h2>
-    <p class="hint">随手贴一段文字，自动拆句立刻练</p>
+  <div class="paste-panel">
     <textarea v-model="text" class="neu-inset" rows="8" placeholder="把文章、新闻、讲稿……任何文字丢进来"></textarea>
     <p v-if="sentences.length" class="preview">{{ sentences.length }} 句待练</p>
     <p v-if="error" class="error">{{ error }}</p>
@@ -39,7 +37,7 @@
       <span>{{ undoMsg }}</span>
       <button class="undo-btn" @click="undo">撤销</button>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup>
@@ -154,8 +152,6 @@ function start() {
 </script>
 
 <style scoped>
-h2 { font-size: 20px; }
-.hint { font-size: 13px; color: var(--text-muted); }
 textarea { width: 100%; border: none; resize: vertical; padding: 14px; font-size: 15px; color: var(--text); font-family: inherit; }
 .preview { font-size: 13px; color: var(--accent-text); }
 .error { font-size: 13px; color: #e8463a; }

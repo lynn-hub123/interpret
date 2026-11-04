@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import PasteView from './PasteView.vue'
+import PastePanel from '../components/PastePanel.vue'
 import { save } from '../lib/storage.js'
 
 function seedSentences() {
@@ -11,7 +11,7 @@ function seedSentences() {
 }
 
 function mountView() {
-  return mount(PasteView)
+  return mount(PastePanel)
 }
 
 beforeEach(() => { localStorage.clear() })

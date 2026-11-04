@@ -1,19 +1,6 @@
 <template>
   <main class="view">
-    <h2>我的</h2>
-    <div class="stat-row">
-      <div class="stat neu-raised"><b>{{ s.streakDays }}</b><span>连续天数</span></div>
-      <div class="stat neu-raised"><b>{{ s.todayCount }}</b><span>今日句数</span></div>
-      <div class="stat neu-raised"><b>{{ s.totalCount }}</b><span>累计句数</span></div>
-    </div>
-
-    <h3>主题强弱</h3>
-    <p v-if="topics.length === 0" class="hint">练几句就有数据啦</p>
-    <div v-for="t in topics" :key="t.id" class="topic-row">
-      <span class="topic-name">{{ t.label }}</span>
-      <div class="bar neu-inset"><div class="bar-fill" :style="{ width: (t.rate * 100).toFixed(0) + '%' }"></div></div>
-      <span class="topic-rate">{{ (t.rate * 100).toFixed(0) }}%</span>
-    </div>
+    <h2>拾潮人手册</h2>
 
     <h3>卡牌图鉴</h3>
     <div class="gallery">
@@ -31,6 +18,35 @@
         <span v-if="hasCard(c.id)" class="gallery-progress">{{ c.st.progress }}%</span>
         <span class="slot" :class="{ got: c.st.hidden }">{{ c.st.hidden ? '隐藏形态 ✓' : '隐藏形态 ?' }}</span>
       </button>
+    </div>
+
+    <h3>主线进度</h3>
+    <div class="story-progress neu-raised">
+      <p v-if="storyProgress.currentScene" class="sp-row">
+        当前站：<b>{{ storyProgress.currentScene.title }}</b>
+      </p>
+      <p v-else-if="storyProgress.doneCount > 0" class="sp-row done">
+        潮水未退。已走过 {{ storyProgress.doneCount }} 站。
+      </p>
+      <p v-else class="sp-row">
+        还没出过海呢。
+      </p>
+      <p v-if="storyProgress.lastChoice" class="sp-sub">上次抉择：{{ storyProgress.lastChoice }}</p>
+      <p class="sp-sub">已完成 {{ storyProgress.doneCount }} / {{ storyProgress.totalCount }} 站</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat neu-raised"><b>{{ s.streakDays }}</b><span>连续天数</span></div>
+      <div class="stat neu-raised"><b>{{ s.todayCount }}</b><span>今日句数</span></div>
+      <div class="stat neu-raised"><b>{{ s.totalCount }}</b><span>累计句数</span></div>
+    </div>
+
+    <h3>主题强弱</h3>
+    <p v-if="topics.length === 0" class="hint">练几句就有数据啦</p>
+    <div v-for="t in topics" :key="t.id" class="topic-row">
+      <span class="topic-name">{{ t.label }}</span>
+      <div class="bar neu-inset"><div class="bar-fill" :style="{ width: (t.rate * 100).toFixed(0) + '%' }"></div></div>
+      <span class="topic-rate">{{ (t.rate * 100).toFixed(0) }}%</span>
     </div>
 
     <h3>设置</h3>
@@ -76,6 +92,8 @@ import { settings, setDirection, setTheme, setShowTimer } from '../stores/settin
 import { exportAll, importAll } from '../lib/storage.js'
 import { allCards, getCards, EMPTY_CARD_STATE } from '../lib/cards.js'
 import { getAiConfig, saveAiConfig, testConnection } from '../lib/grade.js'
+import { getStory } from '../lib/bonds.js'
+import { allScenes, sceneById } from '../lib/scenes.js'
 
 const s = stats()
 const fileInput = ref(null)
@@ -87,6 +105,29 @@ const cardList = allCards().map(c => ({ ...c, st: { ...EMPTY_CARD_STATE, ...(car
 const ai = ref(getAiConfig())
 const aiMsg = ref('')
 const testing = ref(false)
+
+// 主线进度块：纯展示
+const storyProgress = (() => {
+  const st = getStory()
+  const all = allScenes()
+  const currentScene = st.node ? sceneById(st.node) : null
+  const doneScenes = all.filter(s => st.cleared[s.id])
+  // 上次抉择摘要：取最近一个 scene.choice 里被选中的 option.text
+  let lastChoice = ''
+  for (const sc of doneScenes) {
+    const chosenOptionId = st.choices[sc.id]
+    if (chosenOptionId && sc.choice?.options) {
+      const opt = sc.choice.options.find(o => o.id === chosenOptionId)
+      if (opt) { lastChoice = `${sc.title}：${opt.text}`; break }
+    }
+  }
+  return {
+    currentScene,
+    doneCount: doneScenes.length,
+    totalCount: all.length,
+    lastChoice
+  }
+})()
 
 function hasCard(id) {
   return Boolean(cards[id])
@@ -137,6 +178,11 @@ function importData(e) {
 
 <style scoped>
 h2 { font-size: 20px; } h3 { font-size: 15px; margin-top: 24px; }
+.story-progress { padding: 14px 16px; margin-bottom: 4px; }
+.sp-row { margin: 2px 0; font-size: 14px; }
+.sp-row b { color: var(--text); }
+.sp-row.done { color: var(--gold-text); }
+.sp-sub { font-size: 12px; color: var(--text-muted); margin: 2px 0; }
 .stat-row { display: flex; gap: 12px; }
 .stat { flex: 1; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .stat b { font-size: 20px; } .stat span { font-size: 12px; color: var(--text-muted); }

@@ -1,51 +1,86 @@
 <template>
   <main class="view">
-    <section v-if="scene" class="scene-bar neu-raised">
-      <div class="scene-top">
-        <span class="scene-title">{{ scene.title }}</span>
-        <span class="scene-bond">羁绊 {{ bond }}</span>
-      </div>
-      <p class="scene-place">{{ scene.place }} · {{ scene.time }} · {{ scene.spirit.name }}</p>
-      <p class="scene-premise">{{ premiseText }}</p>
-      <div class="scene-foot">
-        <span>本场 {{ sceneStat.cleared }}/{{ sceneStat.total }}</span>
-        <span v-if="lastGain" class="bond-gain">+{{ lastGain.amount }} 羁绊<em v-if="lastGain.note">（{{ lastGain.note }}）</em></span>
-        <span v-if="sceneStat.done" class="scene-done">已练完</span>
-      </div>
-    </section>
-
-    <header class="practice-header">
-      <span class="count">已完成 {{ done }}</span>
-      <span v-if="settings.showTimer" class="timer">{{ elapsed }}s</span>
-      <span class="prog">{{ prog.practiced }}/{{ progThreshold }} · 券 ×{{ prog.tickets }}</span>
-      <button class="btn btn-draw" :disabled="drawDisabled" @click="draw">{{ drawLabel }}</button>
-      <button class="btn btn-history" @click="showHistory = true">历史</button>
-    </header>
-
-    <template v-if="current">
-      <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @rec-stopped="onRecStopped" @skip="next(false)" />
-      <div class="rating-zone">
-        <RatingButtons v-if="showRating" :variant="settings.mode === 'retell' ? 'retell' : 'translate'" @rate="rate" />
-        <p v-else class="hint">{{ modeHint }}</p>
-      </div>
-      <div v-if="lingUtter" class="ling-bubble neu-raised" role="status" :aria-label="`铃说：${lingUtter.text}`">
-        <LingSprite :size="48" />
-        <p class="ling-text">{{ lingUtter.text }}</p>
-      </div>
-      <div class="toggles">
-        <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
-        <div class="mode-toggle">
-          <button class="btn mode-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
-          <button class="btn mode-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
-          <button class="btn mode-btn" :class="{ active: settings.mode === 'retell' }" @click="applyMode('retell')">复述</button>
+    <!-- 主线走完：完成态 -->
+    <template v-if="mainDone">
+      <section class="done-scene neu-raised">
+        <div class="done-head">
+          <LingSprite :size="64" />
+          <div>
+            <h2>潮水还没退</h2>
+            <p class="done-quote">{{ mainDoneQuip }}</p>
+          </div>
         </div>
+        <p class="done-hint">师父的脚印在下一层，还得等下一次退潮。</p>
+      </section>
+
+      <section class="revisit">
+        <h3>已走过的现场</h3>
+        <button v-for="s in revisitList" :key="s.id" class="btn scene-card neu-raised" @click="revisit(s.id)">
+          <span class="scene-head">
+            <span class="scene-title">{{ s.title }}</span>
+            <span class="badge done">已完成</span>
+          </span>
+          <span class="scene-meta">{{ s.place }} · {{ s.time }}</span>
+          <span class="scene-meta">{{ s.spirit.name }} · 羁绊 {{ s.bond }}</span>
+          <span class="scene-stat">已练 {{ s.stat.cleared }}/{{ s.stat.total }}</span>
+        </button>
+      </section>
+
+      <section class="free-entry">
+        <h3>不想等退潮？</h3>
+        <button class="btn btn-primary" @click="goFree">去自由练习转转</button>
+      </section>
+    </template>
+
+    <!-- 主线进行中 / 自由练习模式 -->
+    <template v-else>
+      <section v-if="scene" class="scene-bar neu-raised">
+        <div class="scene-top">
+          <span class="scene-title">{{ scene.title }}</span>
+          <span class="scene-bond">羁绊 {{ bond }}</span>
+        </div>
+        <p class="scene-place">{{ scene.place }} · {{ scene.time }} · {{ scene.spirit.name }}</p>
+        <p class="scene-premise">{{ premiseText }}</p>
+        <div class="scene-foot">
+          <span>本场 {{ sceneStat.cleared }}/{{ sceneStat.total }}</span>
+          <span v-if="lastGain" class="bond-gain">+{{ lastGain.amount }} 羁绊<em v-if="lastGain.note">（{{ lastGain.note }}）</em></span>
+          <span v-if="sceneStat.done" class="scene-done">已练完</span>
+        </div>
+      </section>
+
+      <header class="practice-header">
+        <span class="count">{{ scene ? `本场 ${sceneStat.cleared}/${sceneStat.total}` : `已完成 ${done}` }}</span>
+        <span v-if="settings.showTimer" class="timer">{{ elapsed }}s</span>
+        <span class="prog">{{ prog.practiced }}/{{ progThreshold }} · 券 ×{{ prog.tickets }}</span>
+        <button class="btn btn-draw" :disabled="drawDisabled" @click="draw">{{ drawLabel }}</button>
+        <button class="btn btn-history" @click="showHistory = true">历史</button>
+      </header>
+
+      <template v-if="current">
+        <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @rec-stopped="onRecStopped" @skip="next(false)" />
+        <div class="rating-zone">
+          <RatingButtons v-if="showRating" :variant="settings.mode === 'retell' ? 'retell' : 'translate'" @rate="rate" />
+          <p v-else class="hint">{{ modeHint }}</p>
+        </div>
+        <div v-if="lingUtter" class="ling-bubble neu-raised" role="status" :aria-label="`铃说：${lingUtter.text}`">
+          <LingSprite :size="48" />
+          <p class="ling-text">{{ lingUtter.text }}</p>
+        </div>
+        <div class="toggles">
+          <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
+          <div class="mode-toggle">
+            <button class="btn mode-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
+            <button class="btn mode-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
+            <button class="btn mode-btn" :class="{ active: settings.mode === 'retell' }" @click="applyMode('retell')">复述</button>
+          </div>
+        </div>
+      </template>
+      <div v-else class="empty neu-raised">
+        <LingSprite :size="64" />
+        <p class="ling-quote">{{ emptyQuip }}</p>
+        <p class="hint">沉城那边风挺大的。要不回主线看看，或者去自由练习转转？</p>
       </div>
     </template>
-    <div v-else class="empty neu-raised">
-      <LingSprite :size="64" />
-      <p class="ling-quote">{{ emptyQuip }}</p>
-      <p class="hint">去「题库」挑个主题，或到「粘贴」丢一段文字进来</p>
-    </div>
 
     <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录、复习进度与抽卡进度不保存</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
@@ -162,11 +197,40 @@ function refreshBond() {
   clearedIds.value = clearedLineIds(scene.value.spirit.id)
 }
 
+// —— 主线完成态：story.node 为空且所有场景都 cleared 时渲染 ——
+const allScenesList = allScenes()
+const mainDone = computed(() => {
+  if (story.value.node) return false
+  return allScenesList.every(s => story.value.cleared[s.id])
+})
+const mainDoneQuip = computed(() => pickQuip('mainDone', 0))
+// 完成态下已走过的现场（按 cleared 顺序，不是 allScenes 原序）
+const revisitList = computed(() => {
+  const storyObj = story.value
+  return allScenesList
+    .filter(s => storyObj.cleared[s.id])
+    .map(s => ({
+      ...s,
+      stat: sceneProgress(s, clearedLineIds(s.spirit.id), storyObj.flags),
+      bond: getSpiritBond(s.spirit.id).bond
+    }))
+})
+
+function revisit(sceneId) {
+  sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'scene', sceneId }))
+  router.push('/')
+}
+
+function goFree() {
+  router.push('/free')
+}
+
 // 有抉择的场次：等玩家选完再推进主线；没有抉择的场次练完即推进
 function maybeAdvance() {
   const s = scene.value
   if (!s || !sceneStat.value.done) return
   if (s.choice && !story.value.choices[s.id]) return
+  if (s.id !== story.value.node) return // 重游不推进主线
   const adv = advanceStory(s.id)
   if (!adv.persisted) saveWarn.value = true
   story.value = adv.state
@@ -290,10 +354,8 @@ onMounted(() => {
     scene.value = picked
     if (picked) {
       story.value = getStory()
-      // 条件句（when）只在本场对应的剧情标记已落下时进入句池
       pool.value = sceneSentences(picked.id, story.value.flags)
       refreshBond()
-      // 上次已练完但没来得及推进（例如抉择后刷新）时，这里补一次
       maybeAdvance()
     } else {
       pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
@@ -307,13 +369,64 @@ onMounted(() => {
     const customPool = getCustomSentences()
     pool.value = customPool.length ? customPool : [...allBuiltinSentences(), ...getCustomSentences()]
   } else {
-    pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+    // 无 session：按 story.node 自动加载主线场景；node 为空则进入完成态
+    const freshStory = getStory()
+    if (freshStory.node) {
+      const picked = sceneById(freshStory.node)
+      if (picked) {
+        story.value = freshStory
+        scene.value = picked
+        pool.value = sceneSentences(picked.id, freshStory.flags)
+        refreshBond()
+        maybeAdvance()
+      } else {
+        scene.value = null
+        pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+      }
+    } else {
+      story.value = freshStory
+      // node 为空：主线走完或从未开始，不加载 scene，走完成态或普通池
+      const anyCleared = allScenesList.some(s => freshStory.cleared[s.id])
+      if (anyCleared) {
+        // 至少走过一站，等 mainDone computed 决定渲染完成态还是普通池
+        pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+      } else {
+        // 从未走过，进入第一站
+        const first = allScenesList[0]
+        if (first) {
+          scene.value = first
+          story.value = freshStory
+          pool.value = sceneSentences(first.id, freshStory.flags)
+          refreshBond()
+        } else {
+          pool.value = [...allBuiltinSentences(), ...getCustomSentences()]
+        }
+      }
+    }
   }
   next(false)
 })
 </script>
 
 <style scoped>
+/* —— 完成态 —— */
+.done-scene { padding: 20px; margin-bottom: 20px; }
+.done-head { display: flex; align-items: center; gap: 16px; }
+.done-head h2 { font-size: 20px; margin: 0; }
+.done-quote { font-size: 14px; color: var(--text-muted); margin: 6px 0 0; }
+.done-hint { font-size: 13px; color: var(--text-muted); margin: 12px 0 0; }
+.revisit { margin-bottom: 20px; }
+.revisit h3 { font-size: 15px; margin: 0 0 12px; color: var(--text-muted); }
+.revisit .scene-card {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px;
+  align-items: flex-start; text-align: left; margin-bottom: 10px;
+}
+.scene-head { display: flex; align-items: center; gap: 8px; }
+.badge.done { font-size: 11px; padding: 2px 8px; border-radius: 999px; color: var(--gold-text); background: var(--accent-soft); }
+.scene-meta { font-size: 12px; color: var(--text-muted); }
+.scene-stat { font-size: 12px; color: var(--accent-text); }
+.free-entry h3 { font-size: 15px; margin: 0 0 12px; color: var(--text-muted); }
+
 .scene-bar { padding: 14px 16px; margin-bottom: 14px; }
 .scene-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .scene-title { font-size: 15px; font-weight: 600; }

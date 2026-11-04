@@ -9,9 +9,7 @@
 
 <script setup>
 const tabs = [
-  { to: '/', icon: '🎴', label: '练习' },
-  { to: '/library', icon: '📚', label: '题库' },
-  { to: '/paste', icon: '📋', label: '粘贴' },
-  { to: '/me', icon: '🙂', label: '我的' }
+  { to: '/', icon: '🌊', label: '主线' },
+  { to: '/me', icon: '🎴', label: '拾潮人手册' }
 ]
 </script>
