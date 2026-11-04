@@ -4,6 +4,7 @@
   "title": "第一幕 · 退潮第一天",
   "place": "滩头",
   "time": "退潮首日 · 未明",
+  "art": "scenes/scn02_tidehead.jpg",
   "spirit": { "id": "ling", "name": "铃", "form": "寄居", "domain": "tide" },
   "register": "日常口语",
   "level": "中等",

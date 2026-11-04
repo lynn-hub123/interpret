@@ -1,4 +1,4 @@
-:root { --radius-card: 16px; }
+:root { --radius-card: 16px; --danger: #e8463a; }
 :root[data-theme='dark'] {
   --bg: #1c1c1f;
   --surface: #232327;
@@ -12,6 +12,17 @@
   --gold-text: #e0b95a;
   --shadow-out: 6px 6px 14px rgba(0, 0, 0, 0.55), -6px -6px 14px rgba(255, 255, 255, 0.045);
   --shadow-in: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.04);
+  --px-shadow-color: rgba(0, 0, 0, 0.55);
+  --card-bg-a: #1c1c22;
+  --card-bg-b: #0d0d11;
+  --card-silhouette: #2a2a33;
+  --card-figure: #f4f4f6;
+  --card-fg: #f4f4f6;
+  --card-fade: rgba(0, 0, 0, 0.55);
+  --card-chip-bg: rgba(255, 255, 255, 0.14);
+  --card-gold: #ffe2a0;
+  --card-gold-bg: rgba(255, 215, 130, 0.18);
+  --card-hidden-figure: #fff3d0;
   color-scheme: dark;
 }
 :root[data-theme='light'] {
@@ -27,6 +38,17 @@
   --gold-text: #8a6516;
   --shadow-out: 6px 6px 14px rgba(163, 172, 184, 0.6), -6px -6px 14px rgba(255, 255, 255, 0.95);
   --shadow-in: inset 4px 4px 8px rgba(163, 172, 184, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --px-shadow-color: rgba(38, 40, 44, 0.18);
+  --card-bg-a: #eae7df;
+  --card-bg-b: #d9d5ca;
+  --card-silhouette: #b8b3a6;
+  --card-figure: #26282c;
+  --card-fg: #26282c;
+  --card-fade: rgba(255, 255, 255, 0.6);
+  --card-chip-bg: rgba(0, 0, 0, 0.08);
+  --card-gold: #7a5200;
+  --card-gold-bg: rgba(138, 101, 22, 0.16);
+  --card-hidden-figure: #b8860b;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -55,4 +77,52 @@ body {
 .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; text-decoration: none; color: var(--text-muted); font-size: 12px; padding: 4px 10px; border-radius: 12px; }
 .tab-item.router-link-exact-active { color: var(--accent-text); background: var(--accent-soft); }
 .tab-icon { font-size: 20px; }
+
+/* —— 像素壳 · 视觉硬规则 ——
+   单向光源：硬边控件只用右下 4px 实心块投影，软阴影只留给容器；
+   画布对齐：2px 描边、12px 缺口、尺寸走 4px 网格；
+   颜色只做强调：描边只有中性 --border 与金色。 */
+.px-card,
+.px-btn,
+.px-inset {
+  border: 2px solid var(--border);
+  border-radius: 0;
+}
+.px-card {
+  position: relative;
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--px-shadow-color);
+}
+/* 左上角 12px 缺口：露出底层色，像素卡的身份标记 */
+.px-card::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px;
+  width: 12px; height: 12px;
+  background: var(--bg);
+  border-right: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  pointer-events: none;
+}
+.px-btn {
+  box-shadow: 4px 4px 0 var(--px-shadow-color);
+  transition: transform 80ms steps(2, end), box-shadow 80ms steps(2, end);
+}
+.px-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.px-btn:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  transform: none;
+  cursor: default;
+}
+.px-inset {
+  background: var(--surface-deep);
+  box-shadow: inset 2px 2px 0 var(--px-shadow-color);
+}
+.px-gold { border-color: var(--gold-text); }
+.px-icon { vertical-align: middle; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

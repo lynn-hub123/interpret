@@ -1,6 +1,6 @@
 <template>
   <div class="onboard-overlay">
-    <div class="onboard-panel neu-raised" :data-step="index">
+    <div class="onboard-panel px-card" :data-step="index">
       <div class="mascot">
         <LingSprite :size="96" />
         <span class="mascot-sub">寄居蟹 铃 · 壳里是一块停摆的怀表</span>

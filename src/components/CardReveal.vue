@@ -74,10 +74,13 @@ const artStyle = computed(() => {
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4.2;
-  border-radius: 18px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   overflow: hidden;
-  background: linear-gradient(160deg, #1c1c22, #0d0d11);
+  box-shadow: 4px 4px 0 var(--px-shadow-color);
+  background: linear-gradient(160deg, var(--card-bg-a), var(--card-bg-b));
 }
+.tier-rare, .tier-super { border-color: var(--gold-text); }
 .silhouette,
 .art {
   position: absolute;
@@ -86,24 +89,24 @@ const artStyle = computed(() => {
   align-items: flex-end;
   justify-content: center;
 }
-.silhouette .figure { width: 78%; height: 82%; fill: #2a2a33; }
+.silhouette .figure { width: 78%; height: 82%; fill: var(--card-silhouette); }
 .art {
   background: radial-gradient(circle at 50% 30%, var(--card-accent) 0%, transparent 62%);
 }
-.art .figure { width: 78%; height: 82%; fill: #f4f4f6; opacity: 0.9; }
-.pct { position: absolute; top: 8px; left: 10px; z-index: 3; font-size: 12px; color: #f4f4f6; opacity: 0.85; }
+.art .figure { width: 78%; height: 82%; fill: var(--card-figure); opacity: 0.9; }
+.pct { position: absolute; top: 8px; left: 10px; z-index: 3; font-size: 12px; color: var(--card-fg); opacity: 0.85; }
 .meta {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 12px; font-size: 13px; color: #f4f4f6;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+  padding: 10px 12px; font-size: 13px; color: var(--card-fg);
+  background: linear-gradient(transparent, var(--card-fade));
 }
-.tier-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); }
-.hidden-form { box-shadow: 0 0 0 1px rgba(255, 215, 130, 0.6), 0 0 24px rgba(255, 215, 130, 0.25); }
-.hidden-form .art .figure { fill: #fff3d0; }
+.tier-badge { font-size: 11px; padding: 2px 8px; border-radius: 0; background: var(--card-chip-bg); }
+.hidden-form { border-color: var(--gold-text); }
+.hidden-form .art .figure { fill: var(--card-hidden-figure); }
 .hidden-badge {
   position: absolute; top: 8px; right: 8px; z-index: 3;
-  font-size: 11px; padding: 3px 8px; border-radius: 999px;
-  background: rgba(255, 215, 130, 0.18); color: #ffe2a0;
+  font-size: 11px; padding: 2px 8px; border-radius: 0;
+  background: var(--card-gold-bg); color: var(--card-gold);
 }
 </style>

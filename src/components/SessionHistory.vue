@@ -1,6 +1,6 @@
 <template>
   <div class="overlay" @click.self="emit('close')">
-    <div class="panel neu-raised">
+    <div class="panel px-card">
       <header>
         <h3>本轮练习</h3>
         <button class="btn btn-close" @click="emit('close')">关闭</button>
@@ -27,7 +27,7 @@ const ratingOf = it => RATING_LABELS[it.rating] || ''
 
 <style scoped>
 .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
-.panel { width: min(480px, 100%); max-height: 75dvh; overflow-y: auto; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+.panel { width: min(480px, 100%); max-height: 75dvh; overflow-y: auto; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); border-radius: 0; }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 h3 { margin: 0; font-size: 16px; }
 .btn-close { font-size: 13px; padding: 8px 14px; }

@@ -1,6 +1,6 @@
 <template>
   <div class="rating-row" :class="`variant-${variant}`">
-    <button v-for="r in ratings" :key="r.value" class="btn" @click="emit('rate', r.value)">{{ r.label }}</button>
+    <button v-for="r in ratings" :key="r.value" class="btn px-btn" @click="emit('rate', r.value)">{{ r.label }}</button>
   </div>
 </template>
 
@@ -34,8 +34,8 @@ const ratings = computed(() => LABELS[props.variant] || LABELS.translate)
 </script>
 
 <style scoped>
-.rating-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.rating-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .rating-row .btn { min-width: 84px; }
 .variant-unlock { gap: 8px; }
-.variant-unlock .btn { min-width: 0; font-size: 12px; padding: 10px 10px; }
+.variant-unlock .btn { min-width: 0; font-size: 12px; padding: 8px 12px; }
 </style>

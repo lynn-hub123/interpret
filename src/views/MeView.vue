@@ -21,7 +21,7 @@
     </div>
 
     <h3>主线进度</h3>
-    <div class="story-progress neu-raised">
+    <div class="story-progress px-card">
       <p v-if="storyProgress.currentScene" class="sp-row">
         当前站：<b>{{ storyProgress.currentScene.title }}</b>
       </p>
@@ -36,16 +36,16 @@
     </div>
 
     <div class="stat-row">
-      <div class="stat neu-raised"><b>{{ s.streakDays }}</b><span>连续天数</span></div>
-      <div class="stat neu-raised"><b>{{ s.todayCount }}</b><span>今日句数</span></div>
-      <div class="stat neu-raised"><b>{{ s.totalCount }}</b><span>累计句数</span></div>
+      <div class="stat px-card"><b>{{ s.streakDays }}</b><span>连续天数</span></div>
+      <div class="stat px-card"><b>{{ s.todayCount }}</b><span>今日句数</span></div>
+      <div class="stat px-card"><b>{{ s.totalCount }}</b><span>累计句数</span></div>
     </div>
 
     <h3>主题强弱</h3>
     <p v-if="topics.length === 0" class="hint">练几句就有数据啦</p>
     <div v-for="t in topics" :key="t.id" class="topic-row">
       <span class="topic-name">{{ t.label }}</span>
-      <div class="bar neu-inset"><div class="bar-fill" :style="{ width: (t.rate * 100).toFixed(0) + '%' }"></div></div>
+      <div class="bar px-inset"><div class="bar-fill" :style="{ width: (t.rate * 100).toFixed(0) + '%' }"></div></div>
       <span class="topic-rate">{{ (t.rate * 100).toFixed(0) }}%</span>
     </div>
 
@@ -178,23 +178,23 @@ function importData(e) {
 
 <style scoped>
 h2 { font-size: 20px; } h3 { font-size: 15px; margin-top: 24px; }
-.story-progress { padding: 14px 16px; margin-bottom: 4px; }
+.story-progress { padding: 16px; margin-bottom: 4px; }
 .sp-row { margin: 2px 0; font-size: 14px; }
 .sp-row b { color: var(--text); }
 .sp-row.done { color: var(--gold-text); }
 .sp-sub { font-size: 12px; color: var(--text-muted); margin: 2px 0; }
 .stat-row { display: flex; gap: 12px; }
-.stat { flex: 1; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.stat { flex: 1; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .stat b { font-size: 20px; } .stat span { font-size: 12px; color: var(--text-muted); }
 .topic-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
 .topic-name { width: 56px; font-size: 13px; }
-.bar { flex: 1; height: 10px; border-radius: 999px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.bar { flex: 1; height: 10px; border-radius: 0; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 0; }
 .topic-rate { width: 40px; text-align: right; font-size: 12px; color: var(--text-muted); }
 .setting { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 14px; }
 .data-row { display: flex; gap: 12px; }
 .msg { font-size: 13px; color: var(--accent-text); }
-select { background: var(--surface); color: var(--text); border: none; border-radius: 8px; padding: 6px 10px; box-shadow: var(--shadow-in); }
+select { background: var(--surface); color: var(--text); border: 2px solid var(--border); border-radius: 0; padding: 8px 12px; box-shadow: inset 2px 2px 0 var(--px-shadow-color); }
 .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .gallery-item { display: flex; flex-direction: column; align-items: center; gap: 6px; border: none; background: none; padding: 0; font: inherit; color: inherit; text-align: center; cursor: pointer; }
 .gallery-item.is-locked { opacity: 0.42; }
@@ -205,8 +205,8 @@ select { background: var(--surface); color: var(--text); border: none; border-ra
 .slot.got { color: var(--gold-text); }
 .ai-form { display: flex; flex-direction: column; gap: 4px; }
 .ai-form input {
-  background: var(--surface); color: var(--text); border: none; border-radius: 8px;
-  padding: 6px 10px; font: inherit; font-size: 13px; box-shadow: var(--shadow-in); min-width: 0;
+  background: var(--surface); color: var(--text); border: 2px solid var(--border); border-radius: 0;
+  padding: 8px 12px; font: inherit; font-size: 13px; box-shadow: inset 2px 2px 0 var(--px-shadow-color); min-width: 0;
 }
 .ai-msg { font-size: 12px; color: var(--accent-text); margin: 6px 0 0; min-height: 16px; }
 </style>

@@ -25,11 +25,18 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
-        runtimeCaching: [{
-          urlPattern: /audio\/.+\.(mp3)$/,
-          handler: 'CacheFirst',
-          options: { cacheName: 'audio-v1', expiration: { maxEntries: 800, purgeOnQuotaError: true } }
-        }]
+        runtimeCaching: [
+          {
+            urlPattern: /audio\/.+\.(mp3)$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'audio-v1', expiration: { maxEntries: 800, purgeOnQuotaError: true } }
+          },
+          {
+            urlPattern: /scenes\/.+\.(jpg|jpeg|png|webp)$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'scenes-v1', expiration: { maxEntries: 20, purgeOnQuotaError: true } }
+          }
+        ]
       }
     })
   ],

@@ -1,6 +1,6 @@
 <template>
   <div class="choice-overlay">
-    <div class="choice-panel neu-raised">
+    <div class="choice-panel px-card">
       <p class="choice-kicker">本场结束 · 你要怎么开口</p>
       <p class="choice-trigger">{{ choice.trigger }}</p>
       <p v-if="choice.note" class="choice-note">{{ choice.note }}</p>

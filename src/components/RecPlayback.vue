@@ -1,6 +1,8 @@
 <template>
   <div class="rec-playback">
-    <button class="pb-toggle" :title="isPlaying ? '暂停' : '播放'" @click="onToggle">{{ isPlaying ? '⏸' : '▶' }}</button>
+    <button class="pb-toggle" :title="isPlaying ? '暂停' : '播放'" @click="onToggle">
+      <PixelIcon :name="isPlaying ? 'pause' : 'play'" :size="16" />
+    </button>
     <input
       class="pb-bar"
       type="range"
@@ -40,6 +42,7 @@ export function formatTime(seconds) {
 
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
+import PixelIcon from './PixelIcon.vue'
 
 const props = defineProps({
   src: { type: String, required: true }
@@ -120,11 +123,13 @@ onUnmounted(() => { pause() })
 <style scoped>
 .rec-playback { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 260px; }
 .pb-toggle {
-  width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--accent-soft); color: var(--accent-text); font-size: 13px; flex-shrink: 0;
-  transition: transform 0.12s ease;
+  width: 32px; height: 32px; border: 2px solid var(--border); border-radius: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--accent-text); flex-shrink: 0;
+  box-shadow: 4px 4px 0 var(--px-shadow-color);
+  transition: transform 80ms steps(2, end), box-shadow 80ms steps(2, end);
 }
-.pb-toggle:active { transform: scale(0.92); }
+.pb-toggle:active { transform: translate(4px, 4px); box-shadow: none; }
 .pb-bar {
   flex: 1; min-width: 0; height: 4px; appearance: none; -webkit-appearance: none;
   border-radius: 999px; cursor: pointer; outline: none;

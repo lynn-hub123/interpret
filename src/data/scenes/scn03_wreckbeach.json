@@ -4,6 +4,7 @@
   "title": "第二幕 · 断船滩",
   "place": "断船滩",
   "time": "退潮第一夜 · 更深",
+  "art": "scenes/scn03_wreckbeach.jpg",
   "spirit": { "id": "ling", "name": "铃", "form": "寄居", "domain": "tide" },
   "register": "拾潮行话",
   "level": "中等",

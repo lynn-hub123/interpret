@@ -1,5 +1,5 @@
 <template>
-  <div class="card neu-raised" :class="{ flipped: revealed }">
+  <div class="card px-card" :class="{ flipped: revealed }">
     <div class="card-face">
       <span class="dir-pill">{{ direction === 'zh2en' ? '中 → 英' : '英 → 中' }}</span>
       <div v-if="hasVoice" class="voice-bar">
@@ -7,41 +7,55 @@
         <span v-if="sentence.intent" class="voice-goal">{{ sentence.intent }}</span>
       </div>
       <template v-if="mode === 'listen' && !listenTextShown && !revealed">
-        <button class="btn btn-primary btn-listen" @click="onListenPlay">{{ playing ? '⏹ 停止' : '🎧 播放原句' }}</button>
-        <button class="btn btn-skip" :disabled="!canReveal" @click="listenTextShown = true">显示原文</button>
+        <button class="btn px-btn btn-primary btn-icon btn-listen" @click="onListenPlay">
+          <PixelIcon :name="playing ? 'stop' : 'play'" :size="16" />
+          <span>{{ playing ? '停止' : '播放原句' }}</span>
+        </button>
+        <button class="btn px-btn btn-skip" :disabled="!canReveal" @click="listenTextShown = true">显示原文</button>
         <p v-if="!canReveal" class="gate-hint">先录音作答，再看原文</p>
         <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
       </template>
       <template v-else-if="mode === 'retell' && !revealed">
-        <button class="btn btn-primary btn-listen" @click="onRetellPlay">{{ playing ? '⏹ 停止' : (retellPlayed ? '↻ 重听' : '▶ 播放原句') }}</button>
+        <button class="btn px-btn btn-primary btn-icon btn-listen" @click="onRetellPlay">
+          <PixelIcon :name="playing ? 'stop' : 'play'" :size="16" />
+          <span>{{ playing ? '停止' : (retellPlayed ? '重听' : '播放原句') }}</span>
+        </button>
         <div class="speed-seg">
-          <button v-for="r in SPEEDS" :key="r" class="speed-btn" :class="{ active: speed === r }" @click="speed = r">{{ r }}x</button>
+          <button v-for="r in SPEEDS" :key="r" class="speed-btn px-btn" :class="{ active: speed === r }" @click="speed = r">{{ r }}x</button>
         </div>
-        <button class="btn btn-primary btn-reveal" v-if="canReveal" @click="revealed = true; emit('revealed')">对照原文</button>
+        <button class="btn px-btn btn-primary btn-reveal" v-if="canReveal" @click="revealed = true; emit('revealed')">对照原文</button>
         <p v-if="!canReveal" class="gate-hint">先录音作答，再看参考译文</p>
         <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
       </template>
       <template v-else>
         <p class="source">
           {{ sourceText }}
-          <button v-if="canPlay" class="btn-speak" :title="playing ? '停止' : '朗读原句'" @click="onSpeak">{{ playing ? '⏹' : '🔊' }}</button>
+          <button v-if="canPlay" class="btn-speak" :title="playing ? '停止' : '朗读原句'" @click="onSpeak">
+            <PixelIcon :name="playing ? 'stop' : 'play'" :size="16" />
+          </button>
         </p>
         <p v-if="speakError" class="audio-warn">{{ speakError }}</p>
         <template v-if="!revealed">
-          <button class="btn btn-primary btn-reveal" :disabled="!canReveal" @click="revealed = true; emit('revealed')">看参考译文</button>
+          <button class="btn px-btn btn-primary btn-reveal" :disabled="!canReveal" @click="revealed = true; emit('revealed')">看参考译文</button>
           <p v-if="!canReveal" class="gate-hint">先录音作答，再看参考译文</p>
           <p v-else-if="!recOK" class="gate-hint">本设备无法录音，可直接查看</p>
         </template>
-        <div class="reference neu-inset" v-else>
-          <p v-if="mode === 'retell'" class="reference-label">参考译文</p>
+        <div class="reference px-inset" v-else>
+          <p class="reference-label">参考译文</p>
           <p>{{ referenceText }}</p>
         </div>
       </template>
       <p v-if="listenError" class="audio-warn">{{ listenError }}</p>
-      <div class="rec-zone" v-if="recOK">
-        <button v-if="!isRec" class="btn btn-rec" @click="onRecStart">🎙 录音</button>
-        <div v-else class="rec-live">
-          <button class="btn btn-rec recording" @click="onRecStop">⏹ 停止</button>
+      <div class="rec-zone" v-if="recOK && (!revealed || isRec)">
+        <button v-if="!isRec && !recUrl" class="btn px-btn btn-icon btn-rec" @click="onRecStart">
+          <PixelIcon name="mic" :size="16" />
+          <span>录音</span>
+        </button>
+        <div v-else-if="isRec" class="rec-live">
+          <button class="btn px-btn btn-icon btn-rec recording" @click="onRecStop">
+            <PixelIcon name="stop" :size="16" />
+            <span>停止</span>
+          </button>
           <span class="rec-time">{{ recTimeText }}</span>
         </div>
         <p v-if="recFinal || recInterim" class="rec-sr">
@@ -50,12 +64,18 @@
         <p v-if="srError" class="audio-warn">{{ srError }}</p>
         <RecPlayback v-if="recUrl" ref="recPlayback" :src="recUrl" @playing="onRecPlaying" />
         <div v-if="recUrl" class="rec-actions">
-          <button class="btn-rec-aux" :title="playing ? '停止' : '对照原句再听一遍'" @click="onSpeak">{{ playing ? '⏹ 停止' : '🔊 听原句' }}</button>
-          <button class="btn-rec-aux" title="重新录一遍" @click="onRerecord">↻ 重录</button>
+          <button class="btn-icon btn-rec-aux" :title="playing ? '停止' : '对照原句再听一遍'" @click="onSpeak">
+            <PixelIcon :name="playing ? 'stop' : 'play'" :size="16" />
+            <span>{{ playing ? '停止' : '听原句' }}</span>
+          </button>
+          <button class="btn-icon btn-rec-aux" title="重新录一遍" @click="onRerecord">
+            <PixelIcon name="mic" :size="16" />
+            <span>重录</span>
+          </button>
         </div>
       </div>
       <p v-if="recError" class="audio-warn">{{ recError }}</p>
-      <button v-if="!hideSkip" class="btn btn-skip" @click="emit('skip')">跳过</button>
+      <button v-if="!hideSkip" class="btn px-btn btn-skip" @click="emit('skip')">跳过</button>
     </div>
   </div>
 </template>
@@ -67,6 +87,7 @@ import { ttsSupported } from '../lib/tts.js'
 import { recorderSupported, startRecording, stopRecording, revoke, isRecording, lastErrorName } from '../lib/recorder.js'
 import { speechSupported, start as srStart, stop as srStop } from '../lib/speech.js'
 import RecPlayback from './RecPlayback.vue'
+import PixelIcon from './PixelIcon.vue'
 
 const props = defineProps({
   sentence: { type: Object, required: true },
@@ -268,7 +289,7 @@ async function onRecStop() {
   emit('recStopped', recFinal.value || '')
 }
 
-// 互斥：自己的回放开播时停掉原句（听原句与上方 🔊 共用 playing 状态）
+// 互斥：自己的回放开播时停掉原句（听原句与上方播放按钮共用 playing 状态）
 function onRecPlaying() {
   if (playing.value) { stop(); playing.value = false }
 }
@@ -294,25 +315,25 @@ onUnmounted(() => {
 <style scoped>
 .card { padding: 28px 20px; display: flex; justify-content: center; }
 .card-face { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
-.dir-pill { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+.dir-pill { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 0; padding: 4px 12px; }
 .voice-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: -6px; text-align: center; }
 .voice-who { font-size: 12px; color: var(--accent-text); }
 .voice-goal { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 .source { font-size: 22px; line-height: 1.6; text-align: center; margin: 12px 0; }
-.reference { padding: 14px 16px; width: 100%; text-align: center; font-size: 16px; line-height: 1.6; color: var(--accent-text); }
+.reference { padding: 16px; width: 100%; text-align: center; font-size: 16px; line-height: 1.6; color: var(--accent-text); }
 .btn-skip { font-size: 13px; opacity: 0.6; }
 .gate-hint { font-size: 12px; color: var(--text-muted); margin: 0; }
 .btn-speak { border: none; background: none; cursor: pointer; font-size: 16px; vertical-align: middle; margin-left: 6px; opacity: 0.7; padding: 4px; }
 .btn-speak:active { transform: scale(0.92); }
-.audio-warn { font-size: 12px; color: #e8463a; opacity: 0.8; margin: 0; }
+.audio-warn { font-size: 12px; color: var(--danger); opacity: 0.8; margin: 0; }
 .rec-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.btn-rec { font-size: 13px; padding: 8px 16px; }
+.btn-rec { font-size: 15px; padding: 16px 40px; }
 .btn-rec.recording {
-  color: #e8463a;
+  color: var(--danger);
   animation: rec-pulse 1.6s ease-in-out infinite;
 }
 .rec-live { display: flex; align-items: center; gap: 8px; }
-.rec-time { font-size: 13px; color: #e8463a; font-variant-numeric: tabular-nums; }
+.rec-time { font-size: 13px; color: var(--danger); font-variant-numeric: tabular-nums; }
 .rec-actions { display: flex; gap: 18px; }
 .btn-rec-aux {
   border: none; background: none; cursor: pointer; font: inherit;
@@ -326,11 +347,10 @@ onUnmounted(() => {
 
 .speed-seg { display: flex; gap: 4px; }
 .speed-btn {
-  border: none; cursor: pointer; font: inherit; font-size: 12px; color: var(--text-muted);
-  background: var(--surface); border-radius: 10px; padding: 6px 12px; box-shadow: var(--shadow-out);
-  transition: box-shadow 0.12s ease, color 0.12s ease;
+  cursor: pointer; font: inherit; font-size: 12px; color: var(--text-muted);
+  background: var(--surface); padding: 4px 12px;
 }
-.speed-btn.active { color: var(--accent-text); box-shadow: var(--shadow-in); }
+.speed-btn.active { color: var(--accent-text); box-shadow: inset 2px 2px 0 var(--px-shadow-color); }
 .reference-label { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; }
 
 @keyframes rec-pulse {

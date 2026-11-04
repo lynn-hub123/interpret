@@ -1,7 +1,7 @@
 <template>
   <div class="draw-overlay">
     <div class="stage">
-      <div v-if="!flipped" class="card-back neu-raised">
+      <div v-if="!flipped" class="card-back">
         <span class="mark">?</span>
       </div>
       <template v-else>
@@ -59,13 +59,15 @@ onUnmounted(() => { if (timer) clearTimeout(timer) })
 }
 .stage { width: min(320px, 82vw); display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .card-back {
-  width: 100%; aspect-ratio: 3 / 4.2; border-radius: 18px;
+  width: 100%; aspect-ratio: 3 / 4.2; border-radius: 0;
+  border: 2px solid var(--border);
+  box-shadow: 4px 4px 0 var(--px-shadow-color);
   display: flex; align-items: center; justify-content: center;
   background: repeating-linear-gradient(45deg, #22222a 0 12px, #1b1b21 12px 24px);
   color: var(--accent-text); font-size: 42px;
 }
 .draw-tags { display: flex; gap: 8px; }
-.tier-tag, .new-tag { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--surface); color: var(--text-muted); }
+.tier-tag, .new-tag { font-size: 11px; padding: 3px 10px; border-radius: 0; background: var(--surface); color: var(--text-muted); }
 .new-tag { color: var(--accent-text); background: var(--accent-soft); }
 .draw-hint { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-muted); text-align: center; }
 .draw-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }

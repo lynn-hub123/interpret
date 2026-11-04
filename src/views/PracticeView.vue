@@ -2,7 +2,7 @@
   <main class="view">
     <!-- 主线走完：完成态 -->
     <template v-if="mainDone">
-      <section class="done-scene neu-raised">
+      <section class="done-scene px-card">
         <div class="done-head">
           <LingSprite :size="64" />
           <div>
@@ -15,7 +15,7 @@
 
       <section class="revisit">
         <h3>已走过的现场</h3>
-        <button v-for="s in revisitList" :key="s.id" class="btn scene-card neu-raised" @click="revisit(s.id)">
+        <button v-for="s in revisitList" :key="s.id" class="btn px-btn scene-card" @click="revisit(s.id)">
           <span class="scene-head">
             <span class="scene-title">{{ s.title }}</span>
             <span class="badge done">已完成</span>
@@ -28,23 +28,41 @@
 
       <section class="free-entry">
         <h3>不想等退潮？</h3>
-        <button class="btn btn-primary" @click="goFree">去自由练习转转</button>
+        <button class="btn px-btn btn-primary" @click="goFree">去自由练习转转</button>
       </section>
     </template>
 
     <!-- 主线进行中 / 自由练习模式 -->
     <template v-else>
-      <section v-if="scene" class="scene-bar neu-raised">
-        <div class="scene-top">
-          <span class="scene-title">{{ scene.title }}</span>
-          <span class="scene-bond">羁绊 {{ bond }}</span>
+      <section v-if="scene" class="scene-banner">
+        <div class="scene-art" :class="{ 'is-fallback': !artUrl }">
+          <img v-if="artUrl" class="scene-img" :src="artUrl" alt="" @error="artFailed = true" />
+          <div v-else class="tide-fallback" aria-hidden="true"></div>
+          <div class="scene-title-col">
+            <span class="scene-chapter">{{ chapterLabel }}</span>
+            <h2 class="scene-place-name">{{ scene.place }}</h2>
+          </div>
+          <button class="btn px-btn scene-gear" aria-label="本场设置" @click="showSettings = true">
+            <PixelIcon name="gear" :size="16" />
+          </button>
+          <div class="scene-caption">
+            <span>{{ scene.time }}</span>
+            <span>·</span>
+            <span>{{ scene.spirit.name }}</span>
+          </div>
+          <LingSprite class="scene-ling" :size="48" />
         </div>
-        <p class="scene-place">{{ scene.place }} · {{ scene.time }} · {{ scene.spirit.name }}</p>
-        <p class="scene-premise">{{ premiseText }}</p>
-        <div class="scene-foot">
-          <span>本场 {{ sceneStat.cleared }}/{{ sceneStat.total }}</span>
-          <span v-if="lastGain" class="bond-gain">+{{ lastGain.amount }} 羁绊<em v-if="lastGain.note">（{{ lastGain.note }}）</em></span>
-          <span v-if="sceneStat.done" class="scene-done">已练完</span>
+        <div class="scene-body">
+          <div class="scene-top">
+            <span class="scene-title">{{ scene.title }}</span>
+            <span class="scene-bond">羁绊 {{ bond }}</span>
+          </div>
+          <p class="scene-premise">{{ premiseText }}</p>
+          <div class="scene-foot">
+            <span>本场 {{ sceneStat.cleared }}/{{ sceneStat.total }}</span>
+            <span v-if="lastGain" class="bond-gain">+{{ lastGain.amount }} 羁绊<em v-if="lastGain.note">（{{ lastGain.note }}）</em></span>
+            <span v-if="sceneStat.done" class="scene-done">已练完</span>
+          </div>
         </div>
       </section>
 
@@ -52,35 +70,62 @@
         <span class="count">{{ scene ? `本场 ${sceneStat.cleared}/${sceneStat.total}` : `已完成 ${done}` }}</span>
         <span v-if="settings.showTimer" class="timer">{{ elapsed }}s</span>
         <span class="prog">{{ prog.practiced }}/{{ progThreshold }} · 券 ×{{ prog.tickets }}</span>
-        <button class="btn btn-draw" :disabled="drawDisabled" @click="draw">{{ drawLabel }}</button>
-        <button class="btn btn-history" @click="showHistory = true">历史</button>
+        <button class="btn px-btn btn-draw" :disabled="drawDisabled" @click="draw">
+          <PixelIcon name="ticket" :size="16" />
+          <span>{{ drawLabel }}</span>
+        </button>
+        <button class="btn px-btn btn-history" @click="showHistory = true">历史</button>
+        <button v-if="!scene" class="btn px-btn btn-settings" aria-label="练习设置" @click="showSettings = true">
+          <PixelIcon name="gear" :size="16" />
+        </button>
       </header>
 
       <template v-if="current">
         <PracticeCard :sentence="current.sentence" :direction="current.direction" :mode="settings.mode" @revealed="onRevealed" @rec-stopped="onRecStopped" @skip="next(false)" />
-        <div class="rating-zone">
-          <RatingButtons v-if="showRating" :variant="settings.mode === 'retell' ? 'retell' : 'translate'" @rate="rate" />
-          <p v-else class="hint">{{ modeHint }}</p>
+        <p v-if="stage === 1" class="hint stage-hint">{{ modeHint }}</p>
+        <div v-if="stage === 3" class="rating-zone">
+          <RatingButtons :variant="settings.mode === 'retell' ? 'retell' : 'translate'" @rate="rate" />
         </div>
-        <div v-if="lingUtter" class="ling-bubble neu-raised" role="status" :aria-label="`铃说：${lingUtter.text}`">
+        <div v-if="lingUtter" class="ling-bubble px-card" role="status" :aria-label="`铃说：${lingUtter.text}`">
           <LingSprite :size="48" />
           <p class="ling-text">{{ lingUtter.text }}</p>
         </div>
-        <div class="toggles">
-          <button class="btn dir-toggle" @click="flipDirection">{{ current.direction === 'zh2en' ? '英 → 中' : '中 → 英' }}</button>
-          <div class="mode-toggle">
-            <button class="btn mode-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
-            <button class="btn mode-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
-            <button class="btn mode-btn" :class="{ active: settings.mode === 'retell' }" @click="applyMode('retell')">复述</button>
-          </div>
-        </div>
       </template>
-      <div v-else class="empty neu-raised">
+      <div v-else class="empty px-card">
         <LingSprite :size="64" />
         <p class="ling-quote">{{ emptyQuip }}</p>
         <p class="hint">沉城那边风挺大的。要不回主线看看，或者去自由练习转转？</p>
       </div>
     </template>
+
+    <!-- 本场设置：模式 / 方向 / 计时 -->
+    <div v-if="showSettings" class="settings-mask" @click.self="showSettings = false">
+      <section class="settings-sheet px-card" role="dialog" aria-modal="true" aria-label="练习设置">
+        <div class="settings-head">
+          <h3>{{ scene ? '本场设置' : '练习设置' }}</h3>
+          <button class="btn px-btn settings-close" @click="showSettings = false">关闭</button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">模式</span>
+          <div class="setting-seg">
+            <button class="btn px-btn seg-btn" :class="{ active: settings.mode === 'sight' }" @click="applyMode('sight')">视译</button>
+            <button class="btn px-btn seg-btn" :class="{ active: settings.mode === 'listen' }" @click="applyMode('listen')">听辨</button>
+            <button class="btn px-btn seg-btn" :class="{ active: settings.mode === 'retell' }" @click="applyMode('retell')">复述</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">方向</span>
+          <div class="setting-seg">
+            <button class="btn px-btn seg-btn" :class="{ active: activeDir === 'zh2en' }" @click="applyDirection('zh2en')">中 → 英</button>
+            <button class="btn px-btn seg-btn" :class="{ active: activeDir === 'en2zh' }" @click="applyDirection('en2zh')">英 → 中</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">计时</span>
+          <button class="btn px-btn seg-btn" :class="{ active: settings.showTimer }" @click="toggleTimer">{{ settings.showTimer ? '开' : '关' }}</button>
+        </div>
+      </section>
+    </div>
 
     <p v-if="saveWarn" class="save-warn">存储不可用或已满，本轮记录、复习进度与抽卡进度不保存</p>
     <SessionHistory v-if="showHistory" :items="history" @close="showHistory = false" />
@@ -110,8 +155,9 @@ import SessionHistory from '../components/SessionHistory.vue'
 import DrawOverlay from '../components/DrawOverlay.vue'
 import ChoiceOverlay from '../components/ChoiceOverlay.vue'
 import LingSprite from '../components/LingSprite.vue'
+import PixelIcon from '../components/PixelIcon.vue'
 import { pick as pickQuip } from '../lib/lingQuips.js'
-import { settings, setMode } from '../stores/settings.js'
+import { settings, setMode, setDirection, setShowTimer } from '../stores/settings.js'
 import { allBuiltinSentences, getCustomSentences } from '../lib/sentences.js'
 import { allScenes, sceneById, sceneSentences, sceneProgress, sceneOpening } from '../lib/scenes.js'
 import { awardBond, getSpiritBond, clearedLineIds, advanceStory, getStory, recordChoice } from '../lib/bonds.js'
@@ -140,6 +186,12 @@ const scene = ref(null)
 const bond = ref(0)
 const clearedIds = ref(new Set())
 const lastGain = ref(null)
+// —— 场景图：只加载当前场景；缺失或加载失败时兜底为 CSS 潮线 ——
+const artFailed = ref(false)
+const artUrl = computed(() => (scene.value?.art && !artFailed.value ? `${import.meta.env.BASE_URL}${scene.value.art}` : ''))
+const chapterLabel = computed(() => (scene.value?.title || '').split(' · ')[0])
+const showSettings = ref(false)
+const activeDir = computed(() => current.value?.direction || settings.value.direction)
 // —— 铃的临场冒泡：评分后/场景完成/空态 ——
 const lingUtter = ref(null)      // { text } 或 null；自动 3s 消隐
 let lingTimer = null
@@ -170,8 +222,18 @@ const drawLabel = computed(() => {
   if (prog.value.tickets < 1) return `还差 ${remainingForTicket(prog.value)} 句`
   return '抽卡'
 })
-const showRating = computed(() => current.value && (current.value.revealed || (settings.value.mode === 'retell' && current.value.recDone)))
-const modeHint = computed(() => settings.value.mode === 'retell' ? '听完 → 开口复述 → 对照原文后自评' : '口头译出后，点「看参考译文」对照')
+// 一屏一件事：①提问 → ②对照（已录音）→ ③评分（已看译文）
+// 评分必须晚于对照译文，录音完不再直接开放评分
+const stage = computed(() => {
+  const c = current.value
+  if (!c) return 0
+  if (c.revealed) return 3
+  if (c.recDone) return 2
+  return 1
+})
+const modeHint = computed(() => settings.value.mode === 'retell'
+  ? '先开口复述，再对照原文自评'
+  : '先录音作答，再看参考译文')
 const elapsed = ref(0)
 let startedAt = 0
 let timerId = null
@@ -318,6 +380,7 @@ onUnmounted(() => { clearInterval(timerId); clearTimeout(lingTimer); stop() })
 watch(() => scene.value?.id, () => {
   sceneDoneShown.value = false
   lingUtter.value = null
+  artFailed.value = false
 })
 watch(() => sceneStat.value.done, (done) => {
   if (done && !sceneDoneShown.value) {
@@ -326,8 +389,21 @@ watch(() => sceneStat.value.done, (done) => {
   }
 })
 
-function flipDirection() {
-  current.value.direction = current.value.direction === 'zh2en' ? 'en2zh' : 'zh2en'
+function applyDirection(dir) {
+  setDirection(dir)
+  if (current.value) current.value.direction = dir
+}
+
+function toggleTimer() {
+  const on = !settings.value.showTimer
+  setShowTimer(on)
+  if (on) {
+    startTimer()
+  } else {
+    clearInterval(timerId)
+    timerId = null
+    elapsed.value = 0
+  }
 }
 
 function applyMode(m) {
@@ -418,8 +494,8 @@ onMounted(() => {
 .revisit { margin-bottom: 20px; }
 .revisit h3 { font-size: 15px; margin: 0 0 12px; color: var(--text-muted); }
 .revisit .scene-card {
-  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px;
-  align-items: flex-start; text-align: left; margin-bottom: 10px;
+  display: flex; flex-direction: column; gap: 4px; padding: 16px;
+  align-items: flex-start; text-align: left; margin-bottom: 12px;
 }
 .scene-head { display: flex; align-items: center; gap: 8px; }
 .badge.done { font-size: 11px; padding: 2px 8px; border-radius: 999px; color: var(--gold-text); background: var(--accent-soft); }
@@ -427,13 +503,71 @@ onMounted(() => {
 .scene-stat { font-size: 12px; color: var(--accent-text); }
 .free-entry h3 { font-size: 15px; margin: 0 0 12px; color: var(--text-muted); }
 
-.scene-bar { padding: 14px 16px; margin-bottom: 14px; }
-.scene-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+/* —— 场景横幅：16:9 图像带 + 竖排章名 + 时间/精灵 + 设置入口 —— */
+.scene-banner { margin-bottom: 16px; }
+.scene-art {
+  position: relative;
+  height: 136px;
+  overflow: hidden;
+  background: var(--surface-deep);
+}
+.scene-img {
+  width: 100%; height: 100%; display: block; object-fit: cover;
+  filter: brightness(0.4) saturate(0.8);
+}
+/* 下缘渐隐到背景色，像从黑暗里透出来 */
+.scene-art::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+  background: linear-gradient(180deg, transparent, var(--bg));
+  pointer-events: none;
+}
+/* 图缺失时的兜底：一条随时间下降的潮线 + 刻度 */
+.tide-fallback {
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 23px, var(--border) 23px 24px),
+    linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+}
+.tide-fallback::after {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 64px;
+  height: 2px;
+  background: var(--text-muted);
+  animation: tide-drop 12s steps(16, end) infinite alternate;
+}
+@keyframes tide-drop {
+  from { top: 8px; }
+  to { top: 112px; }
+}
+.scene-title-col { position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 12px; }
+.scene-chapter,
+.scene-place-name {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+}
+.scene-chapter { font-size: 12px; color: var(--text-muted); }
+.scene-place-name { font-size: 20px; font-weight: 600; color: var(--text); margin: 0; }
+.scene-caption {
+  position: absolute; left: 16px; right: 80px; bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: 2px; color: var(--text-muted);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+}
+.scene-gear {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  width: 32px; height: 32px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.scene-ling { position: absolute; right: 16px; bottom: 16px; z-index: 2; }
+.scene-body { padding: 12px 0 0; }
+.scene-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .scene-title { font-size: 15px; font-weight: 600; }
-.scene-bond { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 3px 10px; }
-.scene-place { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
+.scene-bond { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border-radius: 0; padding: 4px 12px; }
 .scene-premise { font-size: 13px; line-height: 1.6; margin: 8px 0 0; }
-.scene-foot { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.scene-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
 .bond-gain { color: var(--accent-text); }
 .bond-gain em { font-style: normal; opacity: 0.7; }
 .scene-done { color: var(--gold-text); }
@@ -441,24 +575,42 @@ onMounted(() => {
 .count { font-size: 14px; color: var(--text-muted); }
 .timer { font-size: 14px; color: var(--accent-text); }
 .prog { font-size: 13px; color: var(--text-muted); }
-.btn-draw { font-size: 13px; padding: 8px 14px; }
+.btn-draw { display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 8px 16px; }
 .btn-draw:disabled { opacity: 0.5; }
-.btn-history { margin-left: auto; font-size: 13px; padding: 8px 14px; }
+.btn-history { margin-left: auto; font-size: 13px; padding: 8px 16px; }
+.btn-settings {
+  width: 36px; height: 36px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
 .rating-zone { margin-top: 20px; min-height: 56px; display: flex; align-items: center; justify-content: center; }
 .hint { font-size: 13px; color: var(--text-muted); }
-.toggles { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.dir-toggle { font-size: 13px; opacity: 0.7; }
-.mode-toggle { display: flex; gap: 4px; }
-.mode-btn { font-size: 13px; opacity: 0.7; padding: 8px 12px; }
-.mode-btn.active { opacity: 1; color: var(--accent-text); box-shadow: var(--shadow-in); }
+.stage-hint { text-align: center; margin: 20px 0 0; }
+
+/* —— 本场设置抽屉 —— */
+.settings-mask {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.settings-sheet { width: min(480px, 100%); padding: 20px; }
+.settings-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.settings-head h3 { font-size: 15px; margin: 0; }
+.settings-close { font-size: 12px; padding: 8px 12px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; }
+.setting-row + .setting-row { border-top: 2px solid var(--border); }
+.setting-label { font-size: 12px; color: var(--text-muted); }
+.setting-seg { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.setting-seg .btn { font-size: 13px; padding: 8px 12px; }
+.setting-seg .btn.active { color: var(--accent-text); box-shadow: inset 2px 2px 0 var(--px-shadow-color); }
 .empty { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .empty .ling-quote { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin: 4px 0 0; max-width: 320px; }
-.ling-bubble { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-top: 14px; animation: ling-in 260ms ease-out; }
+.ling-bubble { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-top: 16px; animation: ling-in 260ms ease-out; }
 .ling-bubble :deep(.ling-sprite) { background: var(--surface-deep); border: 1px solid var(--border); border-radius: 4px; padding: 4px; flex-shrink: 0; }
 .ling-text { font-size: 13px; line-height: 1.6; color: var(--text-muted); margin: 0; }
 @keyframes ling-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.save-warn { text-align: center; font-size: 12px; color: #e8463a; opacity: 0.8; margin: 12px 0 0; }
+.save-warn { text-align: center; font-size: 12px; color: var(--danger); opacity: 0.8; margin: 12px 0 0; }
 </style>

@@ -1,13 +1,13 @@
 <template>
   <div class="paste-panel">
-    <textarea v-model="text" class="neu-inset" rows="8" placeholder="把文章、新闻、讲稿……任何文字丢进来"></textarea>
+    <textarea v-model="text" class="px-inset" rows="8" placeholder="把文章、新闻、讲稿……任何文字丢进来"></textarea>
     <p v-if="sentences.length" class="preview">{{ sentences.length }} 句待练</p>
     <p v-if="error" class="error">{{ error }}</p>
-    <button class="btn btn-primary" :disabled="!sentences.length" @click="start">开始练习</button>
+    <button class="btn px-btn btn-primary" :disabled="!sentences.length" @click="start">开始练习</button>
 
     <p v-if="dataMsg" class="error">{{ dataMsg }}</p>
 
-    <div v-if="customList.length" class="saved neu-raised">
+    <div v-if="customList.length" class="saved px-card">
       <button class="saved-head" @click="toggleExpand">
         <span>已保存 {{ customList.length }} 句</span>
         <span class="saved-arrow">{{ expanded ? '⌃' : '⌄' }}</span>
@@ -17,7 +17,7 @@
           <button v-if="managing" class="btn-tool all" @click="toggleAll">{{ allSelected ? '取消全选' : '全选' }}</button>
           <button class="btn-tool manage" @click="toggleManaging">{{ managing ? '完成' : '管理' }}</button>
         </div>
-        <ul class="saved-list neu-inset">
+        <ul class="saved-list px-inset">
           <li v-for="s in shown" :key="s.id" class="saved-item">
             <div class="saved-main" :class="{ pick: managing }" @click="managing && toggleSelect(s.id)">
               <span v-if="managing" class="check" :class="{ on: selected.includes(s.id) }"></span>
@@ -29,7 +29,7 @@
             <button v-if="!managing" class="btn-remove" title="删除" @click="removeOne(s.id)">✕</button>
           </li>
         </ul>
-        <button v-if="managing" class="btn btn-del" :disabled="!selected.length" @click="removeSelected">删除所选（{{ selected.length }}）</button>
+        <button v-if="managing" class="btn px-btn btn-del" :disabled="!selected.length" @click="removeSelected">删除所选（{{ selected.length }}）</button>
       </div>
     </div>
 
@@ -152,22 +152,22 @@ function start() {
 </script>
 
 <style scoped>
-textarea { width: 100%; border: none; resize: vertical; padding: 14px; font-size: 15px; color: var(--text); font-family: inherit; }
+textarea { width: 100%; resize: vertical; padding: 12px; font-size: 15px; color: var(--text); font-family: inherit; }
 .preview { font-size: 13px; color: var(--accent-text); }
-.error { font-size: 13px; color: #e8463a; }
+.error { font-size: 13px; color: var(--danger); }
 .btn-primary:disabled { opacity: 0.4; }
-.saved { margin-top: 16px; padding: 6px; }
+.saved { margin-top: 16px; padding: 8px; }
 .saved-head {
   width: 100%; display: flex; justify-content: space-between; align-items: center;
   background: none; border: none; color: var(--text); font: inherit; font-size: 14px;
-  padding: 10px 12px; cursor: pointer; border-radius: 12px;
+  padding: 8px 12px; cursor: pointer; border-radius: 0;
 }
 .saved-arrow { color: var(--text-muted); font-size: 13px; }
-.saved-body { padding: 0 6px 6px; }
+.saved-body { padding: 0 8px 8px; }
 .saved-tools { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 8px; }
-.btn-tool { border: none; background: none; color: var(--accent-text); font: inherit; font-size: 13px; padding: 4px 8px; cursor: pointer; border-radius: 8px; }
+.btn-tool { border: none; background: none; color: var(--accent-text); font: inherit; font-size: 13px; padding: 4px 8px; cursor: pointer; border-radius: 0; }
 .saved-list { list-style: none; margin: 0; padding: 4px; max-height: 40dvh; overflow-y: auto; }
-.saved-item { display: flex; align-items: center; gap: 8px; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.saved-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 2px solid var(--border); }
 .saved-item:last-child { border-bottom: none; }
 .saved-main { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .saved-main.pick { cursor: pointer; }
@@ -178,18 +178,18 @@ textarea { width: 100%; border: none; resize: vertical; padding: 14px; font-size
 }
 .saved-meta { font-size: 12px; color: var(--text-muted); }
 .check {
-  width: 18px; height: 18px; border-radius: 6px; box-shadow: var(--shadow-in); flex-shrink: 0;
+  width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 0; box-shadow: inset 2px 2px 0 var(--px-shadow-color); flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--accent-text);
 }
 .check.on::after { content: '✓'; }
-.btn-remove { border: none; background: none; color: var(--text-muted); font-size: 14px; padding: 6px 8px; cursor: pointer; border-radius: 8px; }
-.btn-del { width: 100%; margin-top: 10px; color: #e8463a; font-size: 14px; }
+.btn-remove { border: none; background: none; color: var(--text-muted); font-size: 14px; padding: 6px 8px; cursor: pointer; border-radius: 0; }
+.btn-del { width: 100%; margin-top: 12px; color: var(--danger); font-size: 14px; }
 .btn-del:disabled { opacity: 0.4; }
 .undo-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 20;
-  display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border-radius: 999px; padding: 10px 18px;
-  box-shadow: var(--shadow-out); font-size: 14px;
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface); border: 2px solid var(--border); border-radius: 0; padding: 8px 16px;
+  box-shadow: 4px 4px 0 var(--px-shadow-color); font-size: 14px;
 }
 .undo-btn { border: none; background: none; color: var(--accent-text); font: inherit; font-size: 14px; padding: 0; cursor: pointer; }
 </style>

@@ -40,7 +40,7 @@
             <p v-if="recOK && !aiResult" class="hint">本次为自评</p>
           </template>
 
-          <div v-if="confirm" class="confirm neu-raised">
+          <div v-if="confirm" class="confirm px-card">
             <p>机器认为你翻出了 {{ confirm.ai }}%，确定按 {{ confirm.self }}% 解锁吗？</p>
             <div class="confirm-actions">
               <button class="btn btn-primary" @click="submit(confirm.self)">按我的 {{ confirm.self }}%</button>
@@ -49,7 +49,7 @@
           </div>
         </template>
 
-        <div v-else class="result neu-raised">
+        <div v-else class="result px-card">
           <p class="result-title">本次 {{ result.bucket }}% · 卡面进度 {{ result.progress }}%</p>
           <p v-if="result.unlockedNow">普通形态已永久解锁</p>
           <p v-if="result.hiddenNow" class="gold">隐藏形态已获得</p>
@@ -64,7 +64,7 @@
       </div>
     </template>
 
-    <div v-else class="empty neu-raised">
+    <div v-else class="empty px-card">
       <p>这张卡还没有抽到</p>
       <button class="btn" @click="backToPractice">去练习</button>
     </div>
@@ -221,7 +221,7 @@ onUnmounted(() => {
 .unlock-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .btn-back { font-size: 13px; padding: 8px 14px; }
 .unlock-name { font-size: 16px; font-weight: 600; }
-.tier-tag { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); }
+.tier-tag { font-size: 11px; padding: 3px 10px; border-radius: 0; background: var(--accent-soft); color: var(--accent-text); }
 .reveal-wrap { width: min(220px, 56vw); margin: 0 auto 12px; }
 .hint { font-size: 13px; color: var(--text-muted); text-align: center; }
 .unlock-zone { margin-top: 20px; }
@@ -241,6 +241,6 @@ onUnmounted(() => {
 .result-title { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
 .result p { font-size: 13px; margin: 4px 0; }
 .gold { color: var(--gold-text); }
-.save-warn { text-align: center; font-size: 12px; color: #e8463a; opacity: 0.8; margin: 12px 0 0; }
+.save-warn { text-align: center; font-size: 12px; color: var(--danger); opacity: 0.8; margin: 12px 0 0; }
 .empty { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 </style>

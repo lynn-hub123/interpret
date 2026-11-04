@@ -1,6 +1,6 @@
 <template>
   <div class="topic-grid">
-    <button v-for="t in topics" :key="t.id" class="btn topic-card neu-raised" @click="start(t.id)">
+    <button v-for="t in topics" :key="t.id" class="btn px-btn topic-card" @click="start(t.id)">
       <span class="topic-label">{{ t.label }}</span>
       <span class="topic-count">{{ countOf(t.id) }} 句</span>
     </button>
@@ -21,7 +21,7 @@ function start(topicId) {
 
 <style scoped>
 .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.topic-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; align-items: flex-start; }
+.topic-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; align-items: flex-start; }
 .topic-label { font-size: 17px; }
 .topic-count { font-size: 12px; color: var(--text-muted); }
 </style>

@@ -49,7 +49,7 @@ describe('RecPlayback', () => {
     expect(a.play).toHaveBeenCalled()
     fire(a, 'play')
     await nextTick()
-    expect(w.find('.pb-toggle').text()).toBe('⏸')
+    expect(w.find('.pb-toggle .px-icon--pause').exists()).toBe(true)
     expect(w.emitted('playing')).toBeTruthy()
   })
   it('pause event reverts state, second toggle pauses audio', async () => {
@@ -61,7 +61,7 @@ describe('RecPlayback', () => {
     expect(a.pause).toHaveBeenCalled()
     fire(a, 'pause')
     await nextTick()
-    expect(w.find('.pb-toggle').text()).toBe('▶')
+    expect(w.find('.pb-toggle .px-icon--play').exists()).toBe(true)
   })
   it('loadedmetadata enables bar and shows duration, timeupdate shows current', async () => {
     const w = mount(RecPlayback, { props: { src: SRC } })
@@ -111,7 +111,7 @@ describe('RecPlayback', () => {
     await nextTick()
     fire(a, 'ended')
     await nextTick()
-    expect(w.find('.pb-toggle').text()).toBe('▶')
+    expect(w.find('.pb-toggle .px-icon--play').exists()).toBe(true)
     expect(w.find('.pb-time').text()).toBe('0:00 / 0:07')
   })
   it('src change resets state', async () => {
@@ -121,7 +121,7 @@ describe('RecPlayback', () => {
     fire(a, 'play')
     await nextTick()
     await w.setProps({ src: 'blob:other' })
-    expect(w.find('.pb-toggle').text()).toBe('▶')
+    expect(w.find('.pb-toggle .px-icon--play').exists()).toBe(true)
     expect(w.find('.pb-time').text()).toBe('0:00 / 0:00')
   })
   it('exposed pause works even before play event fires, unmount pauses too', async () => {

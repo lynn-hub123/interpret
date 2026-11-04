@@ -73,12 +73,15 @@ async function mountView() {
 }
 
 describe('PracticeView rating visibility', () => {
-  it('retell mode: rating appears after recStopped without reveal, with retell labels', async () => {
+  it('retell mode: 录音后仍需先对照原文，评分才出现', async () => {
     const { setMode } = await import('../stores/settings.js')
     setMode('retell')
     const w = await mountView()
-    expect(w.text()).toContain('听完 → 开口复述 → 对照原文后自评')
+    expect(w.text()).toContain('先开口复述，再对照原文自评')
     w.findComponent(PracticeCard).vm.$emit('recStopped')
+    await w.vm.$nextTick()
+    expect(w.find('.rating-row').exists()).toBe(false) // 评分必须晚于对照
+    w.findComponent(PracticeCard).vm.$emit('revealed')
     await w.vm.$nextTick()
     const btns = w.findAll('.rating-row .btn')
     expect(btns.map(b => b.text())).toEqual(['流畅', '磕绊', '没记住'])
@@ -94,19 +97,63 @@ describe('PracticeView rating visibility', () => {
     const { setMode } = await import('../stores/settings.js')
     setMode('retell')
     const w = await mountView()
-    w.findComponent(PracticeCard).vm.$emit('recStopped')
+    w.findComponent(PracticeCard).vm.$emit('revealed')
     await w.vm.$nextTick()
     await w.findAll('.rating-row .btn')[0].trigger('click') // 流畅 → 下一句
     await w.vm.$nextTick()
     expect(w.find('.rating-row').exists()).toBe(false) // 新句 recDone=false
   })
-  it('mode toggle shows three modes and applies on click', async () => {
+  it('本场设置抽屉：三种模式可切换并落库', async () => {
     const w = await mountView()
-    const modes = w.findAll('.mode-btn').map(b => b.text())
-    expect(modes).toEqual(['视译', '听辨', '复述'])
-    await w.findAll('.mode-btn')[2].trigger('click')
+    await w.find('.scene-gear').trigger('click')
+    const modeBtns = w.findAll('.setting-row')[0].findAll('.seg-btn')
+    expect(modeBtns.map(b => b.text())).toEqual(['视译', '听辨', '复述'])
+    await modeBtns[2].trigger('click')
     const { settings } = await import('../stores/settings.js')
     expect(settings.value.mode).toBe('retell')
+  })
+})
+
+describe('场景横幅', () => {
+  it('主线场景加载 16:9 场景图，章节竖排与时间精灵叠在图上', async () => {
+    const w = await mountView()
+    const img = w.find('.scene-art .scene-img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toContain('scn02_tidehead')
+    expect(w.find('.scene-chapter').text()).toBe('第一幕')
+    expect(w.find('.scene-place-name').text()).toBe('滩头')
+    expect(w.find('.scene-caption').text()).toContain('退潮首日 · 未明')
+    expect(w.find('.scene-caption').text()).toContain('铃')
+  })
+
+  it('场景图加载失败时兜底为 CSS 潮线，不出现破图', async () => {
+    const w = await mountView()
+    await w.find('.scene-img').trigger('error')
+    expect(w.find('.scene-img').exists()).toBe(false)
+    expect(w.find('.tide-fallback').exists()).toBe(true)
+  })
+
+  it('自由练习页不加载场景图，改为顶部设置入口', async () => {
+    sessionStorage.setItem('interpret.session', JSON.stringify({ mode: 'topic', topicId: 'nope' }))
+    const w = await mountView()
+    expect(w.find('.scene-art').exists()).toBe(false)
+    expect(w.find('.scene-gear').exists()).toBe(false)
+    expect(w.find('.btn-settings').exists()).toBe(true)
+  })
+
+  it('抽屉可切换方向与计时，并即时生效', async () => {
+    const w = await mountView()
+    await w.find('.scene-gear').trigger('click')
+    const dirBtns = w.findAll('.setting-row')[1].findAll('.seg-btn')
+    await dirBtns[1].trigger('click')
+    await w.vm.$nextTick()
+    const { settings } = await import('../stores/settings.js')
+    expect(settings.value.direction).toBe('en2zh')
+    expect(w.find('.dir-pill').text()).toBe('英 → 中')
+
+    const timerBtn = w.findAll('.setting-row')[2].find('.seg-btn')
+    await timerBtn.trigger('click')
+    expect(settings.value.showTimer).toBe(true)
   })
 })
 
