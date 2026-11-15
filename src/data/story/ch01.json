@@ -1,0 +1,481 @@
+{
+  "id": "ch01",
+  "title": "第一章 · 十七层没有灯",
+  "dir": "zh2en",
+  "rating": { "horror": "H2", "nonhuman": "N1", "intimacy": "R2", "cg": "C1" },
+  "warnings": ["horror:psychological", "horror:death"],
+  "gateBudget": { "min": 2, "max": 3 },
+  "place": "城西 · 临江写字楼 B 座",
+  "time": "十一月十七日，雨夜 23:40 — 00:10",
+  "casting": ["zhou_yan", "door_voice", "phone_voice"],
+  "scenes": [
+    {
+      "id": "ch01_s1",
+      "index": 1,
+      "title": "楼梯间",
+      "place": "一层大堂 → 消防楼梯间 → 十七层楼梯口",
+      "time": "23:40",
+      "ambience": {
+        "sight": ["大堂玻璃门上全是雨痕", "快递单湿了半边，寄件人一栏是手写的", "楼梯间的声控灯亮八秒就灭", "楼梯拐角挂着一面蒙灰的镜子"],
+        "sound": ["雨打在玻璃上，一直没停", "电梯到层的提示音只响一声", "楼梯间里只有自己的脚步声"],
+        "smell": ["潮湿的水泥味"]
+      },
+      "presentation": "scene",
+      "caption": [
+        "雨从傍晚下到现在，大堂的玻璃门一直在响。",
+        "你手里那张快递单湿了半边。寄件人一栏是陈迟的字。",
+        "电梯的数字停在 16，按也不动。前台只开了半盏灯。",
+        "十七层。楼梯在消防门后面。"
+      ],
+      "beats": [
+        {
+          "id": "ch01_s1_01",
+          "kind": "narration",
+          "text": "楼梯间的声控灯要跺一下脚才亮。亮八秒，然后自己灭。"
+        },
+        {
+          "id": "ch01_s1_02",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "Seventeenth floor? The lift's been stopping at sixteen all week.",
+            "zh": "十七楼？这电梯一礼拜都只到十六层。"
+          },
+          "emotion": "wary"
+        },
+        {
+          "id": "ch01_s1_03",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "说明自己是来送件的",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "我上去送个箱子，1704。",
+              "en": "I'm taking a box up to 1704.",
+              "required": ["action", "quantity"]
+            },
+            {
+              "id": "b",
+              "zh": "1704 有人在等我，送完我就走。",
+              "en": "Someone's waiting for me in 1704 — I'll be quick.",
+              "required": ["who", "action"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s1_04",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "That's Chen Chi's handwriting. He came by last month too — said he'd bring something up. He never came back down.",
+            "zh": "这是陈迟的字。上个月他也来过，说要送东西上去。后来没下来。"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s1_05",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "追问陈迟，或请对方同行",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "他后来怎么了？",
+              "en": "What happened to him?",
+              "required": ["who", "action"]
+            },
+            {
+              "id": "b",
+              "zh": "你能跟我一起上去吗？",
+              "en": "Could you come up with me?",
+              "required": ["who", "action"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s1_06",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "Take the stairs. Don't look into the mirror on the landing. And if Chen Chi calls you from up there, don't answer.",
+            "zh": "走楼梯。楼梯拐角那面镜子，别往里看。还有——上面要是陈迟叫你，别应。"
+          },
+          "emotion": "urgent"
+        },
+        {
+          "id": "ch01_s1_07",
+          "kind": "narration",
+          "text": "周砚去按电梯。数字亮了一下，又灭了。对方没有再解释。"
+        },
+        {
+          "id": "ch01_s1_08",
+          "kind": "narration",
+          "text": "十六层到十七层之间，声控灯灭了两次。第二次你没有跺脚，它也亮了。楼梯口很窄，再往里是一条长走廊。"
+        },
+        {
+          "id": "ch01_s1_09",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "beatNote": "通过对讲机传来，声音里全是电流声",
+          "text": {
+            "en": "If the wall phone rings up there, don't pick it up.",
+            "zh": "上面要是墙上的电话响，别接。"
+          },
+          "emotion": "urgent"
+        },
+        {
+          "id": "ch01_s1_10",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "答应不接电话",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "知道了，我不接。",
+              "en": "All right — I won't pick it up.",
+              "required": ["action", "polarity"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch01_s2",
+      "index": 2,
+      "title": "电梯厅的公告栏",
+      "place": "十七层走廊东端 · 电梯厅与公告栏",
+      "time": "23:52",
+      "ambience": {
+        "sight": ["走廊很窄，尽头是电梯厅", "灯管一闪一闪", "公告栏玻璃后面夹着一排发黄的纸", "墙上一部老式座机"],
+        "sound": ["灯管电流声", "电梯到层的提示音", "座机铃声，一声和下一声隔得太久"],
+        "smell": ["旧纸和灰"]
+      },
+      "presentation": "chat",
+      "beats": [
+        {
+          "id": "ch01_s2_01",
+          "kind": "narration",
+          "text": "十七层的走廊很窄，尽头是电梯厅。灯管一闪一闪，公告栏的玻璃里夹着一排纸。"
+        },
+        {
+          "id": "ch01_s2_02",
+          "kind": "narration",
+          "text": "电梯到了。数字停在 17，门自己打开。周砚站在里面。"
+        },
+        {
+          "id": "ch01_s2_03",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "问周砚怎么上来的",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "你怎么上来的？",
+              "en": "How did you get up here?",
+              "required": ["who", "action"]
+            },
+            {
+              "id": "b",
+              "zh": "电梯好了？",
+              "en": "Is the lift working now?",
+              "required": ["action"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s2_04",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "It stops here when it wants to.",
+            "zh": "它想停十七层的时候，就停。"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s2_05",
+          "kind": "narration",
+          "text": "公告栏上钉着一叠值班表，边角一层层翘起来。从 2003 到今年，每年 11 月 17 日都被红笔圈过。"
+        },
+        {
+          "id": "ch01_s2_06",
+          "kind": "event",
+          "event": "clue",
+          "card": {
+            "title": "二十二年的值班表",
+            "body": "2003 到今年，每年 11 月 17 日都被红笔圈过。值班人一栏全是「周砚」，笔迹一模一样。只有今年的圈是新画的，墨还没干。",
+            "meta": "线索 · 纸"
+          }
+        },
+        {
+          "id": "ch01_s2_07",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "追问这些签名",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "这些字都是你签的？",
+              "en": "Did you sign all of these?",
+              "required": ["who", "action"]
+            },
+            {
+              "id": "b",
+              "zh": "你每年都在这儿？",
+              "en": "You've been here every year?",
+              "required": ["who", "time"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s2_08",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "Twenty-two years. On this floor.",
+            "zh": "二十二年。就在这层楼。"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s2_09",
+          "kind": "narration",
+          "text": "公告栏旁边的墙上挂着一部座机。它响了。"
+        },
+        {
+          "id": "ch01_s2_10",
+          "kind": "npc",
+          "speaker": "phone_voice",
+          "text": {
+            "en": "Chen Chi? Is this Chen Chi?",
+            "zh": "陈迟？是陈迟吗？"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s2_11",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "对着听筒否认这个名字",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "你打错了，这里没有这个人。",
+              "en": "You've got the wrong number — there's no one here by that name.",
+              "required": ["who", "polarity"]
+            }
+          ],
+          "gate": {
+            "type": "hard",
+            "category": "speech_act",
+            "required": ["who", "polarity"],
+            "accept": {
+              "who": ["no one", "nobody"],
+              "polarity": "negative"
+            },
+            "hints": {
+              "r1": "你还没说清，这里到底有没有这个人。",
+              "r2": "用否定回答：先否认「有这个人」，再说这里。",
+              "r3": "参考译文：You've got the wrong number — there's no one here by that name."
+            },
+            "reference": "You've got the wrong number — there's no one here by that name.",
+            "failEffect": {
+              "flag": "said_name",
+              "note": "沉默出口：听筒那头记住了你的声音；第三场门内会直接叫你。"
+            }
+          }
+        },
+        {
+          "id": "ch01_s2_12",
+          "kind": "narration",
+          "text": "铃声停在半声上。走廊那头，1704 门缝里的光没有动。"
+        },
+        {
+          "id": "ch01_s2_13",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "Now we go back to the door.",
+            "zh": "现在回那扇门去。"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s2_14",
+          "kind": "narration",
+          "text": "你们往回走。经过消防门时，声控灯没有亮。"
+        }
+      ]
+    },
+    {
+      "id": "ch01_s3",
+      "index": 3,
+      "title": "门内的声音",
+      "place": "十七层走廊尽头，1704 门前",
+      "time": "00:07",
+      "ambience": {
+        "sight": ["走廊灯全灭，只剩门缝一条光", "空房间里地板上的老式录音机", "门边翘起的值班表"],
+        "sound": ["门把手自己转动半圈", "磁带转到头的咔哒声"],
+        "smell": ["铁锈味"]
+      },
+      "presentation": "chat",
+      "beats": [
+        {
+          "id": "ch01_s3_01",
+          "kind": "narration",
+          "text": "走廊的灯全灭了。只剩 1704 门缝那一条光，像有人把眼睛睁开一条缝。"
+        },
+        {
+          "id": "ch01_s3_02",
+          "kind": "npc",
+          "speaker": "door_voice",
+          "text": {
+            "en": "It's me. Open the door.",
+            "zh": "是我。开门。"
+          },
+          "emotion": "warm"
+        },
+        {
+          "id": "ch01_s3_03",
+          "kind": "narration",
+          "text": "那个声音说出了只有你和陈迟知道的事：去年冬天，你们在这栋楼下等过一整夜出租车；还有快递单背面那行字——「别拆，等我上来」。那行字你没给任何人看过。"
+        },
+        {
+          "id": "ch01_s3_04",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "That's not him. He says it every night.",
+            "zh": "那不是陈迟。每晚都这么说。"
+          },
+          "emotion": "tired"
+        },
+        {
+          "id": "ch01_s3_05",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "问周砚怎么办，或追究对方早已知情",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "那我现在该怎么办？",
+              "en": "What am I supposed to do now?",
+              "required": ["action"]
+            },
+            {
+              "id": "b",
+              "zh": "你一直都知道？",
+              "en": "You knew all along?",
+              "required": ["action", "time"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s3_06",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "Say no. Out loud. He can't come through a closed mouth.",
+            "zh": "说不。说出口。嘴闭着，他进不来。"
+          },
+          "emotion": "urgent"
+        },
+        {
+          "id": "ch01_s3_07",
+          "kind": "event",
+          "event": "relation",
+          "card": {
+            "title": "周砚挡在门前",
+            "body": "对方没有解释，只把手横在门把前。指节发白。",
+            "meta": "关系 · 周砚"
+          }
+        },
+        {
+          "id": "ch01_s3_08",
+          "kind": "narration",
+          "text": "门把手在你手边自己转了半圈。金属摩擦的声音很短。"
+        },
+        {
+          "id": "ch01_s3_09",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "对门里的声音说不，拒绝开门",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "我不会给你开门。",
+              "en": "I'm not opening the door for you.",
+              "required": ["who", "action", "polarity"]
+            }
+          ],
+          "gate": {
+            "type": "hard",
+            "category": "life_death",
+            "required": ["who", "action", "polarity"],
+            "accept": {
+              "who": ["you"],
+              "action": ["open the door", "let you in", "open it"],
+              "polarity": "negative"
+            },
+            "hints": {
+              "r1": "你还没说清，这句话是对门里谁说的。",
+              "r2": "把三件事说全：对谁说、做什么、否定。",
+              "r3": "参考译文：I'm not opening the door for you."
+            },
+            "reference": "I'm not opening the door for you.",
+            "failEffect": {
+              "flag": "opened_door",
+              "note": "沉默出口：门自己开了，走廊的灯全灭；你活着下楼，但周砚不再开口。"
+            }
+          }
+        },
+        {
+          "id": "ch01_s3_10",
+          "kind": "narration",
+          "text": "门缝里的光收了一下，像有人从门后往后退了一步。"
+        },
+        {
+          "id": "ch01_s3_11",
+          "kind": "narration",
+          "text": "1704 的门自己开了。里面是空的，地上有一台老式录音机还在转，磁带快到头了。"
+        },
+        {
+          "id": "ch01_s3_12",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": {
+            "en": "You can go now. The lift's working.",
+            "zh": "你可以走了。电梯好了。"
+          },
+          "emotion": "flat"
+        },
+        {
+          "id": "ch01_s3_13",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "让周砚一起离开，或确认对方要留下",
+          "candidates": [
+            {
+              "id": "a",
+              "zh": "你跟我一起走。",
+              "en": "Come with me.",
+              "required": ["who", "action"]
+            },
+            {
+              "id": "b",
+              "zh": "你还要留在这里？",
+              "en": "You're staying here?",
+              "required": ["who", "action"]
+            }
+          ]
+        },
+        {
+          "id": "ch01_s3_14",
+          "kind": "narration",
+          "text": "电梯门开着，停在这一层。你回头看，走廊尽头那盏灯下没有人。值班表还钉在门边，最后一行多了一笔，墨还没干。"
+        }
+      ]
+    }
+  ]
+}

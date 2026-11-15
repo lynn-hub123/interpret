@@ -1,0 +1,39 @@
+{
+  "speakers": [
+    {
+      "id": "zhou_yan",
+      "displayName": "周砚",
+      "role": "npc",
+      "avatar": null,
+      "ttsVoice": { "zh": null, "en": null },
+      "defaultEmotion": "wary",
+      "misheard": ["Hm?", "Say that again.", "You're not making sense."]
+    },
+    {
+      "id": "door_voice",
+      "displayName": "门内",
+      "role": "npc",
+      "avatar": null,
+      "ttsVoice": { "zh": null, "en": null },
+      "defaultEmotion": "flat",
+      "misheard": ["What?", "Say it louder.", "That's not what I asked."]
+    },
+    {
+      "id": "phone_voice",
+      "displayName": "听筒",
+      "role": "npc",
+      "avatar": null,
+      "ttsVoice": { "zh": null, "en": null },
+      "defaultEmotion": "flat",
+      "misheard": ["…What?", "Speak up.", "I can't hear you."]
+    },
+    {
+      "id": "player",
+      "displayName": "你",
+      "role": "player",
+      "avatar": null,
+      "ttsVoice": { "zh": null, "en": null },
+      "defaultEmotion": "neutral"
+    }
+  ]
+}
