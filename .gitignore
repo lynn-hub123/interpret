@@ -11,7 +11,10 @@ dev-dist/
 
 # Superpowers brainstorm sessions
 .superpowers/
-docs/superpowers/
+docs/superpowers/*
+!docs/superpowers/specs/
+docs/superpowers/specs/*
+!docs/superpowers/specs/*.md
 
 # IDE / agent working dirs
 .trae/
