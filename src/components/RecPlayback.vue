@@ -1,7 +1,7 @@
 <template>
   <div class="rec-playback">
     <button class="pb-toggle" :title="isPlaying ? '暂停' : '播放'" @click="onToggle">
-      <PixelIcon :name="isPlaying ? 'pause' : 'play'" :size="16" />
+      <StoryIcon :name="isPlaying ? 'pause' : 'play'" :size="16" />
     </button>
     <input
       class="pb-bar"
@@ -42,7 +42,7 @@ export function formatTime(seconds) {
 
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
-import PixelIcon from './PixelIcon.vue'
+import StoryIcon from './StoryIcon.vue'
 
 const props = defineProps({
   src: { type: String, required: true }

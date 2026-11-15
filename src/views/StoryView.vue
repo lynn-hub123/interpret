@@ -35,7 +35,7 @@
             <p v-for="(line, i) in scene.caption" :key="i">{{ line }}</p>
           </div>
           <span class="advance" aria-hidden="true">
-            <PixelIcon name="play" :size="16" />
+            <StoryIcon name="play" :size="16" />
           </span>
         </div>
 
@@ -48,7 +48,19 @@
 
           <div ref="streamEl" class="stream" :key="scene.id" @click="flush">
             <template v-for="m in log" :key="m.uid">
-              <p v-if="m.kind === 'narration'" class="narration">{{ m.text }}</p>
+              <p
+                v-if="m.kind === 'narration'"
+                class="narration"
+                :class="{ 'has-icon': BEAT_ICON[m.uid] }"
+              >
+                <StoryIcon
+                  v-if="BEAT_ICON[m.uid]"
+                  :name="BEAT_ICON[m.uid]"
+                  :size="16"
+                  class="n-icon"
+                />
+                <span>{{ m.text }}</span>
+              </p>
 
               <p v-else-if="m.kind === 'divider'" class="divider">
                 <span class="d-title">{{ m.title }}</span>
@@ -66,7 +78,7 @@
                     :aria-label="speakingId === m.uid ? '停止朗读' : '朗读'"
                     @click.stop="speak(m)"
                   >
-                    <PixelIcon :name="speakingId === m.uid ? 'stop' : 'play'" :size="16" />
+                    <StoryIcon :name="speakingId === m.uid ? 'pause' : 'play'" :size="16" />
                   </button>
                 </div>
                 <p class="en">{{ m.text }}</p>
@@ -77,7 +89,10 @@
               </div>
 
               <div v-else-if="m.kind === 'event'" class="card">
-                <span class="card-title">{{ m.card.title }}</span>
+                <span class="card-head">
+                  <StoryIcon v-if="m.event === 'clue'" name="clue" :size="16" class="card-icon" />
+                  <span class="card-title">{{ m.card.title }}</span>
+                </span>
                 <p class="card-body">{{ m.card.body }}</p>
                 <span class="card-meta">{{ m.card.meta }}</span>
               </div>
@@ -110,7 +125,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import PixelIcon from '../components/PixelIcon.vue'
+import StoryIcon from '../components/StoryIcon.vue'
 import StoryComposer from '../components/StoryComposer.vue'
 import { playText, stop as voiceStop } from '../lib/voice.js'
 import { ttsSupported } from '../lib/tts.js'
@@ -139,6 +154,15 @@ let seq = 0
 // 回合等待：对方打字 900ms，旁白停顿 620ms
 const TYPING_NPC = 900
 const TYPING_CUE = 620
+
+// 旁白里被点名的物件与动作：只标真正出现的那几句
+const BEAT_ICON = {
+  ch01_s1_08: 'stairs',
+  ch01_s2_05: 'roster',
+  ch01_s2_09: 'phone',
+  ch01_s3_11: 'recorder',
+  ch01_s3_14: 'leave'
+}
 
 const scene = computed(() => scenes[sceneIdx.value])
 const currentBeat = computed(() => scene.value.beats[cursor.value] || null)
@@ -603,6 +627,15 @@ onBeforeUnmount(() => {
   line-height: 26px;
   color: var(--story-text);
 }
+.narration.has-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.n-icon {
+  margin-top: 5px;
+  color: var(--story-faint);
+}
 .divider {
   display: flex;
   align-items: baseline;
@@ -636,14 +669,15 @@ onBeforeUnmount(() => {
 }
 .tts {
   margin-left: auto;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: none;
-  border: 1px solid var(--story-line);
+  border: none;
   border-radius: 0;
+  padding: 0;
   color: var(--story-rose-soft);
   cursor: pointer;
 }
@@ -674,6 +708,8 @@ onBeforeUnmount(() => {
   padding: 12px;
   border: 1px dashed var(--story-rose);
 }
+.card-head { display: flex; align-items: center; gap: 8px; }
+.card-icon { color: var(--story-rose-soft); }
 .card-title { display: block; font-size: 17px; line-height: 26px; color: var(--story-bright); }
 .card-body { margin: 6px 0 0; font-size: 17px; line-height: 26px; color: var(--story-text); }
 .card-meta { display: block; margin-top: 6px; font-size: 17px; line-height: 26px; color: var(--story-rose-soft); }

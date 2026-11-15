@@ -40,7 +40,7 @@
           :aria-label="recording ? '停止录音' : '录音'"
           @click="toggleMic"
         >
-          <PixelIcon :name="recording ? 'stop' : 'mic'" :size="16" />
+          <StoryIcon :name="recording ? 'rec' : 'mic'" :size="16" />
         </button>
         <span v-if="recording" class="rec-clock">{{ clock }}</span>
 
@@ -49,8 +49,11 @@
           class="send"
           type="button"
           :disabled="!canSend"
+          aria-label="发送"
           @click="onSend"
-        >发送</button>
+        >
+          <StoryIcon name="send" :size="16" />
+        </button>
         <button
           v-else
           class="gate-key"
@@ -95,7 +98,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import PixelIcon from './PixelIcon.vue'
+import StoryIcon from './StoryIcon.vue'
 import RecPlayback from './RecPlayback.vue'
 import { judge } from '../lib/gate.js'
 import { comprehends } from '../lib/comprehend.js'
@@ -418,15 +421,17 @@ onBeforeUnmount(() => {
   color: var(--story-rose-soft);
 }
 .send {
+  width: 36px;
   height: 36px;
-  padding: 0 14px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: var(--story-panel);
   border: 1px solid var(--story-line);
   border-radius: 0;
   color: var(--story-text);
-  font-family: var(--font-cn);
-  font-size: 17px;
   cursor: pointer;
 }
 .send:disabled, .gate-key:disabled, .mic:disabled { color: var(--story-faint); cursor: default; }
