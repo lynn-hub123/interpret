@@ -10,24 +10,27 @@
     token: ''
   };
 
-  const TYPE_ORDER = ['narration', 'npc', 'os', 'phone', 'say', 'choice', 'scene', 'event'];
+  const TYPE_ORDER = ['narration', 'visual', 'action', 'npc', 'os', 'phone', 'say', 'choice', 'scene', 'event'];
   const TYPE_LABEL = {
-    narration: '旁白 / 画面',
+    narration: '旁白',
+    visual: '画面',
+    action: '动作',
     npc: '角色对话',
     os: '内心 OS',
     phone: '手机消息',
     say: '玩家台词',
     choice: '分支选项',
-    scene: '场景分隔',
+    scene: '场景开头',
     event: '线索卡'
   };
   const DEFAULT_RATING = { horror: 'H2', nonhuman: 'N1', intimacy: 'R2', cg: 'C1' };
   const DEFAULT_GATE_BUDGET = { min: 2, max: 3 };
+  const SPEAKER_COLORS = ['#8fb3d9', '#c99a6e', '#8fbfa8', '#c08fa2', '#b9a86a', '#9b8fd0', '#7fb0a8'];
   const DEFAULT_SPEAKERS = [
-    { id: 'zhou_yan', displayName: '周砚' },
-    { id: 'door_voice', displayName: '门内' },
-    { id: 'phone_voice', displayName: '听筒' },
-    { id: 'player', displayName: '你' }
+    { id: 'zhou_yan', displayName: '周砚', color: SPEAKER_COLORS[0] },
+    { id: 'door_voice', displayName: '门内', color: SPEAKER_COLORS[1] },
+    { id: 'phone_voice', displayName: '听筒', color: SPEAKER_COLORS[2] },
+    { id: 'player', displayName: '你', color: SPEAKER_COLORS[3] }
   ];
 
   const state = {
@@ -42,6 +45,7 @@
   let hotTimer = null;
   let dragId = null;
   const cloud = { cfg: Object.assign({}, CLOUD_DEFAULT), files: null, manifest: null };
+  const history = { stack: [], index: -1, limit: 150, timer: null };
 
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
@@ -153,7 +157,11 @@
   function makeNode(type, patch) {
     const base = { id: uid('n'), type: type, collapsed: false, note: '' };
     if (type === 'narration') {
+      Object.assign(base, { text: '' });
+    } else if (type === 'visual') {
       Object.assign(base, { text: '', shot: '', sound: '' });
+    } else if (type === 'action') {
+      Object.assign(base, { text: '' });
     } else if (type === 'npc') {
       Object.assign(base, { speaker: 'zhou_yan', zh: '', en: '', emotion: '' });
     } else if (type === 'phone') {
@@ -295,6 +303,13 @@
 
   function normalizeChapter(ch) {
     ch.customSpeakers = Array.isArray(ch.customSpeakers) ? ch.customSpeakers : [];
+    ch.customSpeakers.forEach(function (sp) {
+      if (!sp.id) sp.id = uid('sp');
+      sp.displayName = sp.displayName || sp.id;
+      sp.color = sp.color || speakerColor(ch, sp.id);
+      sp.avatar = sp.avatar || '';
+    });
+    ch.speakerOverrides = (ch.speakerOverrides && typeof ch.speakerOverrides === 'object') ? ch.speakerOverrides : {};
     ch.warnings = Array.isArray(ch.warnings) ? ch.warnings : [];
     ch.rating = Object.assign({}, DEFAULT_RATING, ch.rating || {});
     ch.gateBudget = Object.assign({}, DEFAULT_GATE_BUDGET, ch.gateBudget || {});
@@ -372,6 +387,7 @@
     renderEditor();
     renderPreview();
     updateCloudState();
+    resetHistory();
     setSaveState('已载入 ' + clock());
     const first = firstEditableId();
     if (first) focusNode(first);
@@ -384,6 +400,8 @@
     $('#newChapter').addEventListener('click', addChapter);
     $('#chapterListBtn').addEventListener('click', openChapterDirectory);
     $('#chapterSettings').addEventListener('click', openChapterSettings);
+    $('#undoBtn').addEventListener('click', undo);
+    $('#redoBtn').addEventListener('click', redo);
     $('#cloudBtn').addEventListener('click', openCloud);
     $('#importBtn').addEventListener('click', openImport);
     $('#exportMd').addEventListener('click', function () { doExport('md'); });
@@ -417,7 +435,21 @@
         saveNow();
         return;
       }
-      if (e.key === 'Escape' && !$('#modalRoot').hidden) {
+      const modalOpen = !$('#modalRoot').hidden;
+      if (!modalOpen && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) redo(); else undo();
+          return;
+        }
+        if (key === 'y') {
+          e.preventDefault();
+          redo();
+          return;
+        }
+      }
+      if (e.key === 'Escape' && modalOpen) {
         closeModal();
       }
     });
@@ -444,6 +476,88 @@
     renderChapterBar();
     renderEditor(focusFirst ? firstEditableId() : null);
     renderPreview();
+    updateHistoryButtons();
+  }
+
+  /* ---------------- 撤销 / 重做 ---------------- */
+
+  function snapshotState() {
+    return JSON.stringify({ chapters: state.chapters, activeId: state.activeId });
+  }
+
+  function updateHistoryButtons() {
+    const u = $('#undoBtn');
+    const r = $('#redoBtn');
+    if (u) u.disabled = history.index <= 0;
+    if (r) r.disabled = history.index >= history.stack.length - 1;
+  }
+
+  function pushHistory() {
+    clearTimeout(history.timer);
+    history.timer = null;
+    const snap = snapshotState();
+    if (history.index >= 0 && history.stack[history.index] === snap) {
+      updateHistoryButtons();
+      return;
+    }
+    history.stack = history.stack.slice(0, history.index + 1);
+    history.stack.push(snap);
+    if (history.stack.length > history.limit) history.stack.shift();
+    history.index = history.stack.length - 1;
+    updateHistoryButtons();
+  }
+
+  function scheduleHistory() {
+    clearTimeout(history.timer);
+    history.timer = setTimeout(pushHistory, 450);
+  }
+
+  function flushHistory() {
+    if (history.timer) pushHistory();
+  }
+
+  function resetHistory() {
+    clearTimeout(history.timer);
+    history.timer = null;
+    history.stack = [snapshotState()];
+    history.index = 0;
+    updateHistoryButtons();
+  }
+
+  function applyHistory(snap) {
+    let data = null;
+    try { data = JSON.parse(snap); } catch (err) { return; }
+    if (!data || !Array.isArray(data.chapters)) return;
+    state.chapters = data.chapters.map(normalizeChapter);
+    state.activeId = data.activeId;
+    if (!state.chapters.some(function (c) { return c.id === state.activeId; })) {
+      state.activeId = state.chapters[0] ? state.chapters[0].id : null;
+    }
+    saveNow();
+    renderAll();
+    updateHistoryButtons();
+  }
+
+  function undo() {
+    flushHistory();
+    if (history.index <= 0) {
+      toast('没有可撤销的操作');
+      return;
+    }
+    history.index -= 1;
+    applyHistory(history.stack[history.index]);
+    toast('已撤销');
+  }
+
+  function redo() {
+    flushHistory();
+    if (history.index >= history.stack.length - 1) {
+      toast('没有可重做的操作');
+      return;
+    }
+    history.index += 1;
+    applyHistory(history.stack[history.index]);
+    toast('已重做');
   }
 
   function switchChapter(id) {
@@ -460,6 +574,7 @@
 
   function addChapter() {
     saveNow();
+    flushHistory();
     const ch = makeChapter({ title: '新章节 ' + (state.chapters.length + 1) });
     ch.nodes = [
       makeNode('scene', { scene: makeScene({ title: '场景 1', presentation: 'chat' }) }),
@@ -469,6 +584,7 @@
     state.activeId = ch.id;
     renderAll(true);
     saveNow();
+    pushHistory();
     toast('已新建章节');
   }
 
@@ -478,7 +594,7 @@
     let total = 0;
     const add = function (s) { total += String(s || '').replace(/\s+/g, '').length; };
     walkNodes(ch.nodes || [], function (node) {
-      if (node.type === 'narration' || node.type === 'os') {
+      if (node.type === 'narration' || node.type === 'visual' || node.type === 'action' || node.type === 'os') {
         add(node.text);
       } else if (node.type === 'npc' || node.type === 'phone') {
         add(node.zh);
@@ -588,28 +704,33 @@
             const input = $('[data-rename-input]', row);
             const title = input ? input.value.trim() : '';
             if (!title) { toast('标题不能为空'); return; }
+            flushHistory();
             ch.title = title;
             ch.updatedAt = Date.now();
             renaming = null;
             saveNow();
             renderChapterBar();
             rerender(false);
+            pushHistory();
             return;
           }
           if (btn.hasAttribute('data-up') || btn.hasAttribute('data-down')) {
             const from = state.chapters.indexOf(ch);
             const to = btn.hasAttribute('data-up') ? from - 1 : from + 1;
             if (to < 0 || to >= state.chapters.length) return;
+            flushHistory();
             state.chapters.splice(from, 1);
             state.chapters.splice(to, 0, ch);
             saveNow();
             renderChapterBar();
             rerender(false);
+            pushHistory();
             return;
           }
           if (btn.hasAttribute('data-del')) {
             if (state.chapters.length <= 1) { toast('至少保留一个章节'); return; }
             if (!window.confirm('删除「' + (ch.title || ch.id) + '」和它的全部内容？\n\n删除只影响本机，云端副本不会动。')) return;
+            flushHistory();
             const index = state.chapters.indexOf(ch);
             const wasActive = state.activeId === ch.id;
             state.chapters.splice(index, 1);
@@ -620,6 +741,7 @@
             saveNow();
             renderAll(true);
             rerender(false);
+            pushHistory();
             toast('已删除，可在目录里撤销');
           }
         });
@@ -627,11 +749,13 @@
         undoBtn.addEventListener('click', function () {
           const item = undo.pop();
           if (!item) return;
+          flushHistory();
           state.chapters.splice(Math.min(item.index, state.chapters.length), 0, item.chapter);
           if (item.wasActive) state.activeId = item.chapter.id;
           saveNow();
           renderAll(false);
           rerender(false);
+          pushHistory();
           toast('已恢复「' + (item.chapter.title || item.chapter.id) + '」');
         });
 
@@ -649,12 +773,44 @@
   /* ---------------- 编辑器渲染 ---------------- */
 
   function speakerList(ch) {
-    return DEFAULT_SPEAKERS.concat(ch.customSpeakers || []);
+    const seen = {};
+    const out = [];
+    (ch.customSpeakers || []).concat(DEFAULT_SPEAKERS).forEach(function (sp) {
+      if (!sp || !sp.id || seen[sp.id]) return;
+      seen[sp.id] = true;
+      out.push(speakerEntry(ch, sp.id));
+    });
+    return out;
+  }
+
+  function hashColor(id) {
+    let h = 0;
+    const s = String(id || '');
+    for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return SPEAKER_COLORS[h % SPEAKER_COLORS.length];
+  }
+
+  function speakerEntry(ch, id) {
+    const overrides = (ch.speakerOverrides && typeof ch.speakerOverrides === 'object') ? ch.speakerOverrides : {};
+    const ov = overrides[id] || {};
+    const custom = (ch.customSpeakers || []).find(function (s) { return s.id === id; });
+    const base = DEFAULT_SPEAKERS.find(function (s) { return s.id === id; });
+    const src = custom || base || {};
+    return {
+      id: id,
+      displayName: ov.displayName || src.displayName || id || '未命名角色',
+      color: ov.color || src.color || hashColor(id),
+      avatar: ov.avatar != null ? ov.avatar : (src.avatar || ''),
+      builtin: !custom && !!base
+    };
   }
 
   function speakerName(ch, id) {
-    const found = speakerList(ch).find(function (s) { return s.id === id; });
-    return found ? found.displayName : (id || '未命名角色');
+    return speakerEntry(ch, id).displayName;
+  }
+
+  function speakerColor(ch, id) {
+    return speakerEntry(ch, id).color;
   }
 
   function renderSpeakerOptions(ch, selected) {
@@ -682,12 +838,23 @@
 
   function renderFields(n, ch) {
     if (n.type === 'narration') {
-      return '<textarea class="main-text" data-field="text" data-main="1" rows="1" placeholder="旁白 / 画面……">' +
+      const legacy = (n.shot || n.sound)
+        ? '<p class="scene-hint">这个节点还留着旧版旁白的镜头/音效，切到「画面」就能看到并继续编辑。</p>'
+        : '';
+      return '<textarea class="main-text" data-field="text" data-main="1" rows="1" placeholder="旁白：只写叙述文字，不写镜头和音效">' +
+        esc(n.text) + '</textarea>' + legacy + renderNote(n);
+    }
+    if (n.type === 'visual') {
+      return '<textarea class="main-text" data-field="text" data-main="1" rows="1" placeholder="画面描述：玩家此刻看到什么">' +
         esc(n.text) + '</textarea>' +
         '<div class="mini-grid">' +
-          '<input data-field="shot" value="' + escAttr(n.shot) + '" placeholder="镜头（可选）">' +
-          '<input data-field="sound" value="' + escAttr(n.sound) + '" placeholder="音效（可选）">' +
+          '<input data-field="shot" value="' + escAttr(n.shot || '') + '" placeholder="镜头（推近 / 俯拍 / 特写…）">' +
+          '<input data-field="sound" value="' + escAttr(n.sound || '') + '" placeholder="音效 / 环境声（可选）">' +
         '</div>' + renderNote(n);
+    }
+    if (n.type === 'action') {
+      return '<textarea class="main-text" data-field="text" data-main="1" rows="1" placeholder="动作：角色做了什么（推门、后退一步、把手机翻过来…）">' +
+        esc(n.text) + '</textarea>' + renderNote(n);
     }
     if (n.type === 'os') {
       return '<textarea class="main-text" data-field="text" data-main="1" rows="1" placeholder="玩家内心 OS……">' +
@@ -749,7 +916,8 @@
     }
     if (n.type === 'scene') {
       const s = n.scene || makeScene();
-      return '<div class="row">' +
+      return '<p class="scene-lead">场景开头 = 新场景的第一张卡。场景名、地点、时间、场景台词和画面线索都写在这里；它下面的节点都属于这个场景，换场景时再插一张。</p>' +
+        '<div class="row">' +
           '<input class="scene-title" data-scene-field="title" data-main="1" value="' + escAttr(s.title) +
             '" placeholder="场景名（Enter 新建旁白）">' +
           '<select data-scene-field="presentation" class="short" style="flex:0 0 120px">' +
@@ -771,7 +939,7 @@
           '<textarea data-scene-field="sound" rows="2" placeholder="音效（每行一条）">' + esc(s.sound) + '</textarea>' +
           '<textarea data-scene-field="smell" rows="2" placeholder="气味（每行一条）">' + esc(s.smell) + '</textarea>' +
         '</div>' +
-        '<p class="scene-hint">场景界面需要 4 行 caption；消息流可留空。</p>';
+        '<p class="scene-hint">场景界面需要 4 行 caption；消息流可留空。这里的「画面线索」只描述这个场景的画面，和独立的「画面」节点不冲突。</p>';
     }
     if (n.type === 'event') {
       const ev = n.event || {};
@@ -877,41 +1045,49 @@
   function insertAfter(node) {
     const loc = locate(node.id);
     if (!loc) return;
+    flushHistory();
     const nn = makeNode(defaultNextType(node));
     loc.list.splice(loc.index + 1, 0, nn);
     renderEditor(nn.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function addChild(node, optionId) {
     if (!node || node.type !== 'choice') return;
     const opt = (node.options || []).find(function (o) { return o.id === optionId; }) || node.options[0];
     if (!opt) return;
+    flushHistory();
     const nn = makeNode('narration');
     opt.nodes.push(nn);
     renderEditor(nn.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function addEnd() {
     const ch = activeChapter();
+    flushHistory();
     const nn = makeNode('narration');
     ch.nodes.push(nn);
     renderEditor(nn.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function addOption(node) {
     if (!node || node.type !== 'choice') return;
+    flushHistory();
     const opt = makeOption();
     node.options.push(opt);
     renderEditor(node.id);
     renderPreview();
     scheduleSave();
     focusNode(node.id, '.option[data-option-id="' + opt.id + '"] [data-opt-field="zh"]');
+    pushHistory();
   }
 
   function deleteOption(node, optionId) {
@@ -920,10 +1096,12 @@
       toast('至少保留一个选项');
       return;
     }
+    flushHistory();
     node.options = node.options.filter(function (o) { return o.id !== optionId; });
     renderEditor(node.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function deleteNode(node) {
@@ -932,6 +1110,7 @@
     if (node.type === 'choice' && node.options.some(function (o) { return o.nodes && o.nodes.length; })) {
       if (!window.confirm('删除这个分支节点，以及它下面挂的所有支线内容？')) return;
     }
+    flushHistory();
     const prev = loc.list[loc.index - 1] || loc.list[loc.index + 1] || null;
     loc.list.splice(loc.index, 1);
     const parent = loc.parent;
@@ -944,6 +1123,7 @@
     renderEditor();
     renderPreview();
     scheduleSave();
+    pushHistory();
     if (prev) focusNode(prev.id);
     else if (parent) focusNode(parent.id);
   }
@@ -953,16 +1133,20 @@
     if (!loc) return;
     const target = loc.index + delta;
     if (target < 0 || target >= loc.list.length) return;
+    flushHistory();
     loc.list.splice(loc.index, 1);
     loc.list.splice(target, 0, node);
     renderEditor(node.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function primaryText(node) {
     switch (node.type) {
       case 'narration':
+      case 'visual':
+      case 'action':
       case 'os':
         return node.text || '';
       case 'npc':
@@ -982,7 +1166,10 @@
 
   function changeType(node, next) {
     if (!TYPE_LABEL[next] || next === node.type) return;
+    flushHistory();
+    const prev = node.type;
     const oldText = primaryText(node);
+    const textTypes = { narration: 1, visual: 1, action: 1, os: 1, npc: 1, phone: 1, say: 1 };
     const defaults = makeNode(next);
     Object.keys(defaults).forEach(function (k) {
       if (!(k in node)) node[k] = defaults[k];
@@ -999,10 +1186,10 @@
         node.options = [makeOption(), makeOption()];
       }
       if (oldText && node.options[0] && !node.options[0].zh) node.options[0].zh = oldText;
-    } else if (next === 'narration' || next === 'os') {
-      if (oldText && !node.text) node.text = oldText;
-    } else if (next === 'npc' || next === 'phone' || next === 'say') {
-      if (oldText && !node.zh) node.zh = oldText;
+    } else if (textTypes[next]) {
+      // 文本类之间来回切换时，把最新写下的主文本带过去；旧字段仍保留在节点上，切回来不会丢。
+      const targetField = (next === 'npc' || next === 'phone' || next === 'say') ? 'zh' : 'text';
+      if (oldText && (textTypes[prev] || !node[targetField])) node[targetField] = oldText;
       if (next === 'npc' && !node.speaker) node.speaker = 'zhou_yan';
       if (next === 'phone' && !node.speaker) node.speaker = 'phone_voice';
     }
@@ -1010,6 +1197,7 @@
     renderEditor(node.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function cycleType(node, delta) {
@@ -1050,6 +1238,7 @@
     grow(el);
     schedulePreview();
     scheduleSave();
+    scheduleHistory();
   }
 
   function onChange(e) {
@@ -1070,18 +1259,21 @@
       node.speaker = el.value;
       schedulePreview();
       scheduleSave();
+      pushHistory();
       return;
     }
     if (el.dataset.sceneField === 'presentation') {
       node.scene.presentation = el.value;
       schedulePreview();
       scheduleSave();
+      pushHistory();
       return;
     }
     if (el.dataset.eventField === 'kind') {
       node.event.kind = el.value === 'relation' ? 'relation' : 'clue';
       schedulePreview();
       scheduleSave();
+      pushHistory();
     }
   }
 
@@ -1221,6 +1413,7 @@
     const dst = locate(targetId);
     if (!src || !dst || src.list !== dst.list) return;
     e.preventDefault();
+    flushHistory();
     const before = art.classList.contains('drop-before');
     const list = src.list;
     const moved = src.node;
@@ -1233,6 +1426,7 @@
     renderEditor(moved.id);
     renderPreview();
     scheduleSave();
+    pushHistory();
   }
 
   function onDragEnd() {
@@ -1258,8 +1452,8 @@
   function renderPreviewScene(n) {
     const s = n.scene || makeScene();
     const caption = splitLines(s.caption);
-    let html = '<div class="pv-divider" data-preview-id="' + escAttr(n.id) + '">' +
-      '<span>' + esc(s.title || '未命名场景') + '</span>' +
+    let html = '<div class="pv-divider pv-scene-start" data-preview-id="' + escAttr(n.id) + '">' +
+      '<span><span class="pv-scene-tag">场景开头</span>' + esc(s.title || '未命名场景') + '</span>' +
       '<span>' + esc(s.time || '') + '</span>' +
       '</div>';
     if (s.place) html += '<div class="pv-sub">' + esc(s.place) + '</div>';
@@ -1271,6 +1465,16 @@
     return html;
   }
 
+  function speakerAvatarHtml(ch, id) {
+    const sp = speakerEntry(ch, id);
+    if (sp.avatar) {
+      return '<img class="pv-avatar" src="' + escAttr(sp.avatar) + '" alt="">';
+    }
+    const initial = String(sp.displayName || '?').slice(0, 1);
+    return '<span class="pv-avatar pv-avatar-letter" style="background:' + escAttr(sp.color) + '">' +
+      esc(initial) + '</span>';
+  }
+
   function renderPreviewNodes(nodes, ch) {
     return (nodes || []).map(function (n) {
       const pid = ' data-preview-id="' + escAttr(n.id) + '"';
@@ -1279,21 +1483,32 @@
         return '<p class="pv-narration"' + pid + '>' + (n.text ? esc(n.text) : previewEmpty()) + '</p>' +
           cueHtml(n);
       }
+      if (n.type === 'visual') {
+        return '<p class="pv-visual"' + pid + '><span class="pv-tag">画面</span>' +
+          (n.text ? esc(n.text) : previewEmpty()) + '</p>' + cueHtml(n);
+      }
+      if (n.type === 'action') {
+        return '<p class="pv-action"' + pid + '><span class="pv-tag">动作</span>' +
+          (n.text ? esc(n.text) : previewEmpty()) + '</p>';
+      }
       if (n.type === 'os') {
         return '<p class="pv-narration pv-os"' + pid + '><span class="pv-tag">OS</span>' +
           (n.text ? esc(n.text) : previewEmpty()) + '</p>' + cueHtml(n);
       }
       if (n.type === 'npc') {
         const text = ch.dir === 'zh2en' ? (n.en || n.zh) : (n.zh || n.en);
-        return '<div class="pv-npc"' + pid + '>' +
-          '<span class="pv-name">' + esc(speakerName(ch, n.speaker)) + '</span>' +
+        const sp = speakerEntry(ch, n.speaker);
+        return '<div class="pv-npc"' + pid + ' style="--spk:' + escAttr(sp.color) + '">' +
+          '<div class="pv-npc-head">' + speakerAvatarHtml(ch, n.speaker) +
+            '<span class="pv-name">' + esc(sp.displayName) + '</span></div>' +
           '<p>' + (text ? esc(text) : previewEmpty()) + '</p>' +
           '</div>' + cueHtml(n);
       }
       if (n.type === 'phone') {
         const text = ch.dir === 'zh2en' ? (n.en || n.zh) : (n.zh || n.en);
-        return '<div class="pv-phone"' + pid + '>' +
-          '<div class="pv-phone-head">' + esc(speakerName(ch, n.speaker)) + '</div>' +
+        const sp = speakerEntry(ch, n.speaker);
+        return '<div class="pv-phone"' + pid + ' style="--spk:' + escAttr(sp.color) + '">' +
+          '<div class="pv-phone-head">' + speakerAvatarHtml(ch, n.speaker) + esc(sp.displayName) + '</div>' +
           '<p>' + (text ? esc(text) : previewEmpty()) + '</p>' +
           '</div>';
       }
@@ -1395,6 +1610,29 @@
         node.sound ? '音效：' + node.sound : '',
         node.note || ''
       );
+      if (note) beat.beatNote = note;
+      out.push(beat);
+      return;
+    }
+    if (node.type === 'visual') {
+      const text = (node.text || '').trim();
+      if (!text && !node.shot && !node.sound) return;
+      const beat = { id: nextId(), kind: 'narration', text: text };
+      const note = joinNotes(
+        '画面',
+        node.shot ? '镜头：' + node.shot : '',
+        node.sound ? '音效：' + node.sound : '',
+        node.note || ''
+      );
+      if (note) beat.beatNote = note;
+      out.push(beat);
+      return;
+    }
+    if (node.type === 'action') {
+      const text = (node.text || '').trim();
+      if (!text) return;
+      const beat = { id: nextId(), kind: 'narration', text: text };
+      const note = joinNotes('动作', node.note || '');
       if (note) beat.beatNote = note;
       out.push(beat);
       return;
@@ -1519,7 +1757,7 @@
     }
     if (node.type === 'scene') {
       if (!topLevel) {
-        warnings.push('分支内部的场景分隔不会在 JSON 里生成新场景，只保留它下面的节点。');
+        warnings.push('分支内部的「场景开头」不会在 JSON 里生成新场景，只保留它下面的节点。');
       }
     }
   }
@@ -1643,11 +1881,27 @@
     const p = ' '.repeat(indent);
     const blank = function () { lines.push(''); };
     if (node.type === 'narration') {
-      if (!node.text && !node.shot && !node.sound) return;
+      if (!node.text) return;
       lines.push(p + '【旁白】');
+      lines.push(p + node.text);
+      if (node.note) lines.push(p + '（备注：' + node.note + '）');
+      blank();
+      return;
+    }
+    if (node.type === 'visual') {
+      if (!node.text && !node.shot && !node.sound) return;
+      lines.push(p + '【画面】');
       if (node.text) lines.push(p + node.text);
       if (node.shot) lines.push(p + '（镜头：' + node.shot + '）');
       if (node.sound) lines.push(p + '（音效：' + node.sound + '）');
+      if (node.note) lines.push(p + '（备注：' + node.note + '）');
+      blank();
+      return;
+    }
+    if (node.type === 'action') {
+      if (!node.text) return;
+      lines.push(p + '【动作】');
+      lines.push(p + node.text);
       if (node.note) lines.push(p + '（备注：' + node.note + '）');
       blank();
       return;
@@ -1711,8 +1965,8 @@
       return;
     }
     if (node.type === 'scene') {
-      warnings.push('分支内部的场景分隔在 Markdown 里只保留标题，不拆分结构。');
-      lines.push(p + '【场景分隔 · ' + ((node.scene && node.scene.title) || '未命名') + '】');
+      warnings.push('分支内部的「场景开头」在 Markdown 里只保留标题，不拆分结构。');
+      lines.push(p + '【场景开头 · ' + ((node.scene && node.scene.title) || '未命名') + '】');
       blank();
     }
   }
@@ -1880,7 +2134,7 @@
     walkNodes(ch.nodes, function (n) {
       if ((n.type === 'npc' || n.type === 'phone') && n.speaker && !isKnownSpeaker(n.speaker) &&
         !ch.customSpeakers.some(function (s) { return s.id === n.speaker; })) {
-        ch.customSpeakers.push({ id: n.speaker, displayName: n.speaker });
+        ch.customSpeakers.push({ id: n.speaker, displayName: n.speaker, color: hashColor(n.speaker), avatar: '' });
       }
     });
     return ch;
@@ -1898,6 +2152,7 @@
       rating: Object.assign({}, DEFAULT_RATING, raw.rating || {}),
       gateBudget: Object.assign({}, DEFAULT_GATE_BUDGET, raw.gateBudget || {}),
       customSpeakers: Array.isArray(raw.customSpeakers) ? raw.customSpeakers.slice() : [],
+      speakerOverrides: (raw.speakerOverrides && typeof raw.speakerOverrides === 'object') ? raw.speakerOverrides : {},
       nodes: raw.nodes.map(normalizeNode).filter(Boolean)
     });
     return ch;
@@ -1942,7 +2197,7 @@
       n += 1;
       id = 'sp_' + n;
     }
-    ch.customSpeakers.push({ id: id, displayName: clean });
+    ch.customSpeakers.push({ id: id, displayName: clean, color: hashColor(id), avatar: '' });
     return id;
   }
 
@@ -1996,8 +2251,22 @@
       if (marker) {
         const label = marker[1].trim();
         const rest = marker[2].trim();
-        if (/^(场景画面|场景|画面|画面表现|镜头|旁白|情景)$/.test(label)) {
+        if (/^(场景|旁白|情景)$/.test(label)) {
           const n = makeNode('narration', { text: rest });
+          ch.nodes.push(n);
+          last = n;
+          pending = rest ? null : n;
+          return;
+        }
+        if (/^(场景画面|画面|画面表现|视觉)$/.test(label)) {
+          const n = makeNode('visual', { text: rest });
+          ch.nodes.push(n);
+          last = n;
+          pending = rest ? null : n;
+          return;
+        }
+        if (/^(动作|动作描写)$/.test(label)) {
+          const n = makeNode('action', { text: rest });
           ch.nodes.push(n);
           last = n;
           pending = rest ? null : n;
@@ -2034,7 +2303,7 @@
           return;
         }
         if (/^(音效|SFX|sfx)$/i.test(label)) {
-          if (last && last.type === 'narration') {
+          if (last && (last.type === 'visual' || last.type === 'narration')) {
             last.sound = joinSentence(last.sound, rest);
           } else {
             push(makeNode('narration', { sound: rest }));
@@ -2042,7 +2311,7 @@
           return;
         }
         if (/^(镜头)$/.test(label)) {
-          if (last && last.type === 'narration') {
+          if (last && (last.type === 'visual' || last.type === 'narration')) {
             last.shot = joinSentence(last.shot, rest);
           } else {
             push(makeNode('narration', { shot: rest }));
@@ -2178,14 +2447,20 @@
         '<label>章节时间（可选）<input id="chTime" value="' + escAttr(ch.time || '') + '"></label>' +
         '<label>内容提示（逗号分隔）<input id="chWarnings" value="' + escAttr((ch.warnings || []).join(', ')) + '"></label>' +
       '</div>' +
-      '<label>自定义角色（导出前请在 speakers.json 补登同名 id）</label>' +
-      '<div id="spList">' +
-        (ch.customSpeakers || []).map(function (s) {
-          return '<div class="sp-row">' +
-            '<input data-sp-id value="' + escAttr(s.id) + '" placeholder="id（英文）">' +
+      '<label>角色管理（预览按颜色区分；改名、改色会同步到所有历史节点）</label>' +
+      '<div id="spList" class="sp-list">' +
+        speakerList(ch).map(function (s) {
+          return '<div class="sp-row" data-sp-builtin="' + (s.builtin ? '1' : '0') + '" data-sp-key="' + escAttr(s.id) + '">' +
+            '<span class="sp-dot" style="background:' + escAttr(s.color) + '"></span>' +
+            (s.builtin
+              ? '<span class="sp-id" title="内置角色 id">' + esc(s.id) + '</span>'
+              : '<input data-sp-id value="' + escAttr(s.id) + '" placeholder="id（英文）">') +
             '<input data-sp-name value="' + escAttr(s.displayName) + '" placeholder="显示名">' +
-            '<button type="button" class="icon-btn danger" data-sp-del title="删除">✕</button>' +
-          '</div>';
+            '<input data-sp-color type="color" value="' + escAttr(s.color) + '" title="气泡颜色">' +
+            '<input data-sp-avatar value="' + escAttr(s.avatar) + '" placeholder="头像 URL（可选）">' +
+            '<button type="button" class="icon-btn danger" data-sp-del title="删除"' +
+              (s.builtin ? ' disabled' : '') + '>✕</button>' +
+            '</div>';
         }).join('') +
       '</div>' +
       '<button type="button" class="add-inline" id="spAdd">＋ 添加角色</button>' +
@@ -2214,8 +2489,12 @@
         $('#spAdd', root).addEventListener('click', function () {
           const row = document.createElement('div');
           row.className = 'sp-row';
-          row.innerHTML = '<input data-sp-id placeholder="id（英文）">' +
+          row.setAttribute('data-sp-builtin', '0');
+          row.innerHTML = '<span class="sp-dot" style="background:' + SPEAKER_COLORS[0] + '"></span>' +
+            '<input data-sp-id placeholder="id（英文）">' +
             '<input data-sp-name placeholder="显示名">' +
+            '<input data-sp-color type="color" value="' + SPEAKER_COLORS[0] + '" title="气泡颜色">' +
+            '<input data-sp-avatar placeholder="头像 URL（可选）">' +
             '<button type="button" class="icon-btn danger" data-sp-del title="删除">✕</button>';
           spList.appendChild(row);
           row.querySelector('input').focus();
@@ -2247,19 +2526,38 @@
             min: Number($('#gbMin', root).value) || 0,
             max: Number($('#gbMax', root).value) || 0
           };
-          ch.customSpeakers = $$('.sp-row', spList).map(function (row) {
-            return {
-              id: $('[data-sp-id]', row).value.trim(),
-              displayName: $('[data-sp-name]', row).value.trim()
-            };
-          }).filter(function (s) { return s.id || s.displayName; }).map(function (s) {
-            return { id: s.id || s.displayName, displayName: s.displayName || s.id };
+          const customs = [];
+          const overrides = {};
+          $$('.sp-row', spList).forEach(function (row) {
+            const builtin = row.getAttribute('data-sp-builtin') === '1';
+            const key = row.getAttribute('data-sp-key') || '';
+            const idInput = $('[data-sp-id]', row);
+            const id = (builtin ? key : (idInput ? idInput.value.trim() : key)).replace(/\s+/g, '_');
+            if (!id) return;
+            const name = $('[data-sp-name]', row).value.trim();
+            const color = $('[data-sp-color]', row).value || hashColor(id);
+            const avatar = $('[data-sp-avatar]', row).value.trim();
+            if (builtin) {
+              const base = DEFAULT_SPEAKERS.find(function (s) { return s.id === id; });
+              const baseName = base ? base.displayName : id;
+              const baseColor = (base && base.color) || hashColor(id);
+              if (name !== baseName || color !== baseColor || avatar) {
+                overrides[id] = { displayName: name || baseName, color: color, avatar: avatar };
+              }
+            } else {
+              customs.push({ id: id, displayName: name || id, color: color, avatar: avatar });
+            }
           });
+          flushHistory();
+          ch.customSpeakers = customs;
+          ch.speakerOverrides = overrides;
+          ch.updatedAt = Date.now();
           closeModal();
           renderChapterBar();
           renderEditor();
           renderPreview();
           saveNow();
+          pushHistory();
           toast('章节设置已保存');
         });
         $('#chDelete', root).addEventListener('click', function () {
@@ -2268,12 +2566,14 @@
             return;
           }
           if (!window.confirm('删除「' + ch.title + '」以及它所有内容？')) return;
+          flushHistory();
           const index = state.chapters.indexOf(ch);
           state.chapters.splice(index, 1);
           state.activeId = state.chapters[Math.max(0, index - 1)].id;
           closeModal();
           renderAll(true);
           saveNow();
+          pushHistory();
           toast('已删除章节');
         });
       }
@@ -2287,6 +2587,8 @@
       '<div class="form-grid">' +
         '<label>显示名<input id="spName" placeholder="例如：陈迟"></label>' +
         '<label>角色 id<input id="spId" placeholder="例如：chen_chi"></label>' +
+        '<label>气泡颜色<input id="spColor" type="color" value="' + SPEAKER_COLORS[0] + '"></label>' +
+        '<label>头像 URL（可选）<input id="spAvatar" placeholder="https://…"></label>' +
       '</div>' +
       '<div class="modal-actions">' +
         '<button type="button" data-close>取消</button>' +
@@ -2314,12 +2616,20 @@
             return;
           }
           if (!name) name = id;
-          ch.customSpeakers.push({ id: id, displayName: name });
+          flushHistory();
+          ch.customSpeakers.push({
+            id: id,
+            displayName: name,
+            color: $('#spColor', root).value || hashColor(id),
+            avatar: $('#spAvatar', root).value.trim()
+          });
+          ch.updatedAt = Date.now();
           node.speaker = id;
           closeModal();
           renderEditor(node.id);
           renderPreview();
           saveNow();
+          pushHistory();
           toast('已添加角色：' + name);
         });
       }
@@ -2349,7 +2659,7 @@
         '<button type="button" class="tab" data-tab="json">剧本 JSON</button>' +
       '</div>' +
       '<div id="paneText">' +
-        '<p class="hint">识别【旁白】【场景画面】【镜头】【os】【我】【角色名】标记；也支持「角色：台词」。「英文：…」会接到上一条台词。</p>' +
+        '<p class="hint">识别【旁白】【画面】【动作】【镜头】【os】【我】【角色名】标记；也支持「角色：台词」。「英文：…」会接到上一条台词。</p>' +
         '<textarea id="draftText" rows="10" placeholder="把草稿直接粘到这里……"></textarea>' +
         '<p class="hint" id="draftSummary">还没有识别到内容。</p>' +
       '</div>' +
@@ -3094,6 +3404,10 @@
     chapterFromNative: chapterFromNative,
     importJsonChapters: importJsonChapters,
     saveNow: saveNow,
+    undo: undo,
+    redo: redo,
+    changeType: changeType,
+    speakerList: speakerList,
     cloud: cloud,
     refreshCloudList: refreshCloudList,
     computeSyncPlan: computeSyncPlan,
