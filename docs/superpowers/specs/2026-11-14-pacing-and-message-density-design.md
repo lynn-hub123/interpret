@@ -1,6 +1,6 @@
 # 节奏与消息密度（O4 方案，待评审，v3）
 
-状态：方案 v3（密度改为事后体检线；新增人设与代入感；新增限时沉默）｜ 日期：2026-11-14
+状态：**已被 `2026-11-20-narrative-branching-and-saves-design.md` 取代**（2026-11-20）；本文件仅保留 §3 回复时序、§8 限时沉默、§9 人设与代入感作为参考｜ 日期：2026-11-14
 前置文档：`2026-11-12-chat-rpg-repositioning-design.md`（§10 O4）
 关联：`2026-11-14-hard-gate-mechanics-design.md`（重试与门禁）、`2026-11-14-language-switch-design.md`（作答方向）、`2026-11-14-content-scale-design.md`（H3 不叠加门禁）
 范围：O4「实时等待还是即时回复、单次会话多长、哪些消息必须译、哪些只需读」。
