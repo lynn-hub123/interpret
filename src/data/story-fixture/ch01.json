@@ -1,0 +1,90 @@
+{
+  "id": "fixture01",
+  "title": "样例章",
+  "dir": "zh2en",
+  "rating": { "horror": "H1", "nonhuman": "N1", "intimacy": "R1", "cg": "C1" },
+  "warnings": [],
+  "gateBudget": { "min": 1, "max": 1 },
+  "place": "样例地点",
+  "time": "00:00",
+  "casting": ["zhou_yan"],
+  "scenes": [
+    {
+      "id": "fixture_s1",
+      "index": 1,
+      "title": "样例场",
+      "place": "样例地点",
+      "time": "00:00",
+      "presentation": "scene",
+      "caption": ["第一行。", "第二行。", "第三行。", "第四行。"],
+      "beats": [
+        {
+          "id": "fixture_01",
+          "kind": "narration",
+          "text": "样例旁白。"
+        },
+        {
+          "id": "fixture_02",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": { "zh": "你来了。", "en": "You came." },
+          "emotion": "flat"
+        },
+        {
+          "id": "fixture_03",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "打招呼",
+          "candidates": [
+            { "id": "a", "zh": "我来了。", "en": "I'm here.", "required": ["action"] }
+          ]
+        },
+        {
+          "id": "fixture_04",
+          "kind": "npc",
+          "speaker": "zhou_yan",
+          "text": { "zh": "把话说清楚。", "en": "Say it clearly." },
+          "emotion": "wary"
+        },
+        {
+          "id": "fixture_05",
+          "kind": "player",
+          "dir": "zh2en",
+          "intent": "说明来意",
+          "candidates": [
+            { "id": "a", "zh": "我来取东西。", "en": "I'm here to collect something.", "required": ["action"] }
+          ],
+          "gate": {
+            "type": "hard",
+            "category": "speech_act",
+            "required": ["action"],
+            "accept": { "action": "collect" },
+            "hints": {
+              "r1": "先说要做什么。",
+              "r2": "用 collect 相关的说法。",
+              "r3": "参考译文：I'm here to collect something."
+            },
+            "reference": "I'm here to collect something."
+          }
+        },
+        {
+          "id": "fixture_06",
+          "kind": "event",
+          "event": "clue",
+          "card": { "title": "样例线索", "body": "一条样例线索。", "meta": "线索 · 纸" }
+        },
+        {
+          "id": "fixture_07",
+          "kind": "event",
+          "event": "relation",
+          "card": { "title": "样例关系", "body": "关系发生了变化。", "meta": "关系" }
+        },
+        {
+          "id": "fixture_08",
+          "kind": "narration",
+          "text": "样例结束。"
+        }
+      ]
+    }
+  ]
+}
