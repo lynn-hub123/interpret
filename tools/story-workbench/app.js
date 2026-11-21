@@ -10,7 +10,7 @@
     token: ''
   };
 
-  const TYPE_ORDER = ['narration', 'visual', 'action', 'npc', 'os', 'phone', 'say', 'choice', 'scene', 'event'];
+  const TYPE_ORDER = ['narration', 'visual', 'action', 'npc', 'os', 'phone', 'say', 'choice', 'scene', 'event', 'divider'];
   const TYPE_LABEL = {
     narration: '旁白',
     visual: '画面',
@@ -21,8 +21,11 @@
     say: '玩家台词',
     choice: '分支选项',
     scene: '场景开头',
-    event: '线索卡'
+    event: '线索卡',
+    divider: '分隔线'
   };
+  // 下拉里把 schema v1 没有的类型标明，避免写手以为游戏会读到
+  const TYPE_OPTION_LABEL = Object.assign({}, TYPE_LABEL, { choice: '分支选项（未接入）' });
   const DEFAULT_RATING = { horror: 'H2', nonhuman: 'N1', intimacy: 'R2', cg: 'C1' };
   const DEFAULT_GATE_BUDGET = { min: 2, max: 3 };
   const SPEAKER_COLORS = ['#8fb3d9', '#c99a6e', '#8fbfa8', '#c08fa2', '#b9a86a', '#9b8fd0', '#7fb0a8'];
@@ -32,6 +35,8 @@
     { id: 'phone_voice', displayName: '听筒', color: SPEAKER_COLORS[2] },
     { id: 'player', displayName: '你', color: SPEAKER_COLORS[3] }
   ];
+  // 以 src/data/story/speakers.json 为准；加载失败时退回上面的内置名单
+  const knownSpeakerIds = { ids: null };
 
   const state = {
     chapters: [],
@@ -176,6 +181,8 @@
       Object.assign(base, { scene: makeScene() });
     } else if (type === 'event') {
       Object.assign(base, { event: { kind: 'clue', title: '', body: '', meta: '' } });
+    } else if (type === 'divider') {
+      Object.assign(base, { title: '', time: '' });
     }
     return Object.assign(base, patch || {});
   }
@@ -379,6 +386,7 @@
 
   function init() {
     loadState();
+    loadSpeakers();
     loadCloudCfg();
     const auto = $('#autoLocate');
     if (auto) auto.checked = state.ui.autoLocate !== false;
@@ -914,6 +922,13 @@
         '</div>' +
         '<button type="button" class="add-inline" data-action="add-option">＋ 选项</button>';
     }
+    if (n.type === 'divider') {
+      return '<div class="row">' +
+          '<input data-field="title" data-main="1" value="' + escAttr(n.title) + '" placeholder="分隔线标题">' +
+          '<input class="short" data-field="time" value="' + escAttr(n.time) + '" placeholder="时间（可选）">' +
+        '</div>' +
+        '<p class="scene-hint">游戏里的分隔线由换场自动生成；这里的节点原样导出成 divider，StoryView 目前不渲染 JSON 里的 divider。</p>';
+    }
     if (n.type === 'scene') {
       const s = n.scene || makeScene();
       return '<p class="scene-lead">场景开头 = 新场景的第一张卡。场景名、地点、时间、场景台词和画面线索都写在这里；它下面的节点都属于这个场景，换场景时再插一张。</p>' +
@@ -988,7 +1003,7 @@
             '<select class="type-select" data-action="type-select" aria-label="节点类型">' +
               TYPE_ORDER.map(function (t) {
                 return '<option value="' + t + '"' + (t === n.type ? ' selected' : '') + '>' +
-                  TYPE_LABEL[t] + '</option>';
+                  TYPE_OPTION_LABEL[t] + '</option>';
               }).join('') +
             '</select>' +
             (collapsed ? '<span class="node-summary">' + esc(nodeSummary(n, ch)) + '</span>' : '') +
@@ -1284,7 +1299,7 @@
     const node = info.node;
     if (el.tagName === 'SELECT') return;
 
-    if (e.key === 'Tab' && el.dataset.main === '1' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    if (e.ctrlKey && e.altKey && String(e.key).toLowerCase() === 't') {
       e.preventDefault();
       cycleType(node, e.shiftKey ? -1 : 1);
       return;
@@ -1538,6 +1553,12 @@
         }).join('');
         return '<div class="pv-choice"' + pid + '>' + optHtml + branchHtml + '</div>';
       }
+      if (n.type === 'divider') {
+        return '<div class="pv-divider"' + pid + '>' +
+          '<span>' + esc(n.title || '分隔线') + '</span>' +
+          (n.time ? '<span>' + esc(n.time) + '</span>' : '') +
+          '</div>';
+      }
       if (n.type === 'event') {
         const ev = n.event || {};
         return '<div class="pv-card"' + pid + '>' +
@@ -1557,7 +1578,7 @@
     let html = '<div class="pv-scene-head"><span>' + esc(ch.title || '未命名章节') + '</span><span>' +
       (ch.dir === 'en2zh' ? '英 → 中' : '中 → 英') + '</span></div>';
     if (!ch.nodes.length) {
-      html += '<p class="pv-hint">左侧还没有内容。<br>按 Enter 新建一条，Tab 切换类型。</p>';
+      html += '<p class="pv-hint">左侧还没有内容。<br>按 Enter 新建一条，Ctrl+Alt+T 切换类型。</p>';
     } else {
       html += '<div class="pv-stream">' + renderPreviewNodes(ch.nodes, ch) + '</div>';
     }
@@ -1597,7 +1618,20 @@
   }
 
   function isKnownSpeaker(id) {
+    if (knownSpeakerIds.ids) return knownSpeakerIds.ids.has(id);
     return DEFAULT_SPEAKERS.some(function (s) { return s.id === id; });
+  }
+
+  // 校验要以游戏真正读取的 speakers.json 为准，不能只看内置名单
+  function loadSpeakers() {
+    fetch('../../src/data/story/speakers.json')
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        const list = data && Array.isArray(data.speakers) ? data.speakers : null;
+        if (!list || !list.length) return;
+        knownSpeakerIds.ids = new Set(list.map(function (s) { return s.id; }).filter(Boolean));
+      })
+      .catch(function () { /* 打不开就沿用内置名单 */ });
   }
 
   function collectBeats(node, out, nextId, ch, warnings, usedSpeakers, topLevel) {
@@ -1729,7 +1763,12 @@
           o.nodes.forEach(function (child) {
             collectBeats(child, sub, nextId, ch, warnings, usedSpeakers, false);
           });
-          if (sub.length) candidate.branch = sub;
+          if (sub.length) {
+            candidate.branch = sub;
+            warnings.push('分支「' + String(opts[0].zh || opts[0].en || '未命名').slice(0, 10) + '」的 ' +
+              optionLetter(i) + ' 线写了 ' + sub.length + ' 条内容，只能落在 candidate.branch 里；' +
+              'schema v1 没有这个字段，游戏端读不到，这条线在游戏里会消失。');
+          }
         }
         return candidate;
       });
@@ -1755,6 +1794,13 @@
       });
       return;
     }
+    if (node.type === 'divider') {
+      const title = (node.title || '').trim();
+      const time = (node.time || '').trim();
+      if (!title && !time) return;
+      out.push({ id: nextId(), kind: 'divider', title: title, time: time });
+      return;
+    }
     if (node.type === 'scene') {
       if (!topLevel) {
         warnings.push('分支内部的「场景开头」不会在 JSON 里生成新场景，只保留它下面的节点。');
@@ -1764,6 +1810,7 @@
 
   function chapterToJson(ch) {
     const warnings = [];
+    const errors = [];
     const usedSpeakers = new Set();
     if (!ch.nodes.length) warnings.push('本章还没有内容。');
     const groups = groupScenes(ch);
@@ -1786,7 +1833,7 @@
       if (scene.presentation === 'scene') {
         scene.caption = splitLines(s.caption);
         if (scene.caption.length !== 4) {
-          warnings.push('「' + title + '」是场景界面，caption 应为 4 行，现在是 ' + scene.caption.length + ' 行。');
+          errors.push('「' + title + '」是场景界面，caption 必须恰好 4 行，现在是 ' + scene.caption.length + ' 行。');
         }
       }
       let counter = 0;
@@ -1799,9 +1846,13 @@
         collectBeats(n, beats, nextId, ch, warnings, usedSpeakers, true);
       });
       scene.beats = beats;
-      if (!beats.length) warnings.push('「' + title + '」没有可导出的消息节点。');
       const total = beats.length + (scene.caption ? scene.caption.length : 0);
-      if (total > 14) warnings.push('「' + title + '」有 ' + total + ' 条（caption+beats），schema 规定每场上限 14 条。');
+      if (!beats.length) {
+        errors.push('「' + title + '」没有任何消息节点，schema 规定每场至少 8 条（caption 计入）。');
+      } else if (total < 8) {
+        errors.push('「' + title + '」只有 ' + total + ' 条（caption+beats），schema 规定每场至少 8 条。');
+      }
+      if (total > 14) errors.push('「' + title + '」有 ' + total + ' 条（caption+beats），schema 规定每场最多 14 条。');
       return scene;
     });
 
@@ -1809,6 +1860,54 @@
     usedSpeakers.forEach(function (id) {
       if (casting.indexOf(id) === -1) casting.push(id);
     });
+
+    // 硬门禁：同场最多 1 个，总数落在 gateBudget 内
+    const hardScenes = [];
+    scenes.forEach(function (s, i) {
+      const hard = s.beats.filter(function (b) {
+        return b.gate && b.gate.type === 'hard';
+      }).length;
+      if (hard > 1) {
+        errors.push('「' + s.title + '」有 ' + hard + ' 个硬门禁，schema 规定同一场最多 1 个。');
+      }
+      if (hard) hardScenes.push(i);
+    });
+    const budget = ch.gateBudget || DEFAULT_GATE_BUDGET;
+    const budgetMin = Number(budget.min) || 0;
+    const budgetMax = Number(budget.max) || 0;
+    if (hardScenes.length > budgetMax) {
+      errors.push('本章有 ' + hardScenes.length + ' 个硬门禁，超出 gateBudget 上限 ' + budgetMax + '。');
+    }
+    if (hardScenes.length < budgetMin) {
+      errors.push('本章只有 ' + hardScenes.length + ' 个硬门禁，低于 gateBudget 下限 ' + budgetMin + '。');
+    }
+    for (let i = 1; i < hardScenes.length; i += 1) {
+      if (hardScenes[i] - hardScenes[i - 1] < 2) {
+        warnings.push('「' + scenes[hardScenes[i - 1]].title + '」与「' + scenes[hardScenes[i]].title +
+          '」的硬门禁挨在一起；建议中间隔一场，不影响导出。');
+      }
+    }
+
+    const allBeats = scenes.reduce(function (acc, s) { return acc.concat(s.beats); }, []);
+    allBeats.forEach(function (b) {
+      if (b.gate && b.gate.type === 'hard' && (b.candidates || []).length !== 1) {
+        errors.push('有一条硬门禁带了 ' + (b.candidates || []).length + ' 个候选，schema 规定硬门禁只有一个候选。');
+      }
+    });
+    if (!allBeats.some(function (b) { return b.kind === 'event' && b.event === 'clue'; })) {
+      errors.push('本章没有线索卡（event: clue），schema 规定每章至少一张。');
+    }
+    if (!allBeats.some(function (b) { return b.kind === 'event' && b.event === 'relation'; })) {
+      errors.push('本章没有关系事件（event: relation），schema 规定每章至少一条。');
+    }
+    // 只有成功读到 speakers.json 才按它拦，避免打不开文件时误伤
+    if (knownSpeakerIds.ids) {
+      casting.forEach(function (id) {
+        if (!knownSpeakerIds.ids.has(id)) {
+          errors.push('角色 id「' + id + '」不在 src/data/story/speakers.json 中，游戏读不到名字。');
+        }
+      });
+    }
 
     return {
       json: {
@@ -1823,11 +1922,23 @@
         casting: casting,
         scenes: scenes
       },
-      warnings: warnings
+      warnings: warnings,
+      errors: errors
     };
   }
 
-  function exportWithWarnings(text, filename, mime, warnings, note) {
+  function exportWithWarnings(text, filename, mime, warnings, note, errors) {
+    if (errors && errors.length) {
+      openModal(
+        '<h2>这一章还不能交</h2>' +
+        '<p class="hint">下面这些问题违反 src/data/story/schema.md，修好之前不能导出 JSON。</p>' +
+        '<ul class="warn-list">' + errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>' +
+        '<div class="modal-actions">' +
+          '<button type="button" class="primary" data-close>返回修改</button>' +
+        '</div>'
+      );
+      return;
+    }
     if (!warnings.length) {
       download(filename, text, mime);
       toast('已导出 ' + filename);
@@ -1861,7 +1972,8 @@
         safeName(ch.id || ch.title) + '.json',
         'application/json;charset=utf-8',
         result.warnings,
-        '分支选项会写成候选对象的 branch 字段（现有 schema v1 尚未定义分支内容，游戏运行时需要支持）。门禁和信息槽字段在导入导出时会原样保留。'
+        '「分支选项」尚未接入：选项下面的内容只能写成 candidate.branch，schema v1 没有这个字段，游戏端读不到。',
+        result.errors
       );
     } else {
       const result = chapterToMarkdown(ch);
@@ -2028,6 +2140,9 @@
 
   function beatToNode(beat) {
     if (!beat || typeof beat !== 'object') return null;
+    if (beat.kind === 'divider') {
+      return makeNode('divider', { title: beat.title || '', time: beat.time || '' });
+    }
     if (beat.kind === 'narration') {
       const note = String(beat.beatNote || '');
       if (/(^|[^A-Za-z])OS([^A-Za-z]|$)/i.test(note) || /内心|独白/.test(note)) {
@@ -2098,7 +2213,7 @@
     return null;
   }
 
-  function chapterFromJson(raw) {
+  function chapterFromJson(raw, stats) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.scenes)) return null;
     const ch = makeChapter({
       id: uniqueChapterIdFor(raw.id || ''),
@@ -2128,7 +2243,12 @@
       }));
       (Array.isArray(s.beats) ? s.beats : []).forEach(function (beat) {
         const node = beatToNode(beat);
-        if (node) ch.nodes.push(node);
+        if (node) {
+          ch.nodes.push(node);
+        } else if (stats) {
+          const kind = String((beat && beat.kind) || '未知类型');
+          stats.dropped[kind] = (stats.dropped[kind] || 0) + 1;
+        }
       });
     });
     walkNodes(ch.nodes, function (n) {
@@ -2138,6 +2258,16 @@
       }
     });
     return ch;
+  }
+
+  function droppedSummary(stats) {
+    if (!stats || !stats.dropped) return '';
+    const kinds = Object.keys(stats.dropped);
+    if (!kinds.length) return '';
+    const total = kinds.reduce(function (n, k) { return n + stats.dropped[k]; }, 0);
+    return '；丢弃 ' + total + ' 条不支持的消息（' + kinds.map(function (k) {
+      return k + ' × ' + stats.dropped[k];
+    }).join('，') + '）';
   }
 
   function chapterFromNative(raw, keepId) {
@@ -2158,7 +2288,7 @@
     return ch;
   }
 
-  function importJsonChapters(data) {
+  function importJsonChapters(data, stats) {
     let list = [];
     if (Array.isArray(data)) list = data;
     else if (data && Array.isArray(data.chapters)) list = data.chapters;
@@ -2169,7 +2299,7 @@
     }
     return list.map(function (raw) {
       if (raw && Array.isArray(raw.nodes)) return chapterFromNative(raw, false);
-      return chapterFromJson(raw);
+      return chapterFromJson(raw, stats);
     }).filter(Boolean);
   }
 
@@ -2708,9 +2838,10 @@
           reader.onload = function () {
             try {
               const data = JSON.parse(String(reader.result));
-              parsedChapters = importJsonChapters(data);
+              const stats = { dropped: {} };
+              parsedChapters = importJsonChapters(data, stats);
               $('#jsonSummary', root).textContent = parsedChapters.length
-                ? '识别到 ' + parsedChapters.length + ' 章：' + parsedChapters.map(function (c) { return c.title; }).join('、')
+                ? '识别到 ' + parsedChapters.length + ' 章：' + parsedChapters.map(function (c) { return c.title; }).join('、') + droppedSummary(stats)
                 : '文件里没有找到 scenes。';
             } catch (err) {
               parsedChapters = null;

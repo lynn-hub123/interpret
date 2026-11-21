@@ -100,15 +100,21 @@
 
 ## 5. 校验规则（v1）
 
+### 5.1 错误（不通过不能导出）
+
 1. 每场 `caption.length + beats.length` 在 8–14 之间。
 2. `candidates.length` 在 1–3 之间；硬门禁句必须为 1。
 3. `gate.required` 与唯一候选的 `required` 相同。
 4. `gate.accept` 覆盖 `gate.required` 的每个槽，且只用输出语言。
 5. `hints.r1` / `r2` 不含 `accept` 中的任何词。
 6. 章内 `gate.type === "hard"` 的数量在 `gateBudget` 内。
-7. 同一场最多一个硬门禁；相邻硬门禁之间至少隔一场。
+7. 同一场最多一个硬门禁。
 8. 每章至少一张 `clue` 卡与一条 `relation` 事件。
 9. 所有 `speaker` 与 `casting` 都能在 `speakers.json` 找到。
+
+### 5.2 建议（不拦截）
+
+- 相邻两场不要都放硬门禁，中间隔一场更容易把节奏拉开。旧规则「相邻硬门禁之间至少隔一场」来自按配额排节奏的做法，已作废，只作写作建议。
 
 ## 6. 说话人
 
