@@ -22,5 +22,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/checkout@v4
+        with:
+          repository: lynn-hub123/story
+          path: .story
+      - run: node scripts/sync-story.mjs .story/chapters
       - run: npx vitest run
       - run: npm run build

@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:story": "node scripts/sync-story.mjs",
     "fetch:corpus": "node scripts/fetch-corpus.mjs",
     "gen:audio": "node scripts/generate-audio.mjs"
   },

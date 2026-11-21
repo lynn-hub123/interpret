@@ -1,5 +1,5 @@
 // 硬门禁本地判定：只做规范化与信息槽匹配，不理解语义、不调用模型。
-// 规则来源：docs/superpowers/specs/2026-11-14-hard-gate-mechanics-design.md §4
+// 规则来源：story 仓 specs/2026-11-14-hard-gate-mechanics-design.md §4
 
 // 缩写展开：先展开再切词，避免撇号被标点清洗吞掉
 const CONTRACTIONS = [

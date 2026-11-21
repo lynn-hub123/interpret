@@ -9,6 +9,9 @@ dev-dist/
 .DS_Store
 *.local
 
+# 剧本仓同步进来的章节（npm run sync:story）
+src/data/story-import/
+
 # Superpowers brainstorm sessions
 .superpowers/
 docs/superpowers/*

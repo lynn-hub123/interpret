@@ -1,6 +1,7 @@
 // 剧情数据访问与断点：JSON 只读，进度写 localStorage（interpret.story.ch01.v1）。
-import ch01 from '../data/story/ch01.json'
-import speakersFile from '../data/story/speakers.json'
+// 章节由同级 story 仓同步而来（npm run sync:story），本仓不跟踪剧本内容。
+import ch01 from '../data/story-import/ch01.json'
+import speakersFile from '../data/story-import/speakers.json'
 import { load, save } from './storage.js'
 
 export const STORY_KEY = 'story.ch01.v1'
